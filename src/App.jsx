@@ -123,7 +123,7 @@ const TEACHER_MODULES = [
     id: 'event',
     name: 'Edoxia Event',
     // Code Base64 factice. Ex: https://event.stpbb.org
-    encodedUrl: 'Iz0=', 
+    encodedUrl: 'aHR0cHM6Ly9lZG94aWEtZXZlbnQubmV0bGlmeS5hcHA=', 
     desc: 'Gestion des événements et calendrier.',
     icon: <Calendar className="w-6 h-6 text-emerald-400" />,
     tag: 'Agenda',
