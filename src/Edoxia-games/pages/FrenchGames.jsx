@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { Sun, Moon } from 'lucide-react';
-import { collection, addDoc, query, orderBy, limit, getDocs } from "firebase/firestore";
+import { Sun, Moon, Volume2, VolumeX } from 'lucide-react';
+import { collection, addDoc, query, orderBy, limit, getDocs, where, updateDoc, doc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { ThemeContext } from "../../ThemeContext";
 
@@ -215,6 +215,8 @@ function FrenchGames() {
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [showPenalty, setShowPenalty] = useState(false);
+  const [isAudioMode, setIsAudioMode] = useState(false);
+  const [isPracticeMode, setIsPracticeMode] = useState(false);
 
   // --- LEADERBOARD & JOUEUR ---
   const [topScores, setTopScores] = useState([]);
@@ -257,17 +259,30 @@ function FrenchGames() {
     setGameOver(false);
     setSelectedGame(null);
     setTopScores([]); 
+    setIsAudioMode(false);
+    setIsPracticeMode(false);
   };
 
   const saveScore = async () => {
     if (!playerName) return;
     setSavingScore(true);
     try {
-      await addDoc(collection(db, "leaderboard_pronoms"), {
-        pseudo: playerName.slice(0, 12),
-        score: score,
-        date: new Date().toISOString()
-      });
+      const cleanPseudo = playerName.slice(0, 12);
+      const q = query(collection(db, "leaderboard_pronoms"), where("pseudo", "==", cleanPseudo));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const existingDoc = querySnapshot.docs[0];
+        if (score > existingDoc.data().score) {
+          await updateDoc(doc(db, "leaderboard_pronoms", existingDoc.id), { score: score, date: new Date().toISOString() });
+        }
+      } else {
+        await addDoc(collection(db, "leaderboard_pronoms"), {
+          pseudo: cleanPseudo,
+          score: score,
+          date: new Date().toISOString()
+        });
+      }
       await loadTopScores();
       setScoreSaved(true); 
       startGame();
@@ -278,9 +293,24 @@ function FrenchGames() {
     }
   };
 
+  // --- AUDIO ---
+  const speak = useCallback((text) => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'fr-FR';
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  }, []);
+
+  useEffect(() => {
+    if (running && !gameOver && isAudioMode) {
+        speak(`${current.gn} ... ${current.rest}`);
+    }
+  }, [current, running, gameOver, isAudioMode, speak]);
+
   // Timer avec SpeedFactor
   useEffect(() => {
     if (!running) return;
+    if (isPracticeMode) return;
     if (timeLeft <= 0) {
       setRunning(false);
       setGameOver(true);
@@ -291,7 +321,7 @@ function FrenchGames() {
       setTimeLeft((prev) => prev - 1);
     }, 1000 / speedFactor);
     return () => clearInterval(interval);
-  }, [timeLeft, running, speedFactor]);
+  }, [timeLeft, running, speedFactor, isPracticeMode]);
 
   useEffect(() => {
     if (selectedGame) loadTopScores();
@@ -304,12 +334,14 @@ function FrenchGames() {
     if (chosenPronoun.toLowerCase() === current.answer.toLowerCase()) {
       // BONNE RÉPONSE
       setScore(score + 1);
-      setSpeedFactor((prev) => prev * 1.1); // On accélère le temps
-      setTimeLeft(100); // On remet le temps à fond
+      if (!isPracticeMode) {
+        setSpeedFactor((prev) => prev * 1.1); // On accélère le temps
+        setTimeLeft(100); // On remet le temps à fond
+      }
       setCurrent(getNextQuestion());
     } else {
       // MAUVAISE RÉPONSE
-      setTimeLeft((prev) => Math.max(prev - 5, 0)); // Pénalité -5s
+      if (!isPracticeMode) setTimeLeft((prev) => Math.max(prev - 5, 0)); // Pénalité -5s
       setShowPenalty(true);
       setTimeout(() => setShowPenalty(false), 800);
     }
@@ -380,8 +412,8 @@ function FrenchGames() {
           <div className="grid grid-cols-2 gap-4 mb-8">
             <div className={`p-4 rounded-xl border text-center flex flex-col relative overflow-hidden ${isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-slate-100 border-slate-200'}`}>
               <span className={`text-xs uppercase tracking-wider mb-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Temps</span>
-              <strong className={`text-3xl ${isDark ? 'text-white' : 'text-slate-900'}`}>{timeLeft.toFixed(0)} s</strong>
-              {showPenalty && <span className="absolute top-2 right-2 text-red-500 text-xs font-bold animate-ping">-5s</span>}
+              <strong className={`text-3xl ${isDark ? 'text-white' : 'text-slate-900'}`}>{isPracticeMode ? "∞" : `${timeLeft.toFixed(0)} s`}</strong>
+              {showPenalty && !isPracticeMode && <span className="absolute top-2 right-2 text-red-500 text-xs font-bold animate-ping">-5s</span>}
             </div>
             <div className={`p-4 rounded-xl border text-center flex flex-col ${isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-slate-100 border-slate-200'}`}>
               <span className={`text-xs uppercase tracking-wider mb-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Score</span>
@@ -390,7 +422,7 @@ function FrenchGames() {
           </div>
 
           {!running && (
-            <div className="mb-6">
+            <div className="mb-6 space-y-4">
               <input 
                 type="text" 
                 className={`w-full border rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-950 border-slate-700 text-white placeholder-slate-600 focus:border-violet-500 focus:ring-1 focus:ring-violet-500' : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-500'}`} 
@@ -400,6 +432,20 @@ function FrenchGames() {
                 maxLength={12} 
                 autoFocus 
               />
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={() => setIsAudioMode(!isAudioMode)}
+                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors border flex items-center gap-2 ${isAudioMode ? 'bg-violet-500/20 border-violet-500 text-violet-500' : 'bg-transparent border-slate-500 text-slate-500 hover:border-slate-400 hover:text-slate-400'}`}
+                >
+                  {isAudioMode ? <><Volume2 size={18}/> Audio Activé</> : <><VolumeX size={18}/> Audio Désactivé</>}
+                </button>
+                <button
+                  onClick={() => setIsPracticeMode(!isPracticeMode)}
+                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors border flex items-center gap-2 ${isPracticeMode ? 'bg-emerald-500/20 border-emerald-500 text-emerald-500' : 'bg-transparent border-slate-500 text-slate-500 hover:border-slate-400 hover:text-slate-400'}`}
+                >
+                  {isPracticeMode ? "🧘 Mode Entraînement (Activé)" : "⚡ Activer Mode Entraînement"}
+                </button>
+              </div>
             </div>
           )}
 
@@ -414,8 +460,11 @@ function FrenchGames() {
 
           {running && !gameOver && (
             <>
-              <div className={`text-center mb-8 text-2xl ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <div className={`text-center mb-8 text-2xl flex flex-col items-center gap-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                <div className="flex items-center gap-3">
                 <span className={`${isDark ? 'text-violet-400' : 'text-violet-600'} font-bold`}>{current.gn}</span> {current.rest}
+                <button onClick={() => speak(`${current.gn} ... ${current.rest}`)} className="p-2 rounded-full hover:bg-slate-500/20 transition-colors text-slate-400 hover:text-violet-500" title="Répéter"><Volume2 size={24} /></button>
+                </div>
               </div>
               <p className={`${isDark ? 'text-slate-400' : 'text-slate-600'} text-sm text-center mb-6`}>Par quel pronom peux-tu remplacer ce qui est en couleur ?</p>
 
@@ -430,15 +479,23 @@ function FrenchGames() {
                   </button>
                 ))}
               </div>
+              {isPracticeMode && (
+                <button 
+                    onClick={() => { setRunning(false); setGameOver(true); }}
+                    className="mt-6 w-full py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+                >
+                    Arrêter l'entraînement
+                </button>
+              )}
             </>
           )}
 
           {gameOver && (
             <div className="text-center space-y-6 py-4">
-              <h2 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>⏰ Temps écoulé !</h2>
+              <h2 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{isPracticeMode ? "Entraînement terminé" : "⏰ Temps écoulé !"}</h2>
               <p className={`${isDark ? 'text-slate-300' : 'text-slate-700'} text-xl`}>Score final : <strong className={isDark ? 'text-violet-400' : 'text-violet-600'}>{score}</strong></p>
               <div className="space-y-3">
-                {!scoreSaved && (
+                {!scoreSaved && !isPracticeMode && (
                   <button 
                     className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" 
                     onClick={saveScore} 
