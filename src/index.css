@@ -28,3 +28,18 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #475569;
 }
+
+@layer components {
+  .bg-edoxia-card {
+    @apply bg-slate-800/50 backdrop-blur-md;
+  }
+  .bg-edoxia-bg {
+    @apply bg-slate-900/50;
+  }
+  .text-edoxia-muted {
+    @apply text-slate-400;
+  }
+  .bg-edoxia-accent {
+    @apply bg-cyan-600 hover:bg-cyan-500 text-white transition-all;
+  }
+}
