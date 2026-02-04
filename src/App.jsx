@@ -24,6 +24,7 @@ import AdminDashboard from './Edoxia-Quiz/pages/AdminDashboard';
 import HostGame from './Edoxia-Quiz/pages/HostGame';
 import PlayerGame from './Edoxia-Quiz/pages/PlayerGame';
 import { ThemeContext } from './ThemeContext';
+import EventApp from './Edoxia-Event/EventApp';
 
 // --- UTILITAIRE DE SÉCURITÉ (Obfuscation) ---
 // Permet de cacher les liens dans le code source (Inspect Element)
@@ -72,7 +73,7 @@ const MODULES = [
   {
     id: 'events',
     name: 'Evénements',
-    path: '#',
+    path: '/events',
     desc: 'Calendrier et organisation.',
     icon: <Calendar className="w-6 h-6 text-yellow-400" />,
     tag: 'Vie scolaire',
@@ -164,11 +165,21 @@ const ModuleCard = ({ app, locked }) => {
   );
 };
 
+// --- COMPOSANT ROUTE PROTÉGÉE ---
+const ProtectedRoute = ({ isAllowed, children }) => {
+  const navigate = useNavigate();
+  React.useEffect(() => {
+    if (!isAllowed) {
+      navigate('/');
+    }
+  }, [isAllowed, navigate]);
+  return isAllowed ? children : null;
+};
+
 // --- PAGE D'ACCUEIL ---
-const Home = () => {
+const Home = ({ isSchoolUnlocked, unlockSchool }) => {
   const { theme, toggleTheme } = React.useContext(ThemeContext);
   const isDark = theme === 'dark';
-  const [isSchoolUnlocked, setIsSchoolUnlocked] = useState(false);
 
   const handleSchoolAuth = (e) => {
     e.preventDefault();
@@ -176,7 +187,7 @@ const Home = () => {
 
     const pwd = prompt("Mot de passe Espace école :");
     if (pwd === "StpbbFLAUD@") {
-      setIsSchoolUnlocked(true);
+      unlockSchool();
     } else if (pwd !== null) {
       alert("Mot de passe incorrect.");
     }
@@ -274,6 +285,7 @@ export default function App() {
   const [theme, setTheme] = useState('dark');
   const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   const isDark = theme === 'dark';
+  const [isSchoolUnlocked, setIsSchoolUnlocked] = useState(false);
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
@@ -288,7 +300,7 @@ export default function App() {
           </div>
 
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Home isSchoolUnlocked={isSchoolUnlocked} unlockSchool={() => setIsSchoolUnlocked(true)} />} />
             <Route path="/games" element={<GamesHome />} />
             <Route path="/games/maths" element={<MathsGames />} />
             <Route path="/games/french" element={<FrenchGames />} />
@@ -296,6 +308,11 @@ export default function App() {
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/host/:lobbyId" element={<HostGame />} />
             <Route path="/play/:lobbyId" element={<PlayerGame />} />
+            <Route path="/events" element={
+              <ProtectedRoute isAllowed={isSchoolUnlocked}>
+                <EventApp />
+              </ProtectedRoute>
+            } />
           </Routes>
         </div>
       </Router>

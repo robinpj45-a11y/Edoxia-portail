@@ -96,7 +96,7 @@ export default function PlayerGame() {
   if (!lobby || !playerData) return <div className="p-10 text-center text-white">Chargement...</div>;
 
   // --- ÉTATS GLOBAUX ---
-  if (lobby.status === 'review') return <div className="flex flex-col items-center justify-center h-screen bg-edoxia-bg p-6 text-center animate-pulse"><Eye size={64} className="text-yellow-400 mb-4"/><h2 className="text-3xl font-bold text-white">Vérification...</h2><p className="text-edoxia-muted">L'admin passe en revue les réponses.<br/>Regarde l'écran principal !</p></div>;
+  if (lobby.status === 'review') return <div className="flex flex-col items-center justify-center h-screen bg-edoxia-bg p-6 text-center animate-pulse"><Eye size={64} className="text-yellow-400 mb-4"/><h2 className="text-3xl font-bold text-white">Vérification...</h2><p className="text-edoxia-muted">L'admin passe en revue les réponses.<br/></p></div>;
   if (lobby.status === 'finished') { /* ... Code Podium identique à avant ... */ 
     const sortedPlayers = [...lobby.players].sort((a, b) => b.score - a.score);
     const myRank = sortedPlayers.findIndex(p => p.id === playerData.id) + 1;
@@ -126,10 +126,11 @@ export default function PlayerGame() {
       return <div className="flex flex-col items-center justify-center h-screen bg-edoxia-bg p-6 text-center"><CheckCircle size={64} className="text-green-500 mb-4"/><h2 className="text-3xl font-bold text-white">Terminé !</h2><p className="text-edoxia-muted mt-2">Tu as répondu à tout.<br/>Reviens plus tard pour les résultats !</p></div>;
   }
 
-  const currentQ = lobby.questions[qIndex];
+  // Waiting Screen (Généralisé)
+  if (lobby.status === 'waiting' || qIndex < 0) return <div className="flex flex-col items-center justify-center h-screen bg-edoxia-bg p-6 text-center"><div className="w-16 h-16 bg-edoxia-accent rounded-full animate-pulse mb-6 flex items-center justify-center text-2xl font-bold border-4 border-edoxia-bg shadow-[0_0_0_4px_#3B82F6]">{playerData.pseudo.charAt(0)}</div><h2 className="text-3xl font-bold mb-2 text-white">Tu es connecté !</h2><div className="mt-8 text-edoxia-muted text-sm uppercase tracking-widest animate-pulse">Le jeu va bientôt commencer...</div></div>;
 
-  // Waiting Screen (Seulement en Live)
-  if (lobby.mode === 'live' && lobby.status === 'waiting') return <div className="flex flex-col items-center justify-center h-screen bg-edoxia-bg p-6 text-center"><div className="w-16 h-16 bg-edoxia-accent rounded-full animate-pulse mb-6 flex items-center justify-center text-2xl font-bold border-4 border-edoxia-bg shadow-[0_0_0_4px_#3B82F6]">{playerData.pseudo.charAt(0)}</div><h2 className="text-3xl font-bold mb-2 text-white">Tu es connecté !</h2><div className="mt-8 text-edoxia-muted text-sm uppercase tracking-widest animate-pulse">Le jeu va bientôt commencer...</div></div>;
+  const currentQ = lobby.questions[qIndex];
+  if (!currentQ) return <div className="flex flex-col items-center justify-center h-screen bg-edoxia-bg p-6 text-center text-white">Chargement...</div>;
 
   // Answered Screen (Seulement en Live)
   if (lobby.mode === 'live' && hasAnswered) {

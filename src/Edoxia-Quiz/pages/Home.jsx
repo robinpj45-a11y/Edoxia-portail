@@ -55,24 +55,32 @@ export default function Home() {
         const isOpen = lobbyData.status === 'waiting' || (lobbyData.status === 'playing' && lobbyData.mode === 'async');
         
         if (isOpen) {
-            const playerId = Date.now().toString();
-            const playerData = {
-                id: playerId,
-                pseudo,
-                score: 0,
-                currentQuestionIndex: 0, // Progression individuelle
-                answers: {}, // Historique des réponses pour la review
-                hasAnswered: false
-            };
-            
+            // Vérification si le joueur existe déjà (pour reprise de progression)
+            const existingPlayer = lobbyData.players?.find(p => p.pseudo.toLowerCase() === pseudo.trim().toLowerCase());
+            let playerData;
+
+            if (existingPlayer) {
+                playerData = existingPlayer;
+            } else {
+                const playerId = Date.now().toString();
+                const initialIndex = lobbyData.status === 'playing' ? 0 : -1;
+                playerData = {
+                    id: playerId,
+                    pseudo: pseudo.trim(),
+                    score: 0,
+                    currentQuestionIndex: initialIndex, // Progression individuelle
+                    answers: {}, // Historique des réponses pour la review
+                    hasAnswered: false
+                };
+                await updateDoc(lobbyRef, {
+                  players: arrayUnion(playerData)
+                });
+            }
+
             // Sauvegarde Session Longue Durée
             const sessionData = { lobbyId: targetCode.toUpperCase(), ...playerData };
             localStorage.setItem('edoxia_session', JSON.stringify(sessionData));
             sessionStorage.setItem('playerData', JSON.stringify(playerData)); // Backward compatibility
-
-            await updateDoc(lobbyRef, {
-              players: arrayUnion(playerData)
-            });
 
             navigate(`/play/${targetCode.toUpperCase()}`);
         } else {

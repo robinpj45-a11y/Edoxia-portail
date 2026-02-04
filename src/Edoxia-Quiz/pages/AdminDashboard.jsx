@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../firebase';
-import { setDoc, addDoc, doc, collection, getDocs, orderBy, query, onSnapshot, deleteDoc } from 'firebase/firestore';
+import { setDoc, addDoc, doc, collection, getDocs, orderBy, query, onSnapshot, deleteDoc, updateDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
-import { History, PlayCircle, Activity, Trash2, MonitorPlay, PlusCircle, Save, X, Home, ImageIcon, MinusCircle, Zap, Moon, ArrowLeft } from 'lucide-react';
+import { History, PlayCircle, Activity, Trash2, MonitorPlay, PlusCircle, Save, X, Home, ImageIcon, MinusCircle, Zap, Moon, ArrowLeft, Edit, Lock } from 'lucide-react';
 
 const DEMO_QUIZ = {
   id: 'demo', title: 'Quiz de Démo',
@@ -17,26 +17,49 @@ export default function AdminDashboard() {
   const [selectedQuizId, setSelectedQuizId] = useState('demo');
   const [gameMode, setGameMode] = useState('live'); // 'live' ou 'async'
   const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
 
   // États Création Quiz
   const [isCreating, setIsCreating] = useState(false);
+  const [editingQuizId, setEditingQuizId] = useState(null);
   const [newQuizTitle, setNewQuizTitle] = useState('');
   const [newQuestions, setNewQuestions] = useState([]);
   const [qType, setQType] = useState('mcq'); const [qText, setQText] = useState(''); const [qImage, setQImage] = useState(''); const [qOptions, setQOptions] = useState(['', '', '', '']); const [qCorrectIdx, setQCorrectIdx] = useState(0); const [qCorrectText, setQCorrectText] = useState(''); 
 
   useEffect(() => {
+    if (!isAuthenticated) return;
     const fetchHistory = async () => { const q = query(collection(db, "gameHistory"), orderBy("date", "desc")); const snapshot = await getDocs(q); setHistory(snapshot.docs.map(d => ({id: d.id, ...d.data()}))); }; fetchHistory();
     const fetchQuizzes = async () => { const q = query(collection(db, "quizzes"), orderBy("createdAt", "desc")); const snapshot = await getDocs(q); const dbQuizzes = snapshot.docs.map(d => ({id: d.id, ...d.data()})); setSavedQuizzes([DEMO_QUIZ, ...dbQuizzes]); }; fetchQuizzes();
     const unsub = onSnapshot(collection(db, "lobbies"), (snapshot) => { setActiveLobbies(snapshot.docs.map(d => ({id: d.id, ...d.data()}))); }); return () => unsub();
-  }, [isCreating]);
+  }, [isCreating, isAuthenticated]);
 
   // --- LOGIQUE CRÉATION (Simplifiée pour focus sur le mode Soirée) ---
   const changeType = (type) => { setQType(type); setQCorrectIdx(0); if (type === 'tf') { setQOptions(['Vrai', 'Faux']); } else if (type === 'mcq') { setQOptions(['', '', '', '']); } };
   const addOption = () => setQOptions([...qOptions, '']);
   const removeOption = (idx) => { if(qOptions.length <= 2) return; const newOpts = qOptions.filter((_, i) => i !== idx); setQOptions(newOpts); if(qCorrectIdx >= newOpts.length) setQCorrectIdx(0); };
   const addQuestionToBuffer = () => { if(!qText) return alert("Vide !"); let newQ = { type: qType, question: qText, image: qImage }; if(qType === 'mcq' || qType === 'tf') { if(qOptions.some(o => !o)) return alert("Options vides"); newQ.options = [...qOptions]; newQ.correct = Number(qCorrectIdx); } else { if(!qCorrectText) return alert("Réponse ?"); newQ.correct = qCorrectText; } setNewQuestions([...newQuestions, newQ]); setQText(''); setQImage(''); setQCorrectText(''); if(qType === 'mcq') setQOptions(['', '', '', '']); };
-  const saveQuizToDb = async () => { if(!newQuizTitle || newQuestions.length === 0) return alert("Titre?"); setLoading(true); await addDoc(collection(db, "quizzes"), { title: newQuizTitle, questions: newQuestions, createdAt: new Date() }); setIsCreating(false); setNewQuestions([]); setNewQuizTitle(''); setLoading(false); };
-  const cancelCreation = () => { if(window.confirm("Annuler ?")) { setIsCreating(false); setNewQuestions([]); setNewQuizTitle(''); } };
+  
+  const saveQuizToDb = async () => { 
+      if(!newQuizTitle || newQuestions.length === 0) return alert("Titre et au moins une question requis."); 
+      setLoading(true); 
+      if (editingQuizId) {
+          await updateDoc(doc(db, "quizzes", editingQuizId), { title: newQuizTitle, questions: newQuestions });
+      } else {
+          await addDoc(collection(db, "quizzes"), { title: newQuizTitle, questions: newQuestions, createdAt: new Date() }); 
+      }
+      setIsCreating(false); setNewQuestions([]); setNewQuizTitle(''); setEditingQuizId(null); setLoading(false); 
+  };
+  
+  const cancelCreation = () => { if(window.confirm("Annuler ?")) { setIsCreating(false); setNewQuestions([]); setNewQuizTitle(''); setEditingQuizId(null); } };
+
+  const handleEdit = (quiz) => {
+      if(quiz.id === 'demo') return alert("Le quiz de démo n'est pas modifiable.");
+      setNewQuizTitle(quiz.title);
+      setNewQuestions(quiz.questions);
+      setEditingQuizId(quiz.id);
+      setIsCreating(true);
+  };
 
   // --- CRÉATION LOBBY AVEC MODE ---
   const createLobby = async () => {
@@ -64,12 +87,44 @@ export default function AdminDashboard() {
 
   const deleteLobby = async (id) => { if(window.confirm("Supprimer ?")) await deleteDoc(doc(db, "lobbies", id)); };
 
+  if (!isAuthenticated) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-edoxia-bg text-white p-4">
+          <div className="bg-edoxia-card p-8 rounded-xl border border-white/10 shadow-2xl max-w-md w-full text-center backdrop-blur-xl">
+              <div className="mb-6 flex justify-center">
+                  <div className="p-4 bg-red-500/10 rounded-full text-red-400">
+                      <Lock size={32} />
+                  </div>
+              </div>
+              <h1 className="text-2xl font-bold mb-2">Espace Administrateur</h1>
+              <p className="text-slate-400 mb-6 text-sm">Veuillez saisir le mot de passe pour continuer.</p>
+              <form onSubmit={(e) => { e.preventDefault(); if(passwordInput === "StpbbFLAUD@") setIsAuthenticated(true); else alert("Mot de passe incorrect."); }} className="space-y-4">
+                  <input
+                      type="password"
+                      value={passwordInput}
+                      onChange={(e) => setPasswordInput(e.target.value)}
+                      placeholder="Mot de passe"
+                      className="w-full bg-slate-950/50 p-3 rounded-lg border border-white/10 focus:border-edoxia-accent outline-none transition-all text-center text-white"
+                      autoFocus
+                  />
+                  <button type="submit" className="w-full bg-edoxia-accent hover:bg-cyan-500 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-cyan-900/20">
+                      Accéder
+                  </button>
+              </form>
+              <button onClick={() => navigate('/')} className="mt-6 text-sm text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-2 w-full">
+                  <ArrowLeft size={14} /> Retour à l'accueil
+              </button>
+          </div>
+      </div>
+    );
+  }
+
   if(isCreating) {
     return (
       <div className="p-8 max-w-5xl mx-auto pb-20 min-h-screen">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold flex items-center gap-3">
-            <PlusCircle className="text-edoxia-accent" /> Créateur de Quiz
+            <PlusCircle className="text-edoxia-accent" /> {editingQuizId ? 'Modifier le Quiz' : 'Créateur de Quiz'}
           </h1>
           <button onClick={cancelCreation} className="p-2 hover:bg-white/10 rounded-full transition-colors">
             <X size={24} />
@@ -226,7 +281,7 @@ export default function AdminDashboard() {
                 disabled={loading || newQuestions.length === 0}
                 className="w-full bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl font-bold text-lg shadow-lg shadow-green-900/20 mt-6 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
-                {loading ? 'Sauvegarde...' : <><Save size={20} /> Enregistrer le Quiz</>}
+                {loading ? 'Sauvegarde...' : <><Save size={20} /> {editingQuizId ? 'Mettre à jour' : 'Enregistrer le Quiz'}</>}
               </button>
             </div>
           </div>
@@ -247,7 +302,15 @@ export default function AdminDashboard() {
         <div className="bg-edoxia-card p-8 rounded-xl border border-white/5 shadow-xl flex flex-col">
           <div className="bg-edoxia-accent/20 w-12 h-12 rounded-lg flex items-center justify-center mb-4 text-edoxia-accent"><PlayCircle /></div>
           <h2 className="text-2xl font-bold mb-4">Lancer une Partie</h2>
-          <div className="mb-6"><label className="text-sm text-edoxia-muted mb-2 block">Choisir le Quiz</label><select value={selectedQuizId} onChange={(e) => setSelectedQuizId(e.target.value)} className="w-full bg-edoxia-bg border border-white/10 p-3 rounded-lg outline-none focus:border-edoxia-accent">{savedQuizzes.map(q => (<option key={q.id} value={q.id}>{q.title} ({q.questions.length} Q)</option>))}</select></div>
+          <div className="mb-6">
+              <label className="text-sm text-edoxia-muted mb-2 block">Choisir le Quiz</label>
+              <div className="flex gap-2">
+                  <select value={selectedQuizId} onChange={(e) => setSelectedQuizId(e.target.value)} className="flex-1 bg-edoxia-bg border border-white/10 p-3 rounded-lg outline-none focus:border-edoxia-accent">{savedQuizzes.map(q => (<option key={q.id} value={q.id}>{q.title} ({q.questions.length} Q)</option>))}</select>
+                  <button onClick={() => { const q = savedQuizzes.find(sq => sq.id === selectedQuizId); if(q) handleEdit(q); }} className="bg-slate-800 hover:bg-slate-700 border border-white/10 p-3 rounded-lg text-blue-400 transition-colors" title="Modifier">
+                      <Edit size={20}/>
+                  </button>
+              </div>
+          </div>
           
           {/* SÉLECTEUR DE MODE DE JEU */}
           <div className="mb-6 grid grid-cols-2 gap-2 bg-edoxia-bg p-1 rounded-lg">
