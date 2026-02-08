@@ -31,7 +31,7 @@ import {
 
 // IMPORT DU LOGO PERSO
 import logoSvg from './assets/logo.svg'; 
-import HomeGames from './Edoxia-Games/pages/HomeGames';
+import HomeGames from './Edoxia-Games/pages/HomeGames.jsx';
 import MathsGames from './Edoxia-Games/pages/MathsGames';
 import FrenchGames from './Edoxia-Games/pages/FrenchGames';
 import QuizHome from './Edoxia-Quiz/pages/Home';
