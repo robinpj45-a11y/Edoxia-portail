@@ -1,25 +1,21 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Sun, Moon } from 'lucide-react';
 import { ThemeContext } from '../../ThemeContext';
 
 export default function GamesHome() {
-  const { theme, toggleTheme } = React.useContext(ThemeContext);
+  const { theme } = React.useContext(ThemeContext);
   const isDark = theme === 'dark';
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
-      <nav className="flex justify-end items-center mb-12">
-        <button onClick={toggleTheme} className={`p-2 transition-colors rounded-lg ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'}`}>
-           {isDark ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
-        </button>
-      </nav>
+      <Link to="/" className={`absolute top-6 left-6 z-10 flex items-center gap-2 px-4 py-2 text-sm rounded-lg border transition-colors ${isDark ? 'text-cyan-400 bg-cyan-950/30 border-cyan-900/50 hover:bg-cyan-900/50' : 'text-cyan-700 bg-cyan-100/50 border-cyan-200 hover:bg-cyan-200/50'}`}>
+         ← Retour Accueil
+      </Link>
 
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8">
-        <Link to="/" className={`flex items-center gap-2 px-4 py-2 text-sm rounded-lg border transition-colors mb-4 ${isDark ? 'text-cyan-400 bg-cyan-950/30 border-cyan-900/50 hover:bg-cyan-900/50' : 'text-cyan-700 bg-cyan-100/50 border-cyan-200 hover:bg-cyan-200/50'}`}>
-           ← Retour Accueil
-        </Link>
-
+        <div className={`max-w-3xl p-4 rounded-xl border text-sm ${isDark ? 'bg-red-500/10 border-red-500/20 text-red-200' : 'bg-red-50 border-red-200 text-red-700'}`}>
+           <p>⚠️ « Les pseudonymes issus d'un registre familier ou jugés inappropriés seront retirés des classements. Ces activités s'inscrivent dans un cadre strictement pédagogique. Seulement le plus haut score par personne est gardé, dans la mesure du possible merci de garder exactement le même pseudonyme. »</p>
+        </div>
         <div className="space-y-2">
           <h1 className={`text-4xl md:text-5xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Jeux Éducatifs 🎮</h1>
           <p className={`${isDark ? 'text-slate-400' : 'text-slate-600'} text-lg`}>Choisis ta matière :</p>

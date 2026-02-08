@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { Sun, Moon, Volume2, VolumeX } from 'lucide-react';
+import { Volume2, VolumeX } from 'lucide-react';
 import { collection, addDoc, query, orderBy, limit, getDocs, where, updateDoc, doc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { ThemeContext } from "../../ThemeContext";
@@ -203,8 +203,10 @@ const questionsBank = [
 // Liste des pronoms affichés sur les boutons (SANS JE/TU)
 const pronounsList = ["Il", "Elle", "Nous", "Vous", "Ils", "Elles"];
 
+const CLASSES = ["CP A", "CP B", "CE1 A", "CE1 B", "CE2 A", "CE2 B", "CM1 A", "CM1 B", "CM2 A", "CM2 B"];
+
 function FrenchGames() {
-  const { theme, toggleTheme } = React.useContext(ThemeContext);
+  const { theme } = React.useContext(ThemeContext);
   const isDark = theme === 'dark';
   // --- ETATS ---
   const [selectedGame, setSelectedGame] = useState(null); 
@@ -221,6 +223,7 @@ function FrenchGames() {
   // --- LEADERBOARD & JOUEUR ---
   const [topScores, setTopScores] = useState([]);
   const [playerName, setPlayerName] = useState("");
+  const [playerClass, setPlayerClass] = useState("");
   const [savingScore, setSavingScore] = useState(false);
   const [scoreSaved, setScoreSaved] = useState(false);
 
@@ -274,13 +277,14 @@ function FrenchGames() {
       if (!querySnapshot.empty) {
         const existingDoc = querySnapshot.docs[0];
         if (score > existingDoc.data().score) {
-          await updateDoc(doc(db, "leaderboard_pronoms", existingDoc.id), { score: score, date: new Date().toISOString() });
+          await updateDoc(doc(db, "leaderboard_pronoms", existingDoc.id), { score: score, date: new Date().toISOString(), classLabel: playerClass });
         }
       } else {
         await addDoc(collection(db, "leaderboard_pronoms"), {
           pseudo: cleanPseudo,
           score: score,
-          date: new Date().toISOString()
+          date: new Date().toISOString(),
+          classLabel: playerClass
         });
       }
       await loadTopScores();
@@ -349,18 +353,12 @@ function FrenchGames() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
-      <nav className="flex justify-end items-center mb-12">
-        <button onClick={toggleTheme} className={`p-2 transition-colors rounded-lg ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'}`}>
-           {isDark ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
-        </button>
-      </nav>
+      <Link to="/games" className={`absolute top-6 left-6 z-10 flex items-center gap-2 px-4 py-2 text-sm rounded-lg border transition-colors ${isDark ? 'text-cyan-400 bg-cyan-950/30 border-cyan-900/50 hover:bg-cyan-900/50' : 'text-cyan-700 bg-cyan-100/50 border-cyan-200 hover:bg-cyan-200/50'}`}>
+         ← Retour Jeux
+      </Link>
 
       {!selectedGame ? (
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8">
-          <Link to="/games" className={`flex items-center gap-2 px-4 py-2 text-sm rounded-lg border transition-colors mb-4 ${isDark ? 'text-cyan-400 bg-cyan-950/30 border-cyan-900/50 hover:bg-cyan-900/50' : 'text-cyan-700 bg-cyan-100/50 border-cyan-200 hover:bg-cyan-200/50'}`}>
-             ← Retour Jeux
-          </Link>
-          
           <div className="space-y-2">
             <h1 className={`text-4xl md:text-5xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Français 📚</h1>
             <p className={`${isDark ? 'text-slate-400' : 'text-slate-600'} text-lg`}>Choisis ton exercice :</p>
@@ -399,9 +397,9 @@ function FrenchGames() {
             <h3 className={`font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-violet-400' : 'text-violet-600'}`}>🥇 Top 10 (Pronoms)</h3>
             <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
               {topScores.length > 0 ? (
-                 topScores.map(({ id, pseudo, score }) => (
+                 topScores.map(({ id, pseudo, score, classLabel }) => (
                   <div key={id} className={`flex justify-between items-center py-2 border-b last:border-0 text-sm ${isDark ? 'border-slate-800/50 text-slate-300' : 'border-slate-200 text-slate-700'}`}>
-                    <span>{pseudo}</span>
+                    <span>{pseudo} {classLabel && <span className="text-xs opacity-60 ml-1">({classLabel})</span>}</span>
                     <strong className={isDark ? 'text-white' : 'text-slate-900'}>{score}</strong>
                   </div>
                  ))
@@ -423,15 +421,25 @@ function FrenchGames() {
 
           {!running && (
             <div className="mb-6 space-y-4">
-              <input 
-                type="text" 
-                className={`w-full border rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-950 border-slate-700 text-white placeholder-slate-600 focus:border-violet-500 focus:ring-1 focus:ring-violet-500' : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-500'}`} 
-                placeholder="Ton pseudo (max 12)" 
-                value={playerName} 
-                onChange={(e) => setPlayerName(e.target.value)} 
-                maxLength={12} 
-                autoFocus 
-              />
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  className={`flex-1 border rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-950 border-slate-700 text-white placeholder-slate-600 focus:border-violet-500 focus:ring-1 focus:ring-violet-500' : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-500'}`} 
+                  placeholder="Ton pseudo" 
+                  value={playerName} 
+                  onChange={(e) => setPlayerName(e.target.value)} 
+                  maxLength={12} 
+                  autoFocus 
+                />
+                <select
+                  className={`w-1/3 border rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-950 border-slate-700 text-white focus:border-violet-500 focus:ring-1 focus:ring-violet-500' : 'bg-white border-slate-300 text-slate-900 focus:border-violet-500 focus:ring-1 focus:ring-violet-500'}`}
+                  value={playerClass}
+                  onChange={(e) => setPlayerClass(e.target.value)}
+                >
+                  <option value="">Choisir sa classe</option>
+                  {CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
               <div className="flex justify-center gap-4">
                 <button
                   onClick={() => setIsAudioMode(!isAudioMode)}
@@ -449,7 +457,7 @@ function FrenchGames() {
             </div>
           )}
 
-          {!running && !gameOver && playerName && (
+          {!running && !gameOver && playerName && playerClass && (
             <button 
               className="w-full py-3 px-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-bold rounded-xl shadow-lg shadow-violet-900/20 transition-all active:scale-95" 
               onClick={startGame}

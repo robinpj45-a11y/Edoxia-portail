@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { Sparkles, Settings, Utensils, Calendar, Lock, Clock, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Sparkles, Utensils, Calendar, Lock, Clock, ChevronRight, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { TEMPLATE_REPAS } from '../constants';
 import { ThemeContext } from '../../ThemeContext';
@@ -20,18 +20,11 @@ export default function EventHome({ events, onSelect, onViewChange, loading }) {
           <h1 className={`text-xl font-bold tracking-wide flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
             <Sparkles size={20} className="text-cyan-400"/> Edoxia Event
           </h1>
-          <div className={`text-xs mt-1 inline-block px-2 py-0.5 rounded ${loading ? 'bg-orange-500/20 text-orange-400' : 'bg-green-500/20 text-green-400'}`}>
+          <div className={`text-xs mt-1 inline-block px-2 py-0.5 rounded ${loading ? 'bg-orange-500/20 text-orange-400' : 'bg-green-500/20 text-green-100'}`}>
             {loading ? 'Connexion...' : 'En ligne'}
           </div>
         </div>
         </div>
-        <button
-          onClick={() => onViewChange('admin')}
-          className={`p-2 rounded-xl flex items-center gap-2 transition-colors border ${isDark ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300' : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-600'}`}
-          title="Administration"
-        >
-          <Settings size={20} />
-        </button>
       </header>
 
       <main className="p-6 max-w-5xl mx-auto flex flex-col items-center justify-center flex-1 w-full">

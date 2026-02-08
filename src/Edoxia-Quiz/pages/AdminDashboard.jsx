@@ -9,7 +9,7 @@ const DEMO_QUIZ = {
   questions: [{ type: 'mcq', question: "Capitale de la France ?", options: ["Lyon", "Marseille", "Paris", "Bordeaux"], correct: 2 }, { type: 'tf', question: "La Terre est plate.", options: ["Vrai", "Faux"], correct: 1 }]
 };
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ isGlobalAdmin }) {
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]);
   const [activeLobbies, setActiveLobbies] = useState([]);
@@ -17,7 +17,7 @@ export default function AdminDashboard() {
   const [selectedQuizId, setSelectedQuizId] = useState('demo');
   const [gameMode, setGameMode] = useState('live'); // 'live' ou 'async'
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(isGlobalAdmin || false);
   const [passwordInput, setPasswordInput] = useState('');
 
   // États Création Quiz
@@ -26,6 +26,10 @@ export default function AdminDashboard() {
   const [newQuizTitle, setNewQuizTitle] = useState('');
   const [newQuestions, setNewQuestions] = useState([]);
   const [qType, setQType] = useState('mcq'); const [qText, setQText] = useState(''); const [qImage, setQImage] = useState(''); const [qOptions, setQOptions] = useState(['', '', '', '']); const [qCorrectIdx, setQCorrectIdx] = useState(0); const [qCorrectText, setQCorrectText] = useState(''); 
+
+  useEffect(() => {
+    if (isGlobalAdmin) setIsAuthenticated(true);
+  }, [isGlobalAdmin]);
 
   useEffect(() => {
     if (!isAuthenticated) return;

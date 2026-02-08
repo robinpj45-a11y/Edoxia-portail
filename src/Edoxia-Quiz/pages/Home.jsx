@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { db } from '../../firebase';
-import { doc, getDoc, updateDoc, arrayUnion, collection, query, where, onSnapshot } from 'firebase/firestore';
-import { Lock, ArrowRight, Users, Play, RotateCcw } from 'lucide-react';
+import { doc, getDoc, updateDoc, arrayUnion, collection, query, where, onSnapshot, setDoc } from 'firebase/firestore';
+import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendEmailVerification, updateProfile } from 'firebase/auth';
+import { Lock, ArrowRight, Users, Play, RotateCcw, LogIn, User, X, LogOut } from 'lucide-react';
 
 export default function Home() {
   const [code, setCode] = useState('');
@@ -11,6 +12,15 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [activeLobbies, setActiveLobbies] = useState([]);
   const [resumeSession, setResumeSession] = useState(null);
+  const [user, setUser] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPwd, setAuthPwd] = useState('');
+  const [authName, setAuthName] = useState('');
+  const [authFirstname, setAuthFirstname] = useState('');
+  const [authPseudo, setAuthPseudo] = useState('');
+  const auth = getAuth();
 
   // 1. Détection de session existante (LocalStorage)
   useEffect(() => {
@@ -31,6 +41,23 @@ export default function Home() {
       // On filtre : en mode Live seulement waiting, en mode Async waiting et playing
       const visibleLobbies = lobbies.filter(l => l.status === 'waiting' || (l.status === 'playing' && l.mode === 'async'));
       setActiveLobbies(visibleLobbies);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // 3. Gestion Auth
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser && currentUser.emailVerified) {
+        setUser(currentUser);
+        const userRef = doc(db, "users", currentUser.uid);
+        getDoc(userRef).then((snap) => {
+          if (!snap.exists()) setDoc(userRef, { email: currentUser.email, role: currentUser.email === "robinpj45@gmail.com" ? 'admin' : 'élève', createdAt: new Date() });
+          else if (currentUser.email === "robinpj45@gmail.com" && snap.data().role !== 'admin') updateDoc(userRef, { role: 'admin' });
+        });
+      } else {
+        setUser(null);
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -104,9 +131,48 @@ export default function Home() {
       }
   };
 
+  const handleAuth = async (e) => {
+    e.preventDefault();
+    try {
+      if (isRegistering) {
+        if (!authName || !authFirstname || !authPseudo) return alert("Veuillez remplir tous les champs.");
+        const res = await createUserWithEmailAndPassword(auth, authEmail, authPwd);
+        await updateProfile(res.user, { displayName: authPseudo });
+        const role = authEmail === "robinpj45@gmail.com" ? 'admin' : 'élève';
+        await setDoc(doc(db, "users", res.user.uid), {
+          nom: authName,
+          prenom: authFirstname,
+          pseudo: authPseudo,
+          email: authEmail,
+          role: role,
+          createdAt: new Date()
+        });
+        await sendEmailVerification(res.user);
+        await signOut(auth);
+        alert("Compte créé ! Un email de vérification a été envoyé.");
+        setIsRegistering(false);
+      } else {
+        const res = await signInWithEmailAndPassword(auth, authEmail, authPwd);
+        if (!res.user.emailVerified) {
+          await signOut(auth);
+          alert("Veuillez vérifier votre email.");
+          return;
+        }
+        setShowAuthModal(false);
+      }
+    } catch (error) { alert("Erreur: " + error.message); }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      await signInWithPopup(auth, new GoogleAuthProvider());
+      setShowAuthModal(false);
+    } catch (error) { console.error(error); }
+  };
+
   return (
     <div className="flex flex-col items-center min-h-screen p-4 space-y-8 pb-20">
-      <div className="w-full max-w-6xl flex justify-start">
+      <div className="w-full max-w-6xl flex justify-between items-center">
         <Link to="/" className="flex items-center gap-2 px-4 py-2 text-sm text-cyan-400 bg-cyan-950/30 rounded-lg border border-cyan-900/50 hover:bg-cyan-900/50 transition-colors">
            ← Retour Accueil
         </Link>
@@ -192,12 +258,46 @@ export default function Home() {
       </div>
 
       <div className="flex justify-center w-full max-w-5xl mt-12">
-        <div onClick={() => navigate('/admin')} className="bg-slate-900/80 p-6 rounded-xl border border-slate-700/50 hover:border-slate-600 transition cursor-pointer group relative overflow-hidden flex items-center gap-4 w-full md:w-auto hover:bg-slate-800/50">
-            <div className="p-3 bg-red-500/10 rounded-lg text-red-400 group-hover:scale-110 transition"><Lock /></div>
+        <div className="bg-slate-900/80 p-6 rounded-xl border border-slate-700/50 transition cursor-not-allowed group relative overflow-hidden flex items-center gap-4 w-full md:w-auto opacity-50 grayscale">
+            <div className="p-3 bg-red-500/10 rounded-lg text-red-400 transition"><Lock /></div>
             <div><h3 className="text-lg font-bold text-white">Espace Admin</h3><p className="text-sm text-slate-400">Gérer les quiz et les parties</p></div>
-            <div className="ml-4 opacity-0 group-hover:opacity-100 transition"><ArrowRight size={16} /></div>
+            <div className="ml-4 opacity-0 transition"><ArrowRight size={16} /></div>
         </div>
       </div>
+
+      {/* MODAL AUTH */}
+      {showAuthModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 border border-slate-700 p-8 rounded-2xl w-full max-w-md relative shadow-2xl">
+            <button onClick={() => setShowAuthModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white"><X /></button>
+            <h2 className="text-2xl font-bold text-white mb-6 text-center">{isRegistering ? "Créer un compte" : "Connexion"}</h2>
+            
+            <form onSubmit={handleAuth} className="space-y-4">
+              {isRegistering && (
+                <>
+                  <div className="flex gap-2"><input type="text" placeholder="Nom" className="w-1/2 bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-cyan-500 outline-none" value={authName} onChange={e => setAuthName(e.target.value)} required /><input type="text" placeholder="Prénom" className="w-1/2 bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-cyan-500 outline-none" value={authFirstname} onChange={e => setAuthFirstname(e.target.value)} required /></div>
+                  <input type="text" placeholder="Pseudo" className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-cyan-500 outline-none" value={authPseudo} onChange={e => setAuthPseudo(e.target.value)} required />
+                </>
+              )}
+              <input type="email" placeholder="Email" className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-cyan-500 outline-none" value={authEmail} onChange={e => setAuthEmail(e.target.value)} required />
+              <input type="password" placeholder="Mot de passe" className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-cyan-500 outline-none" value={authPwd} onChange={e => setAuthPwd(e.target.value)} required />
+              <button type="submit" className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 rounded-lg transition-all">{isRegistering ? "S'inscrire" : "Se connecter"}</button>
+            </form>
+
+            <div className="my-6 flex items-center gap-4">
+              <div className="h-px bg-slate-700 flex-1"></div><span className="text-slate-500 text-sm">OU</span><div className="h-px bg-slate-700 flex-1"></div>
+            </div>
+
+            <button onClick={handleGoogleLogin} className="w-full bg-white text-slate-900 font-bold py-3 rounded-lg hover:bg-gray-100 transition-all flex items-center justify-center gap-2">
+              <img src="https://www.google.com/favicon.ico" className="w-4 h-4" alt="G"/> Continuer avec Google
+            </button>
+
+            <p className="mt-6 text-center text-slate-400 text-sm">
+              {isRegistering ? "Déjà un compte ?" : "Pas de compte ?"} <button onClick={() => setIsRegistering(!isRegistering)} className="text-cyan-400 hover:underline font-bold">{isRegistering ? "Se connecter" : "S'inscrire"}</button>
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
