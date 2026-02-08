@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ThemeContext } from '../../ThemeContext';
 
-export default function GamesHome() {
+export default function HomeGames() {
   const { theme } = React.useContext(ThemeContext);
   const isDark = theme === 'dark';
 

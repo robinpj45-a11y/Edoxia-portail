@@ -31,7 +31,7 @@ import {
 
 // IMPORT DU LOGO PERSO
 import logoSvg from './assets/logo.svg'; 
-import GamesHome from './Edoxia-Games/pages/Home';
+import HomeGames from './Edoxia-Games/pages/HomeGames';
 import MathsGames from './Edoxia-Games/pages/MathsGames';
 import FrenchGames from './Edoxia-Games/pages/FrenchGames';
 import QuizHome from './Edoxia-Quiz/pages/Home';
@@ -404,7 +404,7 @@ const AppLayout = () => {
          </AnimatePresence>
          <Routes>
             <Route path="/" element={<Home user={user} isSchoolUnlocked={isSchoolUnlocked} />} />
-            <Route path="/games" element={<GamesHome />} />
+            <Route path="/games" element={<HomeGames />} />
             <Route path="/games/maths" element={<MathsGames />} />
             <Route path="/games/french" element={<FrenchGames />} />
             <Route path="/quiz" element={<QuizHome />} />
