@@ -130,7 +130,10 @@ export default function TeacherPage({ students: propStudents, teams: propTeams, 
   const toggleVisibility = (teamId) => { setTeamsVisibility(prev => ({ ...prev, [teamId]: !prev[teamId] })); };
 
   const poolStudents = students
-    .filter(s => s.classLabel === currentClass && s.team === null && s.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter(s => {
+      const displayName = s.name && s.name.trim() ? s.name : `${s.lastName || ''} ${s.firstName || ''}`;
+      return s.classLabel === currentClass && s.team === null && displayName.toLowerCase().includes(searchTerm.toLowerCase());
+    })
     .sort((a, b) => (a.lastName || a.name).localeCompare(b.lastName || b.name));
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-slate-500">Chargement...</div>;

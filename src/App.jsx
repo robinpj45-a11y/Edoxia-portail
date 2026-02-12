@@ -5,11 +5,12 @@ import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendEmailVerification, updateProfile } from 'firebase/auth';
-import { 
-  Search, 
-  Gamepad2, 
+import {
+  Search,
+  Gamepad2,
   Settings,
   ArrowRight,
+  ArrowLeft,
   Sun,
   Moon,
   School,
@@ -30,7 +31,7 @@ import {
 } from 'lucide-react';
 
 // IMPORT DU LOGO PERSO
-import logoSvg from './assets/logo.svg'; 
+import logoSvg from './assets/logo.svg';
 import HomeGames from './Edoxia-Games/pages/HomeGames.jsx';
 import MathsGames from './Edoxia-Games/pages/MathsGames';
 import FrenchGames from './Edoxia-Games/pages/FrenchGames';
@@ -46,6 +47,10 @@ import HubPage from './Edoxia-JS/pages/HubPage';
 import MobileTeamsPage from './Edoxia-JS/pages/MobileTeamsPage';
 import TeacherPage from './Edoxia-JS/pages/TeacherPage';
 import AdminPage from './Edoxia-JS/pages/AdminPage';
+import ReportBug from './modules/ReportBug';
+import CompteurUser from './modules/CompteurUser';
+import GVGDC from './Edoxia-QVGDC/pages/GVGDC';
+import DashboardQVGDC from './Edoxia-QVGDC/pages/DashboardQVGDC';
 
 // --- UTILITAIRE DE SÉCURITÉ (Obfuscation) ---
 // Permet de cacher les liens dans le code source (Inspect Element)
@@ -88,11 +93,22 @@ const DEFAULT_MODULES = [
     isProtected: false,
     requiresSchoolAuth: true,
     restrictedToRoles: ['enseignant', 'directeur', 'admin']
+  },
+  {
+    id: 'qvgdc',
+    name: 'QVGDC ?',
+    path: '/GVGDC',
+    desc: 'Qui Veut Gagner Des Cahiers ?',
+    icon: <Gamepad2 className="w-6 h-6 text-green-400" />,
+    tag: 'Jeux',
+    active: true,
+    isProtected: false,
+    requiresSchoolAuth: false
   }
 ];
 
 // --- COMPOSANT CARTE ---
-const ModuleCard = ({ app, locked, onClick }) => {
+const ModuleCard = ({ app, locked, onClick, onNavigate }) => {
   const { theme } = React.useContext(ThemeContext);
   const isDark = theme === 'dark';
   const navigate = useNavigate();
@@ -113,6 +129,12 @@ const ModuleCard = ({ app, locked, onClick }) => {
     }
 
     if (onClick) onClick();
+
+    if (onNavigate) {
+      e.preventDefault();
+      onNavigate(app);
+      return;
+    }
 
     // Navigation interne
     if (app.path) {
@@ -144,12 +166,12 @@ const ModuleCard = ({ app, locked, onClick }) => {
       )}
 
       <div className={`flex items-center w-full gap-3 ${locked ? 'blur-sm select-none' : ''}`}>
-          <h3 className={`text-sm font-semibold flex-1 transition-colors ${isDark ? (app.active ? 'text-slate-100 group-hover:text-cyan-100' : 'text-slate-400') : (app.active ? 'text-slate-800 group-hover:text-cyan-700' : 'text-slate-500')}`}>
-            {app.name}
-          </h3>
-          {app.active && (
-            <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-cyan-400 transition-colors -rotate-45 group-hover:rotate-0" />
-          )}
+        <h3 className={`text-sm font-semibold flex-1 transition-colors ${isDark ? (app.active ? 'text-slate-100 group-hover:text-cyan-100' : 'text-slate-400') : (app.active ? 'text-slate-800 group-hover:text-cyan-700' : 'text-slate-500')}`}>
+          {app.name}
+        </h3>
+        {app.active && (
+          <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-cyan-400 transition-colors -rotate-45 group-hover:rotate-0" />
+        )}
       </div>
 
       {locked && (
@@ -201,6 +223,11 @@ const AppLayout = () => {
   const [isSchoolUnlocked, setIsSchoolUnlocked] = useState(false);
   const [isGlobalAdmin, setIsGlobalAdmin] = useState(false);
 
+  // QVGDC Password States
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [pendingPath, setPendingPath] = useState(null);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser && currentUser.emailVerified) {
@@ -208,21 +235,25 @@ const AppLayout = () => {
         setUser(currentUser);
         const userRef = doc(db, "users", currentUser.uid);
         getDoc(userRef).then((snap) => {
+          let userData = {};
           let role = 'élève';
+
           if (!snap.exists()) {
-             role = currentUser.email === "robinpj45@gmail.com" ? 'admin' : 'élève';
-             setDoc(userRef, { email: currentUser.email, role, createdAt: new Date(), lastLogin: new Date() });
+            role = currentUser.email === "robinpj45@gmail.com" ? 'admin' : 'élève';
+            userData = { email: currentUser.email, role, createdAt: new Date(), lastLogin: new Date() };
+            setDoc(userRef, userData);
           } else {
-             const data = snap.data();
-             role = data.role || 'élève';
-             const updates = { lastLogin: new Date() };
-             if (currentUser.email === "robinpj45@gmail.com" && role !== 'admin') {
-                 role = 'admin';
-                 updates.role = 'admin';
-             }
-             updateDoc(userRef, updates);
+            userData = snap.data();
+            role = userData.role || 'élève';
+            const updates = { lastLogin: new Date() };
+            if (currentUser.email === "robinpj45@gmail.com" && role !== 'admin') {
+              role = 'admin';
+              updates.role = 'admin';
+            }
+            updateDoc(userRef, updates);
+            userData = { ...userData, ...updates };
           }
-          setUser({ ...currentUser, role });
+          setUser({ ...currentUser, ...userData, role });
           setIsGlobalAdmin(role === 'admin');
         });
       } else {
@@ -236,7 +267,7 @@ const AppLayout = () => {
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "modules"), (snapshot) => {
       if (!snapshot.empty) {
-        const dbModules = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
+        const dbModules = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         // Fusionner avec les modules par défaut s'ils manquent en base (basé sur le nom)
         const missingDefaults = DEFAULT_MODULES.filter(def => !dbModules.some(dbm => dbm.name === def.name));
         setModules([...dbModules, ...missingDefaults]);
@@ -246,6 +277,30 @@ const AppLayout = () => {
     });
     return () => unsubscribe();
   }, []);
+
+  // --- GESTION DE LA PRÉSENCE (Invités + Connectés) ---
+  useEffect(() => {
+    const updatePresence = async () => {
+      let visitorId = localStorage.getItem('visitorId');
+      if (!visitorId) {
+        visitorId = 'guest_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('visitorId', visitorId);
+      }
+
+      try {
+        // On écrit dans une collection 'presence' dédiée
+        await setDoc(doc(db, "presence", visitorId), {
+          lastSeen: new Date(),
+          type: user ? 'user' : 'guest',
+          uid: user ? user.uid : null
+        }, { merge: true });
+      } catch (e) { console.error("Erreur présence", e); }
+    };
+
+    updatePresence(); // Appel immédiat
+    const interval = setInterval(updatePresence, 5 * 60 * 1000); // Rappel toutes les 5 min
+    return () => clearInterval(interval);
+  }, [user]); // Se relance si le statut de connexion change
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -265,7 +320,7 @@ const AppLayout = () => {
         });
         await sendEmailVerification(res.user);
         await signOut(auth);
-        alert("Compte créé ! Un email de vérification a été envoyé. Veuillez vérifier votre boîte mail.");
+        alert("Compte créé ! Un email de vérification a été envoyé. Veuillez vérifier votre boîte mail (et vos spams).");
         setIsRegistering(false);
       } else {
         const res = await signInWithEmailAndPassword(auth, authEmail, authPwd);
@@ -284,7 +339,7 @@ const AppLayout = () => {
       const res = await signInWithPopup(auth, new GoogleAuthProvider());
       const userRef = doc(db, "users", res.user.uid);
       const snap = await getDoc(userRef);
-      
+
       // Si le doc n'existe pas ou s'il manque le nom/prénom, on affiche la modale de complétion
       if (!snap.exists() || !snap.data().nom || !snap.data().prenom) {
         setShowAuthModal(false);
@@ -302,8 +357,8 @@ const AppLayout = () => {
 
     const userRef = doc(db, "users", auth.currentUser.uid);
     await setDoc(userRef, {
-        nom: completeName,
-        prenom: completeFirstname
+      nom: completeName,
+      prenom: completeFirstname
     }, { merge: true });
 
     setShowCompleteProfileModal(false);
@@ -317,117 +372,165 @@ const AppLayout = () => {
     return !app.requiresSchoolAuth || isSchoolUnlocked || isAuthorized;
   };
 
+  const handlePasswordSubmit = (e) => {
+    e.preventDefault();
+    if (passwordInput === 'stpbb') {
+      setShowPasswordModal(false);
+      setPasswordInput('');
+      setIsSidebarOpen(false);
+      if (pendingPath) navigate(pendingPath);
+    } else {
+      alert("Mot de passe incorrect");
+    }
+  };
+
+  const handleModuleClick = (app) => {
+    // Cas spécifique pour QVGDC
+    if (app.id === 'qvgdc') {
+      const allowedRoles = ['enseignant', 'directeur', 'admin'];
+      const hasAccess = user && allowedRoles.includes(user.role);
+
+      if (hasAccess) {
+        setIsSidebarOpen(false);
+        navigate(app.path);
+      } else {
+        setIsSidebarOpen(false);
+        setPendingPath(app.path);
+        setPasswordInput('');
+        setShowPasswordModal(true);
+      }
+      return;
+    }
+
+    // Comportement standard
+    setIsSidebarOpen(false);
+    if (app.path) {
+      navigate(app.path);
+    } else if (app.encodedUrl) {
+      const realLink = decodeLink(app.encodedUrl);
+      window.open(realLink, '_blank');
+    }
+  };
+
   return (
     <div className={`min-h-screen flex flex-col relative selection:bg-cyan-500/20 overflow-hidden transition-colors duration-300 ${isDark ? 'bg-[#020617]' : 'bg-slate-50'}`}>
-       {/* Backgrounds */}
-       <div className="fixed inset-0 -z-10">
-            <div className={`absolute top-0 left-1/4 w-96 h-96 rounded-full blur-[128px] animate-blob ${isDark ? 'bg-cyan-500/10' : 'bg-cyan-500/20'}`} />
-            <div className={`absolute bottom-0 right-1/4 w-96 h-96 rounded-full blur-[128px] animate-blob animation-delay-2000 ${isDark ? 'bg-violet-500/10' : 'bg-violet-500/20'}`} />
-            <div className={`absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] ${isDark ? 'opacity-[0.03]' : 'opacity-[0.05]'}`} />
-       </div>
+      {/* Backgrounds */}
+      <div className="fixed inset-0 -z-10">
+        <div className={`absolute top-0 left-1/4 w-96 h-96 rounded-full blur-[128px] animate-blob ${isDark ? 'bg-cyan-500/10' : 'bg-cyan-500/20'}`} />
+        <div className={`absolute bottom-0 right-1/4 w-96 h-96 rounded-full blur-[128px] animate-blob animation-delay-2000 ${isDark ? 'bg-violet-500/10' : 'bg-violet-500/20'}`} />
+        <div className={`absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] ${isDark ? 'opacity-[0.03]' : 'opacity-[0.05]'}`} />
+      </div>
 
-       {/* Navbar Globale */}
-       {!location.pathname.startsWith('/JS2026') && (
-       <nav className={`flex justify-between items-center p-4 gap-2 shrink-0 z-50 relative border-b backdrop-blur-md transition-colors ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white/80 border-slate-200'}`}>
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className={`p-2 rounded-lg transition-colors ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'}`}>
-            <Menu className="w-6 h-6" />
-          </button>
+      {/* Navbar Globale */}
+      {!location.pathname.startsWith('/JS2026') && !location.pathname.startsWith('/GVGDC') && !location.pathname.startsWith('/DashboardQVGDC') && (
+        <nav className={`flex justify-between items-center p-4 gap-2 shrink-0 z-50 relative border-b backdrop-blur-md transition-colors ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white/80 border-slate-200'}`}>
+          <div className="flex items-center gap-3">
+            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className={`p-2 rounded-lg transition-colors ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'}`}>
+              <Menu className="w-6 h-6" />
+            </button>
+            <CompteurUser />
+          </div>
           <div className="flex items-center gap-2">
-          <button onClick={toggleTheme} className={`p-2 transition-colors rounded-lg ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'}`}>
-             {isDark ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
-          </button>
-          <button onClick={() => { if(user) { if(user.role === 'admin') setShowSettingsModal(true); else navigate('/profile'); } else { setShowAuthModal(true); } }} className={`p-2 transition-colors rounded-lg ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'}`}>
-             <Settings className="w-6 h-6" />
-          </button>
-          {user ? (
-            <div className="flex items-center gap-2 ml-2">
-                <span className={`text-sm font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-700'}`}><User size={16}/> {user.displayName || user.email}</span>
-                <button onClick={() => signOut(auth)} className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition"><LogOut size={16}/></button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 ml-2">
+            <ReportBug />
+            <button onClick={toggleTheme} className={`p-2 transition-colors rounded-lg ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'}`}>
+              {isDark ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
+            </button>
+            <button onClick={() => { if (user) { if (user.role === 'admin') setShowSettingsModal(true); else navigate('/profile'); } else { setShowAuthModal(true); } }} className={`p-2 transition-colors rounded-lg ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'}`}>
+              <Settings className="w-6 h-6" />
+            </button>
+            {user ? (
+              <div className="flex items-center gap-2 ml-2">
+                <span className={`text-sm font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-700'}`}><User size={16} /> {user.displayName || user.email}</span>
+                <button onClick={() => signOut(auth)} className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition"><LogOut size={16} /></button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 ml-2">
                 <button onClick={() => { setIsRegistering(true); setShowAuthModal(true); }} className="px-4 py-2 text-sm font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-500 transition-colors shadow-sm">S'inscrire</button>
                 <button onClick={() => { setIsRegistering(false); setShowAuthModal(true); }} className="px-4 py-2 text-sm font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-500 transition-colors shadow-sm">Se connecter</button>
-            </div>
-          )}
+              </div>
+            )}
           </div>
         </nav>
-       )}
+      )}
 
-       {/* Contenu des Routes */}
-       <div className="flex-1 overflow-hidden relative">
-         <AnimatePresence>
-            {isSidebarOpen && (
-                <>
-                    <motion.div 
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        onClick={() => setIsSidebarOpen(false)}
-                        className="absolute inset-0 bg-black/50 z-40"
-                    />
-                    <motion.aside
-                        initial={{ x: -300 }} animate={{ x: 0 }} exit={{ x: -300 }}
-                        transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
-                        className={`absolute top-0 left-0 bottom-0 w-64 z-50 border-r p-6 gap-8 overflow-y-auto transition-colors shadow-2xl ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}
-                    >
-                        <div className="flex justify-between items-center mb-6">
-                             <h2 className={`font-bold text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>Menu</h2>
-                             <button onClick={() => setIsSidebarOpen(false)} className={isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'}><X /></button>
-                        </div>
-                        
-                        {modules.filter(m => (['games', 'quiz'].includes(m.id) || ['Jeux', 'Quiz'].includes(m.tag)) && isVisible(m)).length > 0 && (
-                            <div>
-                                <h3 className={`text-xs font-bold uppercase tracking-wider mb-4 px-1 flex items-center gap-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                                    <Gamepad2 size={14} /> Jeux
-                                </h3>
-                                <div className="space-y-3">
-                                    {modules.filter(m => (['games', 'quiz'].includes(m.id) || ['Jeux', 'Quiz'].includes(m.tag)) && isVisible(m)).map(app => (
-                                        <ModuleCard key={app.id} app={app} locked={false} onClick={() => setIsSidebarOpen(false)} />
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+      {/* Contenu des Routes */}
+      <div className="flex-1 overflow-hidden relative">
+        <AnimatePresence>
+          {isSidebarOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                onClick={() => setIsSidebarOpen(false)}
+                className="absolute inset-0 bg-black/50 z-[90]"
+              />
+              <motion.aside
+                initial={{ x: -300 }} animate={{ x: 0 }} exit={{ x: -300 }}
+                transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
+                className={`absolute top-0 left-0 bottom-0 w-64 z-[100] border-r p-6 gap-8 overflow-y-auto transition-colors shadow-2xl ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}
+              >
+                <div className="flex justify-between items-center mb-6">
+                  <button onClick={() => { navigate('/'); setIsSidebarOpen(false); }} className={`font-bold text-lg flex items-center gap-2 transition-colors ${isDark ? 'text-white hover:text-cyan-400' : 'text-slate-900 hover:text-cyan-600'}`}>
+                    <ArrowLeft size={20} /> Accueil
+                  </button>
+                  <button onClick={() => setIsSidebarOpen(false)} className={isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-900'}><X /></button>
+                </div>
 
-                        <div className="mt-8">
-                            <h3 className={`text-xs font-bold uppercase tracking-wider mb-4 px-1 flex items-center gap-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                                <School size={14} /> Espace École
-                            </h3>
-                            <div className="space-y-3">
-                                {modules.filter(m => (['events'].includes(m.id) || ['Vie scolaire'].includes(m.tag)) && isVisible(m)).map(app => (
-                                    <ModuleCard key={app.id} app={app} locked={false} onClick={() => setIsSidebarOpen(false)} />
-                                ))}
-                            </div>
-                        </div>
-                    </motion.aside>
-                </>
-            )}
-         </AnimatePresence>
-         <Routes>
-            <Route path="/" element={<Home user={user} isSchoolUnlocked={isSchoolUnlocked} />} />
-            <Route path="/games" element={<HomeGames />} />
-            <Route path="/games/maths" element={<MathsGames />} />
-            <Route path="/games/french" element={<FrenchGames />} />
-            <Route path="/quiz" element={<QuizHome />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/admin" element={<AdminDashboard isGlobalAdmin={isGlobalAdmin} />} />
-            <Route path="/host/:lobbyId" element={<HostGame />} />
-            <Route path="/play/:lobbyId" element={<PlayerGame />} />
-            <Route path="/global-admin" element={
-              <ProtectedRoute isAllowed={isGlobalAdmin}>
-                <GlobalAdmin defaultModules={DEFAULT_MODULES} />
-              </ProtectedRoute>
-            } />
-            <Route path="/events" element={
-              <ProtectedRoute isAllowed={isSchoolUnlocked || (user && (user.role === 'admin' || user.role === 'enseignant'))}>
-                <EventApp />
-              </ProtectedRoute>
-            } />
-            <Route path="/JS2026" element={<HubPage />} />
-            <Route path="/JS2026/teams" element={<MobileTeamsPage />} />
-            <Route path="/JS2026/teacher" element={<TeacherPage />} />
-            <Route path="/JS2026/admin" element={<AdminPage />} />
-         </Routes>
-       </div>
+                {modules.filter(m => (['games', 'quiz'].includes(m.id) || ['Jeux', 'Quiz'].includes(m.tag)) && isVisible(m)).length > 0 && (
+                  <div>
+                    <h3 className={`text-xs font-bold uppercase tracking-wider mb-4 px-1 flex items-center gap-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                      <Gamepad2 size={14} /> Jeux
+                    </h3>
+                    <div className="space-y-3">
+                      {modules.filter(m => (['games', 'quiz'].includes(m.id) || ['Jeux', 'Quiz'].includes(m.tag)) && isVisible(m)).map(app => (
+                        <ModuleCard key={app.id} app={app} locked={false} onNavigate={handleModuleClick} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-8">
+                  <h3 className={`text-xs font-bold uppercase tracking-wider mb-4 px-1 flex items-center gap-2 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                    <School size={14} /> Espace École
+                  </h3>
+                  <div className="space-y-3">
+                    {modules.filter(m => (['events'].includes(m.id) || ['Vie scolaire'].includes(m.tag)) && isVisible(m)).map(app => (
+                      <ModuleCard key={app.id} app={app} locked={false} onNavigate={handleModuleClick} />
+                    ))}
+                  </div>
+                </div>
+              </motion.aside>
+            </>
+          )}
+        </AnimatePresence>
+        <Routes>
+          <Route path="/" element={<Home user={user} isSchoolUnlocked={isSchoolUnlocked} />} />
+          <Route path="/games" element={<HomeGames />} />
+          <Route path="/games/maths" element={<MathsGames />} />
+          <Route path="/games/french" element={<FrenchGames />} />
+          <Route path="/quiz" element={<QuizHome />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/admin" element={<AdminDashboard isGlobalAdmin={isGlobalAdmin} />} />
+          <Route path="/host/:lobbyId" element={<HostGame />} />
+          <Route path="/play/:lobbyId" element={<PlayerGame />} />
+          <Route path="/global-admin" element={
+            <ProtectedRoute isAllowed={isGlobalAdmin}>
+              <GlobalAdmin defaultModules={DEFAULT_MODULES} />
+            </ProtectedRoute>
+          } />
+          <Route path="/events" element={
+            <ProtectedRoute isAllowed={isSchoolUnlocked || (user && (user.role === 'admin' || user.role === 'enseignant'))}>
+              <EventApp user={user} />
+            </ProtectedRoute>
+          } />
+          <Route path="/JS2026" element={<HubPage />} />
+          <Route path="/JS2026/teams" element={<MobileTeamsPage />} />
+          <Route path="/JS2026/teacher" element={<TeacherPage />} />
+          <Route path="/JS2026/admin" element={<AdminPage />} />
+          <Route path="/GVGDC" element={<GVGDC />} />
+          <Route path="/DashboardQVGDC" element={<DashboardQVGDC />} />
+        </Routes>
+      </div>
 
       {/* MODAL AUTH */}
       {showAuthModal && (
@@ -435,7 +538,7 @@ const AppLayout = () => {
           <div className="bg-slate-900 border border-slate-700 p-8 rounded-2xl w-full max-w-md relative shadow-2xl">
             <button onClick={() => setShowAuthModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white"><X /></button>
             <h2 className="text-2xl font-bold text-white mb-6 text-center">{isRegistering ? "Créer un compte" : "Connexion"}</h2>
-            
+
             <form onSubmit={handleAuth} className="space-y-4">
               {isRegistering && (
                 <>
@@ -453,7 +556,7 @@ const AppLayout = () => {
             </div>
 
             <button onClick={handleGoogleLogin} className="w-full bg-white text-slate-900 font-bold py-3 rounded-lg hover:bg-gray-100 transition-all flex items-center justify-center gap-2">
-              <img src="https://www.google.com/favicon.ico" className="w-4 h-4" alt="G"/> Continuer avec Google
+              <img src="https://www.google.com/favicon.ico" className="w-4 h-4" alt="G" /> Continuer avec Google
             </button>
 
             <p className="mt-6 text-center text-slate-400 text-sm">
@@ -469,7 +572,7 @@ const AppLayout = () => {
           <div className="bg-slate-900 border border-slate-700 p-8 rounded-2xl w-full max-w-md relative shadow-2xl">
             <h2 className="text-2xl font-bold text-white mb-6 text-center">Finaliser l'inscription</h2>
             <p className="text-slate-400 text-center mb-6 text-sm">Veuillez renseigner votre nom et prénom pour continuer.</p>
-            
+
             <form onSubmit={handleCompleteProfile} className="space-y-4">
               <input type="text" placeholder="Nom" className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-cyan-500 outline-none" value={completeName} onChange={e => setCompleteName(e.target.value)} required />
               <input type="text" placeholder="Prénom" className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-cyan-500 outline-none" value={completeFirstname} onChange={e => setCompleteFirstname(e.target.value)} required />
@@ -486,17 +589,52 @@ const AppLayout = () => {
             <button onClick={() => setShowSettingsModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white"><X /></button>
             <h2 className="text-2xl font-bold text-white mb-6">Paramètres</h2>
             <div className="space-y-3">
-                <button onClick={() => { setShowSettingsModal(false); navigate('/profile'); }} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2">
-                    <User size={20} /> Mon Profil
-                </button>
-                <button onClick={() => { setShowSettingsModal(false); navigate('/global-admin'); }} className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2">
-                    <Settings size={20} /> Administration
-                </button>
+              <button onClick={() => { setShowSettingsModal(false); navigate('/profile'); }} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2">
+                <User size={20} /> Mon Profil
+              </button>
+              <button onClick={() => { setShowSettingsModal(false); navigate('/global-admin'); }} className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2">
+                <Settings size={20} /> Administration
+              </button>
             </div>
           </div>
         </div>
       )}
-    </div>
+
+      {/* MODAL PASSWORD QVGDC */}
+      {
+        showPasswordModal && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-slate-900 border border-slate-700 p-8 rounded-2xl w-full max-w-sm relative shadow-2xl text-center">
+              <button onClick={() => setShowPasswordModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white"><X /></button>
+              <div className="mb-6 flex justify-center">
+                <div className="p-4 bg-cyan-500/10 rounded-full">
+                  <Lock className="w-8 h-8 text-cyan-400" />
+                </div>
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">Accès Restreint</h2>
+              <p className="text-slate-400 mb-6 text-sm">Ce module est réservé aux enseignants. Veuillez entrer le mot de passe pour continuer.</p>
+
+              <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                <input
+                  type="password"
+                  placeholder="Mot de passe"
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-cyan-500 outline-none transition-colors"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-cyan-500/20"
+                >
+                  Déverrouiller
+                </button>
+              </form>
+            </div>
+          </div>
+        )
+      }
+    </div >
   );
 };
 
@@ -535,72 +673,72 @@ const Home = ({ isSchoolUnlocked, user }) => {
 
   return (
     <div className="flex h-full overflow-hidden">
-        {/* CONTENU PRINCIPAL (NEWS) */}
-        <main className="flex-1 relative overflow-hidden flex flex-col justify-center">
-            <div className="max-w-5xl mx-auto px-8 flex flex-col items-center justify-center gap-10 h-full pt-20">
-                
-                {/* Logo & Title */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className="flex flex-row items-center gap-8"
-                >
-                    <div className="relative shrink-0">
-                        <div className={`absolute inset-0 blur-2xl rounded-full ${isDark ? 'bg-cyan-500/20' : 'bg-cyan-500/30'}`}></div>
-                        <img 
-                        src={logoSvg} 
-                        alt="Logo Edoxia" 
-                        className="w-32 h-32 relative z-10 object-contain drop-shadow-[0_0_15px_rgba(6,182,212,0.3)]" 
-                        />
-                    </div>
-                    
-                    <div className="text-left">
-                        <h1 className={`text-7xl font-bold tracking-tighter mb-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                        Edoxia
-                        </h1>
-                    </div>
-                </motion.div>
+      {/* CONTENU PRINCIPAL (NEWS) */}
+      <main className="flex-1 relative overflow-hidden flex flex-col justify-center">
+        <div className="max-w-5xl mx-auto px-8 flex flex-col items-center justify-center gap-10 h-full pt-20">
 
-                {/* SLIDER */}
-                <div className="w-full max-w-3xl h-60 relative rounded-3xl overflow-hidden shadow-2xl group">
-                    <AnimatePresence mode='wait'>
-                        <motion.div
-                            key={currentSlide}
-                            initial={{ opacity: 0, x: 50 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -50 }}
-                            transition={{ duration: 0.5 }}
-                            onClick={() => navigate(SLIDES[currentSlide].path)}
-                            className={`absolute inset-0 ${SLIDES[currentSlide].bgClass} flex flex-col items-center justify-center cursor-pointer hover:brightness-110 transition-all rounded-3xl overflow-hidden`}
-                        >
-                             <div className="absolute inset-0 flex items-center justify-center">
-                                {SLIDES[currentSlide].icon}
-                             </div>
-                             
-                             <div className="relative z-10 text-center p-8">
-                                <h2 className="text-3xl font-bold text-white mb-2 drop-shadow-lg">{SLIDES[currentSlide].title}</h2>
-                                <p className="text-lg text-white/90 font-medium drop-shadow-md">{SLIDES[currentSlide].desc}</p>
-                                <div className="mt-4 inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-white text-sm font-bold border border-white/30 group-hover:bg-white/30 transition-colors">
-                                    Accéder <ArrowRight size={16} />
-                                </div>
-                             </div>
-                        </motion.div>
-                    </AnimatePresence>
+          {/* Logo & Title */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="flex flex-row items-center gap-8"
+          >
+            <div className="relative shrink-0">
+              <div className={`absolute inset-0 blur-2xl rounded-full ${isDark ? 'bg-cyan-500/20' : 'bg-cyan-500/30'}`}></div>
+              <img
+                src={logoSvg}
+                alt="Logo Edoxia"
+                className="w-32 h-32 relative z-10 object-contain drop-shadow-[0_0_15px_rgba(6,182,212,0.3)]"
+              />
+            </div>
 
-                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 z-20">
-                        {SLIDES.map((_, index) => (
-                            <button 
-                                key={index} 
-                                onClick={(e) => { e.stopPropagation(); setCurrentSlide(index); }}
-                                className={`h-2 rounded-full transition-all duration-300 ${index === currentSlide ? 'bg-white w-8' : 'bg-white/40 w-2 hover:bg-white/60'}`} 
-                            />
-                        ))}
-                    </div>
+            <div className="text-left">
+              <h1 className={`text-7xl font-bold tracking-tighter mb-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                Edoxia
+              </h1>
+            </div>
+          </motion.div>
+
+          {/* SLIDER */}
+          <div className="w-full max-w-3xl h-60 relative rounded-3xl overflow-hidden shadow-2xl group">
+            <AnimatePresence mode='wait'>
+              <motion.div
+                key={currentSlide}
+                initial={{ opacity: 0, x: 50 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -50 }}
+                transition={{ duration: 0.5 }}
+                onClick={() => navigate(SLIDES[currentSlide].path)}
+                className={`absolute inset-0 ${SLIDES[currentSlide].bgClass} flex flex-col items-center justify-center cursor-pointer hover:brightness-110 transition-all rounded-3xl overflow-hidden`}
+              >
+                <div className="absolute inset-0 flex items-center justify-center">
+                  {SLIDES[currentSlide].icon}
                 </div>
 
+                <div className="relative z-10 text-center p-8">
+                  <h2 className="text-3xl font-bold text-white mb-2 drop-shadow-lg">{SLIDES[currentSlide].title}</h2>
+                  <p className="text-lg text-white/90 font-medium drop-shadow-md">{SLIDES[currentSlide].desc}</p>
+                  <div className="mt-4 inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-white text-sm font-bold border border-white/30 group-hover:bg-white/30 transition-colors">
+                    Accéder <ArrowRight size={16} />
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 z-20">
+              {SLIDES.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={(e) => { e.stopPropagation(); setCurrentSlide(index); }}
+                  className={`h-2 rounded-full transition-all duration-300 ${index === currentSlide ? 'bg-white w-8' : 'bg-white/40 w-2 hover:bg-white/60'}`}
+                />
+              ))}
             </div>
-        </main>
+          </div>
+
+        </div>
+      </main>
     </div>
   );
 };

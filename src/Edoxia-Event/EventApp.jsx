@@ -6,21 +6,23 @@ import Home from './pages/Home';
 import RegisterUser from './pages/RegisterUser';
 import AdminDashboard from './pages/AdminDashboard';
 
-export default function EventApp() {
+export default function EventApp({ user: propUser }) {
   const [view, setView] = useState('home'); // 'home', 'register', 'admin'
   const [events, setEvents] = useState([]);
   const [entries, setEntries] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [loading, setLoading] = useState(true);
-  
-  // Gestion d'un utilisateur invité persistant pour les inscriptions
-  const [user] = useState(() => {
+
+  // Gestion d'un utilisateur invité persistant si pas de user authentifié
+  const [guestUser] = useState(() => {
     const storedUid = localStorage.getItem('edoxia_event_uid');
     if (storedUid) return { uid: storedUid };
     const newUid = `guest_${Math.random().toString(36).substr(2, 9)}`;
     localStorage.setItem('edoxia_event_uid', newUid);
     return { uid: newUid };
   });
+
+  const user = propUser || guestUser;
 
   useEffect(() => {
     // Écoute des évènements en temps réel
@@ -40,7 +42,7 @@ export default function EventApp() {
       const entriesData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       setEntries(entriesData);
     }, (error) => {
-        console.error("Erreur chargement entries:", error);
+      console.error("Erreur chargement entries:", error);
     });
 
     return () => {
@@ -62,31 +64,32 @@ export default function EventApp() {
   // Rendu conditionnel selon la vue active
   if (view === 'admin') {
     return (
-      <AdminDashboard 
-        events={events} 
-        entries={entries} 
-        user={user} 
-        onBack={handleBackToHome} 
+      <AdminDashboard
+        events={events}
+        entries={entries}
+        user={user}
+        onBack={handleBackToHome}
       />
     );
   }
 
   if (view === 'register' && selectedEvent) {
     return (
-      <RegisterUser 
-        event={selectedEvent} 
-        user={user} 
-        onBack={handleBackToHome} 
+      <RegisterUser
+        event={selectedEvent}
+        user={user}
+        onBack={handleBackToHome}
       />
     );
   }
 
   return (
-    <Home 
-      events={events} 
-      onSelect={handleSelectEvent} 
-      onViewChange={setView} 
-      loading={loading} 
+    <Home
+      events={events}
+      entries={entries}
+      onSelect={handleSelectEvent}
+      onViewChange={setView}
+      loading={loading}
     />
   );
 }

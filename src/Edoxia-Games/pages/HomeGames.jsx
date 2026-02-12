@@ -8,13 +8,13 @@ export default function HomeGames() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
-      <Link to="/" className={`absolute top-6 left-6 z-10 flex items-center gap-2 px-4 py-2 text-sm rounded-lg border transition-colors ${isDark ? 'text-cyan-400 bg-cyan-950/30 border-cyan-900/50 hover:bg-cyan-900/50' : 'text-cyan-700 bg-cyan-100/50 border-cyan-200 hover:bg-cyan-200/50'}`}>
-         ← Retour Accueil
+      <Link to="/" className={`relative md:absolute top-0 left-0 md:top-6 md:left-6 z-10 w-fit mb-6 md:mb-0 flex items-center gap-2 px-4 py-2 text-sm rounded-lg border transition-colors ${isDark ? 'text-cyan-400 bg-cyan-950/30 border-cyan-900/50 hover:bg-cyan-900/50' : 'text-cyan-700 bg-cyan-100/50 border-cyan-200 hover:bg-cyan-200/50'}`}>
+        ← Retour
       </Link>
 
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8">
         <div className={`max-w-3xl p-4 rounded-xl border text-sm ${isDark ? 'bg-red-500/10 border-red-500/20 text-red-200' : 'bg-red-50 border-red-200 text-red-700'}`}>
-           <p>⚠️ « Les pseudonymes issus d'un registre familier ou jugés inappropriés seront retirés des classements. Ces activités s'inscrivent dans un cadre strictement pédagogique. Seulement le plus haut score par personne est gardé, dans la mesure du possible merci de garder exactement le même pseudonyme. »</p>
+          <p>⚠️ « Les pseudonymes issus d'un registre familier ou jugés inappropriés seront retirés des classements. Ces activités s'inscrivent dans un cadre strictement pédagogique. Seulement le plus haut score par personne est gardé, dans la mesure du possible merci de garder exactement le même pseudonyme. »</p>
         </div>
         <div className="space-y-2">
           <h1 className={`text-4xl md:text-5xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Jeux Éducatifs 🎮</h1>

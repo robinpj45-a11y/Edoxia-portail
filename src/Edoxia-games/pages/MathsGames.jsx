@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom"; // Pour le bouton retour accueil
-import { Volume2, VolumeX } from 'lucide-react';
+import { Volume2, VolumeX, ChevronDown, ChevronUp, Trophy } from 'lucide-react';
 import { collection, addDoc, query, orderBy, limit, getDocs, where, updateDoc, doc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { ThemeContext } from "../../ThemeContext";
@@ -21,13 +21,13 @@ function getRandomAddition() {
 }
 
 function getRandomAddTen() {
-  const a = Math.floor(Math.random() * 61) + 11; 
-  const b = (Math.floor(Math.random() * 5) + 1) * 10; 
+  const a = Math.floor(Math.random() * 61) + 11;
+  const b = (Math.floor(Math.random() * 5) + 1) * 10;
   return { a, b, question: `${a} + ${b}`, answer: a + b };
 }
 
 function getRandomSubTen() {
-  const a = Math.floor(Math.random() * 80) + 20; 
+  const a = Math.floor(Math.random() * 80) + 20;
   const maxTens = Math.floor(a / 10);
   const b = (Math.floor(Math.random() * maxTens) + 1) * 10;
   return { a, b, question: `${a} - ${b}`, answer: a - b };
@@ -36,7 +36,7 @@ function getRandomSubTen() {
 function getRandomAddEleven() {
   const isLowNumber = Math.random() < 0.8;
   let a;
-  if (isLowNumber) { a = Math.floor(Math.random() * 60) + 40; } 
+  if (isLowNumber) { a = Math.floor(Math.random() * 60) + 40; }
   else { a = Math.floor(Math.random() * 851) + 100; }
   const b = 11;
   return { a, b, question: `${a} + ${b}`, answer: a + b };
@@ -45,7 +45,7 @@ function getRandomAddEleven() {
 function getRandomSubEleven() {
   const isLowNumber = Math.random() < 0.8;
   let a;
-  if (isLowNumber) { a = Math.floor(Math.random() * 60) + 40; } 
+  if (isLowNumber) { a = Math.floor(Math.random() * 60) + 40; }
   else { a = Math.floor(Math.random() * 851) + 100; }
   const b = 11;
   return { a, b, question: `${a} - ${b}`, answer: a - b };
@@ -57,17 +57,18 @@ function MathsGames() {
   const { theme } = React.useContext(ThemeContext);
   const isDark = theme === 'dark';
   // --- ETATS ---
-  const [selectedGame, setSelectedGame] = useState(null); 
+  const [selectedGame, setSelectedGame] = useState(null);
   const [timeLeft, setTimeLeft] = useState(100);
   const [speedFactor, setSpeedFactor] = useState(1);
   const [running, setRunning] = useState(false);
-  const [current, setCurrent] = useState({ question: "", answer: 0 }); 
+  const [current, setCurrent] = useState({ question: "", answer: 0 });
   const [userAnswer, setUserAnswer] = useState("");
   const [score, setScore] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [showPenalty, setShowPenalty] = useState(false);
   const [isAudioMode, setIsAudioMode] = useState(false);
   const [isPracticeMode, setIsPracticeMode] = useState(false);
+  const [showAllScores, setShowAllScores] = useState(false);
 
   // --- LEADERBOARD & JOUEUR ---
   const [topScores, setTopScores] = useState([]);
@@ -79,18 +80,18 @@ function MathsGames() {
   // --- LOGIQUE FIREBASE ---
   const getCollectionName = useCallback(() => {
     if (selectedGame === 'add') return "leaderboard_add";
-    if (selectedGame === 'addTen') return "leaderboard_addTen"; 
+    if (selectedGame === 'addTen') return "leaderboard_addTen";
     if (selectedGame === 'subTen') return "leaderboard_subTen";
     if (selectedGame === 'addEleven') return "leaderboard_addEleven";
     if (selectedGame === 'subEleven') return "leaderboard_subEleven";
-    return "leaderboard_mult"; 
+    return "leaderboard_mult";
   }, [selectedGame]);
 
   const loadTopScores = useCallback(async () => {
-    if (!selectedGame) return; 
+    if (!selectedGame) return;
     try {
       const colName = getCollectionName();
-      const q = query(collection(db, colName), orderBy("score", "desc"), limit(10));
+      const q = query(collection(db, colName), orderBy("score", "desc"), limit(15));
       const snapshot = await getDocs(q);
       const scores = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setTopScores(scores);
@@ -101,8 +102,8 @@ function MathsGames() {
 
   const getNextQuestion = useCallback(() => {
     if (selectedGame === 'add') return getRandomAddition();
-    if (selectedGame === 'addTen') return getRandomAddTen(); 
-    if (selectedGame === 'subTen') return getRandomSubTen(); 
+    if (selectedGame === 'addTen') return getRandomAddTen();
+    if (selectedGame === 'subTen') return getRandomSubTen();
     if (selectedGame === 'addEleven') return getRandomAddEleven();
     if (selectedGame === 'subEleven') return getRandomSubEleven();
     return getRandomMultiplication();
@@ -125,7 +126,7 @@ function MathsGames() {
     setRunning(false);
     setGameOver(false);
     setSelectedGame(null);
-    setTopScores([]); 
+    setTopScores([]);
     setIsAudioMode(false);
     setIsPracticeMode(false);
   };
@@ -136,7 +137,7 @@ function MathsGames() {
     try {
       const colName = getCollectionName();
       const cleanPseudo = playerName.slice(0, 12);
-      
+
       const q = query(collection(db, colName), where("pseudo", "==", cleanPseudo));
       const querySnapshot = await getDocs(q);
 
@@ -154,7 +155,7 @@ function MathsGames() {
         });
       }
       await loadTopScores();
-      setScoreSaved(true); 
+      setScoreSaved(true);
       startGame();
     } catch (error) {
       console.error("Erreur sauvegarde:", error);
@@ -174,14 +175,14 @@ function MathsGames() {
   }, []);
 
   const getSpokenText = useCallback((q) => {
-      if (!q || !q.question) return "";
-      let t = q.question.replace(/×/g, "fois").replace(/-/g, "moins").replace(/\+/g, "plus");
-      return `Combien font ${t} ?`;
+    if (!q || !q.question) return "";
+    let t = q.question.replace(/×/g, "fois").replace(/-/g, "moins").replace(/\+/g, "plus");
+    return `Combien font ${t} ?`;
   }, []);
 
   useEffect(() => {
     if (running && !gameOver && isAudioMode) {
-        speak(getSpokenText(current));
+      speak(getSpokenText(current));
     }
   }, [current, running, gameOver, isAudioMode, speak, getSpokenText]);
 
@@ -203,7 +204,7 @@ function MathsGames() {
     e.preventDefault();
     if (!running || gameOver) return;
     const num = parseInt(userAnswer, 10);
-    
+
     if (num === current.answer) {
       const newScore = score + 1;
       setScore(newScore);
@@ -211,7 +212,7 @@ function MathsGames() {
         setSpeedFactor((prev) => prev * 1.1);
         setTimeLeft(100);
       }
-      setCurrent(getNextQuestion()); 
+      setCurrent(getNextQuestion());
       setUserAnswer("");
     } else {
       if (!isPracticeMode) setTimeLeft((prev) => Math.max(prev - 5, 0));
@@ -222,20 +223,20 @@ function MathsGames() {
   };
 
   const getGameTitle = () => {
-      if (selectedGame === 'mult') return 'Multiplications';
-      if (selectedGame === 'add') return 'Additions';
-      if (selectedGame === 'addTen') return 'Ajout de dizaines';
-      if (selectedGame === 'subTen') return 'Retrait de dizaines';
-      if (selectedGame === 'addEleven') return '+11';
-      if (selectedGame === 'subEleven') return '-11';
-      return 'Jeu';
+    if (selectedGame === 'mult') return 'Multiplications';
+    if (selectedGame === 'add') return 'Additions';
+    if (selectedGame === 'addTen') return 'Ajout de dizaines';
+    if (selectedGame === 'subTen') return 'Retrait de dizaines';
+    if (selectedGame === 'addEleven') return '+11';
+    if (selectedGame === 'subEleven') return '-11';
+    return 'Jeu';
   };
 
   // --- RENDER ---
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
-      <Link to="/games" className={`absolute top-6 left-6 z-10 flex items-center gap-2 px-4 py-2 text-sm rounded-lg border transition-colors ${isDark ? 'text-cyan-400 bg-cyan-950/30 border-cyan-900/50 hover:bg-cyan-900/50' : 'text-cyan-700 bg-cyan-100/50 border-cyan-200 hover:bg-cyan-200/50'}`}>
-         ← Retour Jeux
+      <Link to="/games" className={`relative md:absolute top-0 left-0 md:top-6 md:left-6 z-10 w-fit mb-6 md:mb-0 flex items-center gap-2 px-4 py-2 text-sm rounded-lg border transition-colors ${isDark ? 'text-cyan-400 bg-cyan-950/30 border-cyan-900/50 hover:bg-cyan-900/50' : 'text-cyan-700 bg-cyan-100/50 border-cyan-200 hover:bg-cyan-200/50'}`}>
+        ← Retour
       </Link>
 
       {!selectedGame ? (
@@ -244,7 +245,7 @@ function MathsGames() {
             <h1 className={`text-4xl md:text-5xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Mathématiques 📐</h1>
             <p className={`${isDark ? 'text-slate-400' : 'text-slate-600'} text-lg`}>Choisis ton épreuve :</p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 w-full max-w-4xl">
             {/* LISTE DES JEUX */}
             {[
@@ -255,7 +256,7 @@ function MathsGames() {
               { id: 'addEleven', icon: '🚀', title: '+ 11', desc: "Nombres jusqu'à 950" },
               { id: 'subEleven', icon: '📉', title: '- 11', desc: "Nombres jusqu'à 950" },
             ].map((game) => (
-              <div 
+              <div
                 key={game.id}
                 className={`group relative flex flex-col items-center p-6 rounded-2xl border transition-all cursor-pointer backdrop-blur-sm ${isDark ? 'border-slate-800 bg-slate-900/50 hover:bg-slate-800/80 hover:border-cyan-500/30' : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-cyan-500/50 shadow-sm'}`}
                 onClick={() => setSelectedGame(game.id)}
@@ -271,8 +272,8 @@ function MathsGames() {
         /* --- ECRAN DE JEU (Identique à avant) --- */
         <div className={`w-full max-w-2xl mx-auto border p-8 rounded-2xl backdrop-blur-xl shadow-2xl mt-10 ${isDark ? 'bg-slate-900/80 border-slate-700/50' : 'bg-white/90 border-slate-200'}`}>
           <div className="flex justify-between items-center mb-8">
-            <button 
-              className={`px-4 py-2 text-sm rounded-lg transition-colors ${isDark ? 'text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-800' : 'text-slate-500 hover:text-slate-900 bg-slate-100 hover:bg-slate-200'}`} 
+            <button
+              className={`px-4 py-2 text-sm rounded-lg transition-colors ${isDark ? 'text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-800' : 'text-slate-500 hover:text-slate-900 bg-slate-100 hover:bg-slate-200'}`}
               onClick={goMenu}
             >
               ⬅ Menu Maths
@@ -281,17 +282,87 @@ function MathsGames() {
           </div>
 
           <div className={`p-6 rounded-xl mb-8 border ${isDark ? 'bg-slate-950/50 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-            <h3 className={`font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>🥇 Top 10 ({getGameTitle()})</h3>
-            <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
-              {topScores.length > 0 ? (
-                 topScores.map(({ id, pseudo, score, classLabel }) => (
-                  <div key={id} className={`flex justify-between items-center py-2 border-b last:border-0 text-sm ${isDark ? 'border-slate-800/50 text-slate-300' : 'border-slate-200 text-slate-700'}`}>
-                    <span>{pseudo} {classLabel && <span className="text-xs opacity-60 ml-1">({classLabel})</span>}</span>
-                    <strong className={isDark ? 'text-white' : 'text-slate-900'}>{score}</strong>
+            <h3 className={`font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>
+              <Trophy size={20} className="text-yellow-500" /> Classement
+            </h3>
+
+            {topScores.length > 0 ? (
+              <div className="flex flex-col">
+                {/* PODIUM */}
+                <div className="flex justify-center items-end gap-2 sm:gap-4 mb-6 px-2 pt-4">
+                  {/* 2ND PLACE */}
+                  <div className="flex flex-col items-center w-1/3">
+                    {topScores[1] ? (
+                      <>
+                        <div className={`relative flex flex-col items-center justify-end w-full rounded-t-xl p-2 border-t border-l border-r ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-100 border-slate-200'}`} style={{ height: '120px' }}>
+                          <span className="text-2xl mb-1">🥈</span>
+                          <span className={`font-bold text-center text-sm truncate w-full ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{topScores[1].pseudo}</span>
+                          <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{topScores[1].score} pts</span>
+                        </div>
+                        <div className={`w-full h-2 ${isDark ? 'bg-slate-600' : 'bg-slate-300'}`}></div>
+                      </>
+                    ) : <div className="h-[120px]"></div>}
                   </div>
-                 ))
-              ) : (<div className="text-slate-500 text-sm italic">Aucun score...</div>)}
-            </div>
+
+                  {/* 1ST PLACE */}
+                  <div className="flex flex-col items-center w-1/3">
+                    {topScores[0] ? (
+                      <>
+                        <div className="mb-2"><Trophy size={24} className="text-yellow-400 animate-bounce" /></div>
+                        <div className={`relative flex flex-col items-center justify-end w-full rounded-t-xl p-2 border-t border-l border-r shadow-[0_0_15px_rgba(250,204,21,0.3)] ${isDark ? 'bg-gradient-to-b from-yellow-500/20 to-slate-900 border-yellow-500/50' : 'bg-gradient-to-b from-yellow-100 to-white border-yellow-400'}`} style={{ height: '150px' }}>
+                          <span className="text-3xl mb-1">👑</span>
+                          <span className={`font-bold text-center truncate w-full ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`}>{topScores[0].pseudo}</span>
+                          <span className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{topScores[0].score} pts</span>
+                        </div>
+                        <div className="w-full h-2 bg-yellow-400"></div>
+                      </>
+                    ) : null}
+                  </div>
+
+                  {/* 3RD PLACE */}
+                  <div className="flex flex-col items-center w-1/3">
+                    {topScores[2] ? (
+                      <>
+                        <div className={`relative flex flex-col items-center justify-end w-full rounded-t-xl p-2 border-t border-l border-r ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-100 border-slate-200'}`} style={{ height: '100px' }}>
+                          <span className="text-2xl mb-1">🥉</span>
+                          <span className={`font-bold text-center text-sm truncate w-full ${isDark ? 'text-amber-700' : 'text-amber-800'}`}>{topScores[2].pseudo}</span>
+                          <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{topScores[2].score} pts</span>
+                        </div>
+                        <div className={`w-full h-2 ${isDark ? 'bg-amber-900' : 'bg-amber-700'}`}></div>
+                      </>
+                    ) : <div className="h-[100px]"></div>}
+                  </div>
+                </div>
+
+                {/* LIST (4th - 15th) */}
+                {topScores.length > 3 && (
+                  <div className="mt-2">
+                    <button
+                      onClick={() => setShowAllScores(!showAllScores)}
+                      className={`w-full flex items-center justify-center gap-2 py-2 text-sm font-medium transition-colors rounded-lg ${isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-600'}`}
+                    >
+                      {showAllScores ? <><ChevronUp size={16} /> Masquer la suite</> : <><ChevronDown size={16} /> Voir la suite ({topScores.length - 3})</>}
+                    </button>
+
+                    {showAllScores && (
+                      <div className={`mt-2 space-y-1 rounded-xl p-2 ${isDark ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
+                        {topScores.slice(3).map((score, index) => (
+                          <div key={score.id || index} className={`flex items-center justify-between px-3 py-2 rounded-lg ${isDark ? 'bg-slate-800/50' : 'bg-white border border-slate-100'}`}>
+                            <div className="flex items-center gap-3">
+                              <span className={`flex items-center justify-center w-6 h-6 text-xs font-bold rounded-full ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-600'}`}>{index + 4}</span>
+                              <span className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{score.pseudo} <span className="opacity-50 text-xs font-normal">({score.classLabel || "?"})</span></span>
+                            </div>
+                            <strong className={`text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>{score.score}</strong>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-slate-500 italic">Aucun score enregistré pour le moment...</div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4 mb-8">
@@ -309,14 +380,14 @@ function MathsGames() {
           {!running && (
             <div className="mb-6 space-y-4">
               <div className="flex gap-2">
-                <input 
-                  type="text" 
-                  className={`flex-1 border rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-950 border-slate-700 text-white placeholder-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500' : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500'}`} 
-                  placeholder="Ton pseudo" 
-                  value={playerName} 
-                  onChange={(e) => setPlayerName(e.target.value)} 
-                  maxLength={12} 
-                  autoFocus 
+                <input
+                  type="text"
+                  className={`flex-1 border rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-950 border-slate-700 text-white placeholder-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500' : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500'}`}
+                  placeholder="Ton pseudo"
+                  value={playerName}
+                  onChange={(e) => setPlayerName(e.target.value)}
+                  maxLength={12}
+                  autoFocus
                 />
                 <select
                   className={`w-1/3 border rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-950 border-slate-700 text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500' : 'bg-white border-slate-300 text-slate-900 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500'}`}
@@ -332,7 +403,7 @@ function MathsGames() {
                   onClick={() => setIsAudioMode(!isAudioMode)}
                   className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors border flex items-center gap-2 ${isAudioMode ? 'bg-cyan-500/20 border-cyan-500 text-cyan-500' : 'bg-transparent border-slate-500 text-slate-500 hover:border-slate-400 hover:text-slate-400'}`}
                 >
-                  {isAudioMode ? <><Volume2 size={18}/> Audio Activé</> : <><VolumeX size={18}/> Audio Désactivé</>}
+                  {isAudioMode ? <><Volume2 size={18} /> Audio Activé</> : <><VolumeX size={18} /> Audio Désactivé</>}
                 </button>
                 <button
                   onClick={() => setIsPracticeMode(!isPracticeMode)}
@@ -345,8 +416,8 @@ function MathsGames() {
           )}
 
           {!running && !gameOver && playerName && playerClass && (
-            <button 
-              className="w-full py-3 px-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg shadow-cyan-900/20 transition-all active:scale-95" 
+            <button
+              className="w-full py-3 px-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg shadow-cyan-900/20 transition-all active:scale-95"
               onClick={startGame}
             >
               🎮 Démarrer ({playerName})
@@ -365,27 +436,27 @@ function MathsGames() {
                 </div>
               </div>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <input 
-                  type="number" 
-                  className={`w-full text-center text-4xl font-bold border rounded-xl px-4 py-4 outline-none transition-all ${isDark ? 'bg-slate-950 border-slate-700 text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500' : 'bg-white border-slate-300 text-slate-900 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500'}`} 
-                  value={userAnswer} 
-                  onChange={(e) => setUserAnswer(e.target.value)} 
-                  placeholder="?" 
-                  autoFocus 
+                <input
+                  type="number"
+                  className={`w-full text-center text-4xl font-bold border rounded-xl px-4 py-4 outline-none transition-all ${isDark ? 'bg-slate-950 border-slate-700 text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500' : 'bg-white border-slate-300 text-slate-900 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500'}`}
+                  value={userAnswer}
+                  onChange={(e) => setUserAnswer(e.target.value)}
+                  placeholder="?"
+                  autoFocus
                 />
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="w-full py-3 px-4 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl transition-all active:scale-95"
                 >
                   Valider
                 </button>
               </form>
               {isPracticeMode && (
-                <button 
-                    onClick={() => { setRunning(false); setGameOver(true); }}
-                    className="mt-4 w-full py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+                <button
+                  onClick={() => { setRunning(false); setGameOver(true); }}
+                  className="mt-4 w-full py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
                 >
-                    Arrêter l'entraînement
+                  Arrêter l'entraînement
                 </button>
               )}
             </>
@@ -397,16 +468,16 @@ function MathsGames() {
               <p className={`${isDark ? 'text-slate-300' : 'text-slate-700'} text-xl`}>Score final : <strong className={isDark ? 'text-cyan-400' : 'text-cyan-600'}>{score}</strong></p>
               <div className="space-y-3">
                 {!scoreSaved && !isPracticeMode && (
-                  <button 
-                    className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" 
-                    onClick={saveScore} 
+                  <button
+                    className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={saveScore}
                     disabled={savingScore}
                   >
                     {savingScore ? "Sauvegarde..." : "💾 Sauvegarder le score"}
                   </button>
                 )}
-                <button 
-                  className={`w-full py-3 px-4 font-semibold rounded-xl transition-all ${isDark ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' : 'bg-slate-200 hover:bg-slate-300 text-slate-800'}`} 
+                <button
+                  className={`w-full py-3 px-4 font-semibold rounded-xl transition-all ${isDark ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' : 'bg-slate-200 hover:bg-slate-300 text-slate-800'}`}
                   onClick={startGame}
                 >
                   {scoreSaved ? "🔄 Rejouer" : "Rejouer sans sauvegarder"}

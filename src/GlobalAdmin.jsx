@@ -7,7 +7,8 @@ import {
   Gamepad2, Bell, Calendar, Search, Settings, 
   ArrowRight, Sun, Moon, School, BookOpen, 
   GraduationCap, Calculator, Languages, FlaskConical,
-  LayoutDashboard, Trophy, PartyPopper, UserCog, Medal
+  LayoutDashboard, Trophy, PartyPopper, UserCog, Medal,
+  Bug, MessageSquare
 } from 'lucide-react';
 import AdminDashboard from './Edoxia-Quiz/pages/AdminDashboard';
 
@@ -260,6 +261,63 @@ const EventsAdmin = () => (
     </div>
 );
 
+const BugsAdmin = () => {
+    const [reports, setReports] = useState([]);
+
+    useEffect(() => {
+        const q = query(collection(db, "feedback"), orderBy("date", "desc"));
+        const unsub = onSnapshot(q, (snap) => {
+            setReports(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        });
+        return () => unsub();
+    }, []);
+
+    const deleteReport = async (id) => {
+        if(window.confirm("Supprimer ce signalement ?")) {
+            await deleteDoc(doc(db, "feedback", id));
+        }
+    };
+
+    return (
+        <div className="max-w-3xl mx-auto pb-20">
+            <div className="flex justify-between items-center mb-8">
+                <h2 className="text-2xl font-bold flex items-center gap-2"><Bug className="text-red-500"/> Signalements & Avis</h2>
+            </div>
+            <div className="space-y-4">
+                {reports.length === 0 && <div className="text-center text-slate-500 py-10 italic">Aucun signalement pour le moment.</div>}
+                {reports.map(report => (
+                    <div key={report.id} className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex gap-4">
+                        <div className={`p-3 rounded-full h-fit shrink-0 ${report.type === 'bug' ? 'bg-red-500/10 text-red-500' : 'bg-blue-500/10 text-blue-500'}`}>
+                            {report.type === 'bug' ? <Bug size={24}/> : <MessageSquare size={24}/>}
+                        </div>
+                        <div className="flex-1">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <span className={`text-xs font-bold uppercase px-2 py-1 rounded ${report.type === 'bug' ? 'bg-red-900/30 text-red-400' : 'bg-blue-900/30 text-blue-400'}`}>
+                                        {report.type}
+                                    </span>
+                                    <span className="text-slate-500 text-xs ml-2">
+                                        {new Date(report.date).toLocaleString()}
+                                    </span>
+                                </div>
+                                <button onClick={() => deleteReport(report.id)} className="text-slate-500 hover:text-red-500 transition-colors p-1">
+                                    <Trash2 size={18}/>
+                                </button>
+                            </div>
+                            <p className="mt-2 text-slate-300 whitespace-pre-wrap text-sm">{report.message}</p>
+                            {report.name && <p className="text-xs text-slate-400 mt-2 font-bold">De: {report.name}</p>}
+                            {report.email && <p className="text-xs text-slate-500 mt-2">Contact: {report.email}</p>}
+                            <div className="mt-2 text-[10px] text-slate-600 font-mono truncate">
+                                {report.url}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 const UsersAdmin = () => {
   const [users, setUsers] = useState([]);
 
@@ -319,7 +377,7 @@ const UsersAdmin = () => {
 };
 
 export default function GlobalAdmin({ defaultModules }) {
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState('users');
   const navigate = useNavigate();
 
   return (
@@ -337,11 +395,9 @@ export default function GlobalAdmin({ defaultModules }) {
         </div>
         
         <nav className="flex-1 px-4 space-y-2 overflow-y-auto">
-           <SidebarItem icon={LayoutDashboard} label="Accueil" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
-           <SidebarItem icon={Gamepad2} label="Edoxia-Games" active={activeTab === 'games'} onClick={() => setActiveTab('games')} />
-           <SidebarItem icon={Trophy} label="Edoxia-Quiz" active={activeTab === 'quiz'} onClick={() => setActiveTab('quiz')} />
-           <SidebarItem icon={PartyPopper} label="Edoxia-Event" active={activeTab === 'events'} onClick={() => setActiveTab('events')} />
            <SidebarItem icon={UserCog} label="Utilisateurs" active={activeTab === 'users'} onClick={() => setActiveTab('users')} />
+           <SidebarItem icon={Gamepad2} label="Edoxia-Games" active={activeTab === 'games'} onClick={() => setActiveTab('games')} />
+           <SidebarItem icon={Bug} label="Signalements" active={activeTab === 'bugs'} onClick={() => setActiveTab('bugs')} />
         </nav>
       </aside>
 
@@ -357,6 +413,7 @@ export default function GlobalAdmin({ defaultModules }) {
             )}
             {activeTab === 'events' && <EventsAdmin />}
             {activeTab === 'users' && <UsersAdmin />}
+            {activeTab === 'bugs' && <BugsAdmin />}
         </div>
       </main>
     </div>
