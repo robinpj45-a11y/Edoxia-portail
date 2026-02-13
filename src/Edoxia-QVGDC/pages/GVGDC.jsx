@@ -69,6 +69,8 @@ export default function GVGDC() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
+  const [usedQuestionIds, setUsedQuestionIds] = useState([]);
+
   // --- REFS & EFFETS ---
   const presenterRef = useRef(null);
   const audioRef = useRef(null);
@@ -133,12 +135,12 @@ export default function GVGDC() {
     const saveGame = async () => {
       try {
         await setDoc(doc(db, "qvgdc_sessions", "current"), {
-          teams, phase, level, currentTeamIndex, currentPlayerIndex, updatedAt: new Date()
+          teams, phase, level, currentTeamIndex, currentPlayerIndex, usedQuestionIds, updatedAt: new Date()
         }, { merge: true });
       } catch (e) { console.error("Erreur sauvegarde partie:", e); }
     };
     if (teams.length > 0) saveGame();
-  }, [teams, phase, level, currentTeamIndex, currentPlayerIndex]);
+  }, [teams, phase, level, currentTeamIndex, currentPlayerIndex, usedQuestionIds]);
 
   // --- SAUVEGARDE LOCALE (REFRESH) ---
   useEffect(() => {
@@ -161,6 +163,7 @@ export default function GVGDC() {
         if (parsed.currentTurnIndex !== undefined) setCurrentTurnIndex(parsed.currentTurnIndex);
         if (parsed.showBuzzerWarning) setShowBuzzerWarning(parsed.showBuzzerWarning);
         if (parsed.activeJoker) setActiveJoker(parsed.activeJoker);
+        if (parsed.usedQuestionIds) setUsedQuestionIds(parsed.usedQuestionIds);
       } catch (e) {
         console.error("Erreur restauration session:", e);
       }
@@ -173,10 +176,10 @@ export default function GVGDC() {
     const stateToSave = {
       phase, step, teams, unassignedPlayers, currentTeamIndex, currentPlayerIndex,
       level, maxLevel, currentQuestion, selectedOption, hiddenOptions, oralResult, buzzerTeamIndex,
-      turnQueue, currentTurnIndex, activeJoker, showBuzzerWarning
+      turnQueue, currentTurnIndex, activeJoker, showBuzzerWarning, usedQuestionIds
     };
     localStorage.setItem('gvgdc_session', JSON.stringify(stateToSave));
-  }, [phase, step, teams, unassignedPlayers, currentTeamIndex, currentPlayerIndex, level, maxLevel, currentQuestion, selectedOption, hiddenOptions, isLoaded, turnQueue, currentTurnIndex, oralResult, buzzerTeamIndex, activeJoker, showBuzzerWarning]);
+  }, [phase, step, teams, unassignedPlayers, currentTeamIndex, currentPlayerIndex, level, maxLevel, currentQuestion, selectedOption, hiddenOptions, isLoaded, turnQueue, currentTurnIndex, oralResult, buzzerTeamIndex, activeJoker, showBuzzerWarning, usedQuestionIds]);
 
   // --- LOGIQUE SETUP ---
   const addPlayer = () => {
@@ -198,7 +201,7 @@ export default function GVGDC() {
 
   const addTeam = () => {
     const id = Date.now().toString();
-    setTeams([...teams, { id, name: `Équipe ${teams.length + 1}`, players: [], score: 0, jokers: [...JOKERS] }]);
+    setTeams([...teams, { id, name: `Équipe ${teams.length + 1} `, players: [], score: 0, jokers: [...JOKERS] }]);
   };
 
   const removeTeam = (id) => {
@@ -310,8 +313,22 @@ export default function GVGDC() {
   // --- LOGIQUE JEU ---
   const loadRandomQuestion = () => {
     const source = dbQuestions.length > 0 ? dbQuestions : MOCK_QUESTIONS;
-    const randomIndex = Math.floor(Math.random() * source.length);
-    setCurrentQuestion(source[randomIndex]);
+
+    // Filtrer les questions déjà utilisées
+    const availableQuestions = source.filter(q => !usedQuestionIds.includes(q.id));
+
+    if (availableQuestions.length === 0) {
+      setPhase('FINISHED');
+      alert("Toutes les questions ont été posées ! Fin de la partie.");
+      return;
+    }
+
+    const randomIndex = Math.floor(Math.random() * availableQuestions.length);
+    const selectedQuestion = availableQuestions[randomIndex];
+
+    setCurrentQuestion(selectedQuestion);
+    setUsedQuestionIds(prev => [...prev, selectedQuestion.id]);
+
     setBuzzerTeamIndex(null);
     setOralResult(null);
     setStep('QUESTION');
@@ -463,7 +480,7 @@ export default function GVGDC() {
 
   // --- RENDER ---
   return (
-    <div className={`min-h-screen bg-slate-900 text-white font-mono p-4 flex flex-col overflow-hidden selection:bg-green-400 selection:text-black ${isFullscreen ? '' : 'pt-28'}`}>
+    <div className={`min-h-screen bg-slate-900 text-white font-mono p-4 flex flex-col overflow-hidden selection:bg-green-400 selection:text-black ${isFullscreen ? '' : 'pt-28'} `}>
       <style>{`
         @keyframes flash-fast {
           0%, 100% { opacity: 1; transform: scale(1); }
@@ -473,13 +490,13 @@ export default function GVGDC() {
           animation: flash-fast 0.8s infinite;
         }
         @keyframes flash-blue {
-            0%, 100% { background-color: rgb(30 58 138); border-color: rgb(59 130 246); color: white; }
-            50% { background-color: rgb(23 37 84); border-color: rgb(29 78 216); color: #bfdbfe; }
+          0%, 100% { background-color: rgb(30 58 138); border-color: rgb(59 130 246); color: white; }
+          50% { background-color: rgb(23 37 84); border-color: rgb(29 78 216); color: #bfdbfe; }
         }
         .animate-flash-blue {
-            animation: flash-blue 0.5s infinite;
+          animation: flash-blue 0.5s infinite;
         }
-      `}</style>
+`}</style>
 
       {/* HEADER / PRESENTER AREA */}
       <div className="border-b-4 border-white pb-4 mb-6 flex justify-between items-end relative">
@@ -501,7 +518,7 @@ export default function GVGDC() {
         {/* PRESENTER */}
         <div className="absolute left-[55%] -translate-x-1/2 bottom-4 flex flex-col items-center z-50">
           {!isFullscreen && (
-            <div className="absolute -top-24 w-40 bg-yellow-300 text-slate-900 p-3 text-xs font-bold text-center border-4 border-slate-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] after:content-[''] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-[10px] after:border-transparent after:border-t-yellow-300 mb-2 animate-bounce">
+            <div className="absolute-top-24 w-40 bg-yellow-300 text-slate-900 p-3 text-xs font-bold text-center border-4 border-slate-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] after:content-[''] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-[10px] after:border-transparent after:border-t-yellow-300 mb-2 animate-bounce">
               Tu devrais mettre en plein écran !
             </div>
           )}
@@ -532,7 +549,7 @@ export default function GVGDC() {
                       className={`flex-1 w-full border-2 flex items-center justify-center text-xs font-bold transition-all duration-300 rounded shadow-md ${isActive
                         ? (isCurrent ? 'bg-orange-500 border-orange-300 text-white scale-110 z-10 shadow-[0_0_20px_rgba(249,115,22,0.8)]' : 'bg-green-600 border-green-400 text-green-100 opacity-90')
                         : 'bg-slate-800/80 border-slate-700 text-slate-600'
-                        }`}
+                        } `}
                     >
                       {stepLevel}
                     </div>
@@ -551,7 +568,7 @@ export default function GVGDC() {
                       className={`flex-1 w-full border-2 flex items-center justify-center text-xs font-bold transition-all duration-300 rounded shadow-md ${isActive
                         ? (isCurrent ? 'bg-orange-500 border-orange-300 text-white scale-110 z-10 shadow-[0_0_20px_rgba(249,115,22,0.8)]' : 'bg-green-600 border-green-400 text-green-100 opacity-90')
                         : 'bg-slate-800/80 border-slate-700 text-slate-600'
-                        }`}
+                        } `}
                     >
                       {stepLevel}
                     </div>
@@ -571,7 +588,7 @@ export default function GVGDC() {
                     className={`flex-1 w-full border-2 flex items-center justify-center text-sm font-bold transition-all duration-300 rounded shadow-md ${isActive
                       ? (isCurrent ? 'bg-orange-500 border-orange-300 text-white scale-110 z-10 shadow-[0_0_20px_rgba(249,115,22,0.8)]' : 'bg-green-600 border-green-400 text-green-100 opacity-90')
                       : 'bg-slate-800/80 border-slate-700 text-slate-600'
-                      }`}
+                      } `}
                   >
                     {stepLevel}
                   </div>
@@ -744,7 +761,7 @@ export default function GVGDC() {
                       ${isAvailable
                         ? 'bg-purple-900 border-purple-500 text-purple-200 hover:bg-purple-800 cursor-pointer'
                         : 'bg-slate-900 border-slate-800 text-slate-700 line-through cursor-not-allowed opacity-50'
-                      }`}
+                      } `}
                   >
                     {joker.icon} {joker.label}
                   </button>
@@ -757,7 +774,7 @@ export default function GVGDC() {
           <div className="flex-1 flex items-center justify-center">
             <div className="w-full max-w-4xl">
               <div className="bg-slate-800 border-4 border-white p-8 mb-8 text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)] relative">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-900 px-4 text-slate-400 text-sm border border-slate-700">QUESTION {currentTurnIndex + 1}</div>
+                <div className="absolute-top-3 left-1/2-translate-x-1/2 bg-slate-900 px-4 text-slate-400 text-sm border border-slate-700">QUESTION {currentTurnIndex + 1}</div>
                 <h2 className="text-2xl md:text-4xl font-bold leading-tight">{currentQuestion.question}</h2>
 
                 {turnQueue[currentTurnIndex]?.type === 'buzzer' && step === 'QUESTION' && (
@@ -765,7 +782,7 @@ export default function GVGDC() {
                     <p className="text-sm text-slate-400 mb-3 uppercase font-bold">Sélectionnez l'équipe qui répond :</p>
                     <div className="flex flex-wrap justify-center gap-3">
                       {teams.map((team, idx) => (
-                        <button key={team.id} onClick={() => setBuzzerTeamIndex(idx)} className={`px-4 py-2 font-bold border-2 transition-all ${buzzerTeamIndex === idx ? 'bg-green-600 border-green-400 text-white scale-110 shadow-[0_0_15px_rgba(34,197,94,0.5)]' : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-white hover:text-white'}`}>
+                        <button key={team.id} onClick={() => setBuzzerTeamIndex(idx)} className={`px-4 py-2 font-bold border-2 transition-all ${buzzerTeamIndex === idx ? 'bg-green-600 border-green-400 text-white scale-110 shadow-[0_0_15px_rgba(34,197,94,0.5)]' : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-white hover:text-white'} `}>
                           {team.name}
                         </button>
                       ))}
@@ -785,7 +802,7 @@ export default function GVGDC() {
                 )}
 
                 {step === 'REVEAL' && currentQuestion.type === 'oral' && (
-                  <div className={`mt-6 text-4xl font-black animate-in zoom-in ${oralResult === 'correct' ? 'text-green-400' : 'text-red-500'}`}>
+                  <div className={`mt-6 text-4xl font-black animate-in zoom-in ${oralResult === 'correct' ? 'text-green-400' : 'text-red-500'} `}>
                     {oralResult === 'correct' ? 'CORRECT !' : 'INCORRECT !'}
                   </div>
                 )}
@@ -823,7 +840,7 @@ export default function GVGDC() {
                         key={idx}
                         onClick={() => handleOptionClick(idx)}
                         disabled={step !== 'QUESTION'}
-                        className={`p-6 border-4 text-xl font-bold text-left transition-all relative group ${stateClass}`}
+                        className={`p-6 border-4 text-xl font-bold text-left transition-all relative group ${stateClass} `}
                       >
                         <span className="absolute top-2 left-3 text-xs opacity-50">OPTION {['A', 'B', 'C', 'D'][idx]}</span>
                         {opt}
@@ -843,9 +860,9 @@ export default function GVGDC() {
               onClick={step === 'QUESTION' ? launchSuspense : revealAnswer}
               disabled={(step === 'QUESTION' && currentQuestion.type !== 'oral' && selectedOption === null) || (step === 'QUESTION' && turnQueue[currentTurnIndex]?.type === 'buzzer' && buzzerTeamIndex === null) || (step !== 'QUESTION' && step !== 'SUSPENSE')}
               className={`text-white py-3 font-bold border-b-4 active:border-b-0 active:translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${step === 'SUSPENSE'
-                ? "bg-blue-700 hover:bg-blue-600 border-blue-900"
+                ? "bg-blue-700 hover:bg-blue-600 border-blue-900 animate-pulse"
                 : "bg-orange-700 hover:bg-orange-600 border-orange-900"
-                }`}
+                } `}
             >
               {step === 'SUSPENSE' ? "VALIDER / RÉVÉLER" : "MUSIQUE / SUSPENSE"}
             </button>
@@ -866,7 +883,7 @@ export default function GVGDC() {
             </button>
 
             <div className="bg-black p-2 font-mono text-xs text-green-500 border border-green-900 overflow-hidden">
-              {`> STATUS: ${step}\n> MODE: ${turnQueue[currentTurnIndex]?.type === 'buzzer' ? 'BUZZER' : 'NORMAL'}\n> TEAM: ${buzzerTeamIndex !== null ? teams[buzzerTeamIndex].name : teams[currentTeamIndex].name}`}
+              {`> STATUS: ${step} \n > MODE: ${turnQueue[currentTurnIndex]?.type === 'buzzer' ? 'BUZZER' : 'NORMAL'} \n > TEAM: ${buzzerTeamIndex !== null ? teams[buzzerTeamIndex].name : teams[currentTeamIndex].name} `}
             </div>
           </div>
 
@@ -880,7 +897,7 @@ export default function GVGDC() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
             {teams.sort((a, b) => b.score - a.score).map((team, index) => (
               <div key={team.id} className="bg-slate-800 border-4 border-white p-6 relative shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)]">
-                {index === 0 && <div className="absolute -top-6 -right-6 text-yellow-400 animate-bounce"><Trophy size={48} /></div>}
+                {index === 0 && <div className="absolute-top-6 -right-6 text-yellow-400 animate-bounce"><Trophy size={48} /></div>}
                 <h3 className="text-2xl font-bold mb-2">{team.name}</h3>
                 <div className="text-4xl font-black text-green-400">{team.score} PTS</div>
                 <div className="mt-4 text-sm text-slate-400">
