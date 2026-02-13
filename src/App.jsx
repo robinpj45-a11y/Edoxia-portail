@@ -385,23 +385,6 @@ const AppLayout = () => {
   };
 
   const handleModuleClick = (app) => {
-    // Cas spécifique pour QVGDC
-    if (app.id === 'qvgdc') {
-      const allowedRoles = ['enseignant', 'directeur', 'admin'];
-      const hasAccess = user && allowedRoles.includes(user.role);
-
-      if (hasAccess) {
-        setIsSidebarOpen(false);
-        navigate(app.path);
-      } else {
-        setIsSidebarOpen(false);
-        setPendingPath(app.path);
-        setPasswordInput('');
-        setShowPasswordModal(true);
-      }
-      return;
-    }
-
     // Comportement standard
     setIsSidebarOpen(false);
     if (app.path) {

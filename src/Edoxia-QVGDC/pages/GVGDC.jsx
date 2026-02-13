@@ -624,7 +624,7 @@ export default function GVGDC() {
       </div>
 
       {/* VERTICAL LEVEL BAR */}
-      {phase !== 'SETUP' && phase !== 'PRE_MENU' && (
+      {phase !== 'SETUP' && phase !== 'PRE_MENU' && !isSoloMode && (
         <div className="absolute right-6 top-[300px] bottom-[100px] flex gap-4 z-40 pointer-events-none items-center h-auto">
           {maxLevel > 15 ? (
             <>
@@ -887,13 +887,14 @@ export default function GVGDC() {
                     key={joker.id}
                     onClick={() => isAvailable && useJoker(joker.id)}
                     disabled={!isAvailable || step !== 'QUESTION'}
-                    className={`px-3 py-1 text-xs font-bold border-2 flex items-center gap-2 transition-all
+                    className={`${isSoloMode ? 'px-2 py-2 text-[10px] gap-1' : 'px-3 py-1 text-xs gap-2'} font-bold border-2 flex items-center transition-all
                       ${isAvailable
                         ? 'bg-purple-900 border-purple-500 text-purple-200 hover:bg-purple-800 cursor-pointer'
                         : 'bg-slate-900 border-slate-800 text-slate-700 line-through cursor-not-allowed opacity-50'
                       } `}
                   >
-                    {joker.icon} {label}
+                    {React.cloneElement(joker.icon, { size: isSoloMode ? 14 : 16 })}
+                    {label}
                   </button>
                 );
               })}
