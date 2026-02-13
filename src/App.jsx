@@ -406,30 +406,30 @@ const AppLayout = () => {
 
       {/* Navbar Globale */}
       {!location.pathname.startsWith('/JS2026') && !location.pathname.startsWith('/GVGDC') && !location.pathname.startsWith('/DashboardQVGDC') && (
-        <nav className={`flex justify-between items-center p-4 gap-2 shrink-0 z-50 relative border-b backdrop-blur-md transition-colors ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white/80 border-slate-200'}`}>
-          <div className="flex items-center gap-3">
-            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className={`p-2 rounded-lg transition-colors ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'}`}>
-              <Menu className="w-6 h-6" />
+        <nav className={`flex justify-between items-center p-2 md:p-4 gap-2 shrink-0 z-50 relative border-b backdrop-blur-md transition-colors ${isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white/80 border-slate-200'}`}>
+          <div className="flex items-center gap-2 md:gap-3">
+            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className={`p-1 md:p-2 rounded-lg transition-colors ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'}`}>
+              <Menu className="w-5 h-5 md:w-6 md:h-6" />
             </button>
             <CompteurUser />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 md:gap-2">
             <ReportBug />
-            <button onClick={toggleTheme} className={`p-2 transition-colors rounded-lg ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'}`}>
-              {isDark ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
+            <button onClick={toggleTheme} className={`p-1 md:p-2 transition-colors rounded-lg ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'}`}>
+              {isDark ? <Sun className="w-5 h-5 md:w-6 md:h-6" /> : <Moon className="w-5 h-5 md:w-6 md:h-6" />}
             </button>
-            <button onClick={() => { if (user) { if (user.role === 'admin') setShowSettingsModal(true); else navigate('/profile'); } else { setShowAuthModal(true); } }} className={`p-2 transition-colors rounded-lg ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'}`}>
-              <Settings className="w-6 h-6" />
+            <button onClick={() => { if (user) { if (user.role === 'admin') setShowSettingsModal(true); else navigate('/profile'); } else { setShowAuthModal(true); } }} className={`p-1 md:p-2 transition-colors rounded-lg ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'}`}>
+              <Settings className="w-5 h-5 md:w-6 md:h-6" />
             </button>
             {user ? (
-              <div className="flex items-center gap-2 ml-2">
-                <span className={`text-sm font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-700'}`}><User size={16} /> {user.displayName || user.email}</span>
-                <button onClick={() => signOut(auth)} className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition"><LogOut size={16} /></button>
+              <div className="flex items-center gap-1 md:gap-2 ml-1 md:ml-2">
+                <span className={`text-xs md:text-sm font-bold flex items-center gap-1 md:gap-2 ${isDark ? 'text-white' : 'text-slate-700'}`}><User size={16} className="w-4 h-4 md:w-5 md:h-5" /> <span className="hidden sm:inline">{user.displayName || user.email}</span><span className="sm:hidden">{(user.displayName || user.email).split(' ')[0]}</span></span>
+                <button onClick={() => signOut(auth)} className="p-1 md:p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition"><LogOut size={16} className="w-4 h-4 md:w-5 md:h-5" /></button>
               </div>
             ) : (
-              <div className="flex items-center gap-2 ml-2">
-                <button onClick={() => { setIsRegistering(true); setShowAuthModal(true); }} className="px-4 py-2 text-sm font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-500 transition-colors shadow-sm">S'inscrire</button>
-                <button onClick={() => { setIsRegistering(false); setShowAuthModal(true); }} className="px-4 py-2 text-sm font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-500 transition-colors shadow-sm">Se connecter</button>
+              <div className="flex items-center gap-1 md:gap-2 ml-1 md:ml-2">
+                <button onClick={() => { setIsRegistering(true); setShowAuthModal(true); }} className="px-2 py-1 md:px-4 md:py-2 text-xs md:text-sm font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-500 transition-colors shadow-sm">S'inscrire</button>
+                <button onClick={() => { setIsRegistering(false); setShowAuthModal(true); }} className="px-2 py-1 md:px-4 md:py-2 text-xs md:text-sm font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-500 transition-colors shadow-sm">Se connecter</button>
               </div>
             )}
           </div>
@@ -644,6 +644,14 @@ const Home = ({ isSchoolUnlocked, user }) => {
       path: '/quiz',
       bgClass: 'bg-gradient-to-br from-purple-600 to-pink-800',
       icon: <Gamepad2 size={96} className="text-white/10" />
+    },
+    {
+      id: 'qvgdc',
+      title: 'Qui veut gagner des CRAYONS ?',
+      desc: 'Participe à l\'émission culte de l\'école !',
+      path: '/GVGDC',
+      bgClass: 'bg-gradient-to-br from-yellow-600 to-orange-800',
+      icon: <Trophy size={96} className="text-white/10" />
     }
   ];
 

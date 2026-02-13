@@ -26,7 +26,7 @@ export default function EventHome({ events, entries, onSelect, onViewChange, loa
           </Link>
           <div>
             <h1 className={`text-xl font-bold tracking-wide flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-              <Sparkles size={20} className="text-cyan-400" /> Edoxia Event
+              Edoxia Event
             </h1>
             <div className={`text-xs mt-1 inline-block px-2 py-0.5 rounded ${loading ? 'bg-orange-500/20 text-orange-400' : 'bg-green-500/20 text-green-100'}`}>
               {loading ? 'Connexion...' : 'En ligne'}
