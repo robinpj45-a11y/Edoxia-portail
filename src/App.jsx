@@ -700,6 +700,16 @@ const Home = ({ isSchoolUnlocked, user }) => {
             </div>
           </motion.div>
 
+          {/* HOLIDAY MESSAGE */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className={`text-2xl font-semibold text-center ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}
+          >
+            Je vous souhaite de très bonnes vacances !
+          </motion.div>
+
           {/* SLIDER */}
           <div className="w-full max-w-3xl h-60 relative rounded-3xl overflow-hidden shadow-2xl group">
             <AnimatePresence mode='wait'>
