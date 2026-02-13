@@ -2,11 +2,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Monitor, Mic, Volume2, Skull, Check, X, HelpCircle, Zap, GripVertical, Plus, Trash2, Maximize, Minimize, RefreshCw, Trophy, CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
-import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, query, orderBy, limit, addDoc, where, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import suspensSound from '../../assets/Suspens QVGDC.mp3';
 import winSound from '../../assets/Gagnant QVGDC.mp3';
 import loseSound from '../../assets/Perte QVGDC.mp3';
+import { User } from 'lucide-react';
 
 // --- DONNÉES FICTIVES (MOCK) ---
 const MOCK_QUESTIONS = [
@@ -35,7 +36,7 @@ const PRESETS = {
 export default function GVGDC() {
   const navigate = useNavigate();
   // --- ÉTATS DU JEU ---
-  const [phase, setPhase] = useState('SETUP'); // SETUP, PLAYING, AWAITING_ADMIN, FINISHED
+  const [phase, setPhase] = useState('PRE_MENU'); // PRE_MENU, SETUP, PLAYING, AWAITING_ADMIN, FINISHED
   const [step, setStep] = useState('QUESTION'); // QUESTION, SUSPENSE, PRE_REVEAL, REVEAL, AWAITING_ADMIN
 
   // --- DONNÉES DE SESSION ---
@@ -45,6 +46,12 @@ export default function GVGDC() {
   ]);
   const [unassignedPlayers, setUnassignedPlayers] = useState([]);
   const [draggedPlayer, setDraggedPlayer] = useState(null);
+
+  // --- MODE SOLO ---
+  const [isSoloMode, setIsSoloMode] = useState(false);
+  const [soloPlayer, setSoloPlayer] = useState({ name: '', class: 'CE1 A' });
+  const [showSoloSetup, setShowSoloSetup] = useState(false);
+  const [leaderboard, setLeaderboard] = useState([]);
 
   // Gestion du tour par tour
   const [turnQueue, setTurnQueue] = useState([]); // File d'attente des tours { teamIndex, playerIndex }
@@ -76,6 +83,7 @@ export default function GVGDC() {
   const audioRef = useRef(null);
   const winAudioRef = useRef(null);
   const loseAudioRef = useRef(null);
+  const leaderboardFetchedRef = useRef(false);
 
   useEffect(() => {
     audioRef.current = new Audio(suspensSound);
@@ -135,12 +143,12 @@ export default function GVGDC() {
     const saveGame = async () => {
       try {
         await setDoc(doc(db, "qvgdc_sessions", "current"), {
-          teams, phase, level, currentTeamIndex, currentPlayerIndex, usedQuestionIds, updatedAt: new Date()
+          teams, phase, level, currentTeamIndex, currentPlayerIndex, usedQuestionIds, isSoloMode, soloPlayer, updatedAt: new Date()
         }, { merge: true });
       } catch (e) { console.error("Erreur sauvegarde partie:", e); }
     };
     if (teams.length > 0) saveGame();
-  }, [teams, phase, level, currentTeamIndex, currentPlayerIndex, usedQuestionIds]);
+  }, [teams, phase, level, currentTeamIndex, currentPlayerIndex, usedQuestionIds, isSoloMode, soloPlayer]);
 
   // --- SAUVEGARDE LOCALE (REFRESH) ---
   useEffect(() => {
@@ -148,7 +156,7 @@ export default function GVGDC() {
     if (savedState) {
       try {
         const parsed = JSON.parse(savedState);
-        if (parsed.phase) setPhase(parsed.phase);
+        if (parsed.phase && parsed.phase !== 'SETUP') setPhase(parsed.phase);
         if (parsed.step) setStep(parsed.step);
         if (parsed.teams) setTeams(parsed.teams);
         if (parsed.unassignedPlayers) setUnassignedPlayers(parsed.unassignedPlayers);
@@ -164,6 +172,8 @@ export default function GVGDC() {
         if (parsed.showBuzzerWarning) setShowBuzzerWarning(parsed.showBuzzerWarning);
         if (parsed.activeJoker) setActiveJoker(parsed.activeJoker);
         if (parsed.usedQuestionIds) setUsedQuestionIds(parsed.usedQuestionIds);
+        if (parsed.isSoloMode !== undefined) setIsSoloMode(parsed.isSoloMode);
+        if (parsed.soloPlayer) setSoloPlayer(parsed.soloPlayer);
       } catch (e) {
         console.error("Erreur restauration session:", e);
       }
@@ -176,10 +186,59 @@ export default function GVGDC() {
     const stateToSave = {
       phase, step, teams, unassignedPlayers, currentTeamIndex, currentPlayerIndex,
       level, maxLevel, currentQuestion, selectedOption, hiddenOptions, oralResult, buzzerTeamIndex,
-      turnQueue, currentTurnIndex, activeJoker, showBuzzerWarning, usedQuestionIds
+      turnQueue, currentTurnIndex, activeJoker, showBuzzerWarning, usedQuestionIds, isSoloMode, soloPlayer
     };
     localStorage.setItem('gvgdc_session', JSON.stringify(stateToSave));
-  }, [phase, step, teams, unassignedPlayers, currentTeamIndex, currentPlayerIndex, level, maxLevel, currentQuestion, selectedOption, hiddenOptions, isLoaded, turnQueue, currentTurnIndex, oralResult, buzzerTeamIndex, activeJoker, showBuzzerWarning, usedQuestionIds]);
+  }, [phase, step, teams, unassignedPlayers, currentTeamIndex, currentPlayerIndex, level, maxLevel, currentQuestion, selectedOption, hiddenOptions, isLoaded, turnQueue, currentTurnIndex, oralResult, buzzerTeamIndex, activeJoker, showBuzzerWarning, usedQuestionIds, isSoloMode, soloPlayer]);
+
+  // Fetch leaderboard when finished
+  useEffect(() => {
+    if (phase === 'FINISHED' && !leaderboardFetchedRef.current) {
+      leaderboardFetchedRef.current = true;
+      const finalizeAndFetch = async () => {
+        // Save score if solo
+        if (isSoloMode && teams[0]) {
+          try {
+            // Check if player exists
+            const q = query(collection(db, "qvgdc_scores"), where("name", "==", soloPlayer.name));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+              // Update if new score is higher
+              const docRef = querySnapshot.docs[0].ref;
+              const existingData = querySnapshot.docs[0].data();
+              if (teams[0].score > existingData.score) {
+                await updateDoc(docRef, {
+                  score: teams[0].score,
+                  class: soloPlayer.class, // Update class too just in case
+                  updatedAt: new Date()
+                });
+              }
+            } else {
+              // Add new entry
+              await addDoc(collection(db, "qvgdc_scores"), {
+                name: soloPlayer.name,
+                class: soloPlayer.class,
+                score: teams[0].score,
+                createdAt: new Date()
+              });
+            }
+          } catch (e) { console.error("Error saving score", e); }
+        }
+
+        // Fetch leaderboard
+        try {
+          const q = query(collection(db, "qvgdc_scores"), orderBy("score", "desc"), limit(50));
+          const snap = await getDocs(q);
+          setLeaderboard(snap.docs.map(d => d.data()));
+        } catch (e) { console.error("Error fetching leaderboard", e); }
+      };
+      finalizeAndFetch();
+    }
+    if (phase !== 'FINISHED') {
+      leaderboardFetchedRef.current = false;
+    }
+  }, [phase, isSoloMode, soloPlayer, teams]);
 
   // --- LOGIQUE SETUP ---
   const addPlayer = () => {
@@ -199,9 +258,29 @@ export default function GVGDC() {
     }
   };
 
+  const startSoloSetup = () => {
+    setShowSoloSetup(true);
+  };
+
+  const confirmSoloStart = () => {
+    if (!soloPlayer.name.trim()) return alert("Entrez un prénom !");
+    setIsSoloMode(true);
+    // Configurer Jokers Solo : Pas de public, 'Appel' devient 'Appel à un parent'
+    const soloJokers = JOKERS
+      .filter(j => j.id !== 'public')
+      .map(j => j.id === 'call' ? { ...j, label: 'Appel à un parent' } : j);
+
+    // Configurer une équipe unique pour le joueur solo
+    setTeams([
+      { id: 'solo', name: soloPlayer.name, players: [soloPlayer.name], score: 0, jokers: soloJokers }
+    ]);
+    setShowSoloSetup(false);
+    setTimeout(() => startGame(true), 100);
+  };
+
   const addTeam = () => {
     const id = Date.now().toString();
-    setTeams([...teams, { id, name: `Équipe ${teams.length + 1} `, players: [], score: 0, jokers: [...JOKERS] }]);
+    setTeams([...teams, { id, name: `Équipe ${teams.length + 1}`, players: [], score: 0, jokers: [...JOKERS] }]);
   };
 
   const removeTeam = (id) => {
@@ -266,25 +345,37 @@ export default function GVGDC() {
     }
   };
 
-  const startGame = () => {
+  const startGame = (forceSolo = false) => {
     // Génération de la file d'attente (Round Robin)
     // On alterne entre les équipes : J1 Eq1, J1 Eq2, J2 Eq1, J2 Eq2...
     const queue = [];
-    const maxPlayers = Math.max(...teams.map(t => t.players.length));
 
-    for (let i = 0; i < maxPlayers; i++) {
-      teams.forEach((team, tIndex) => {
-        if (team.players[i]) {
-          queue.push({ teamIndex: tIndex, playerIndex: i });
+    // WORKAROUND: Si forceSolo est true, on construit une queue fictive pour le joueur solo
+    if (forceSolo) {
+      const totalQuestions = dbQuestions.length > 0 ? dbQuestions.length : MOCK_QUESTIONS.length;
+      // Solo : le joueur répond à tout
+      for (let i = 0; i < totalQuestions; i++) {
+        queue.push({ teamIndex: 0, playerIndex: 0 }); // Toujours équipe 0, joueur 0
+      }
+    } else {
+      const maxPlayers = Math.max(...teams.map(t => t.players.length));
+
+      for (let i = 0; i < maxPlayers; i++) {
+        teams.forEach((team, tIndex) => {
+          if (team.players[i]) {
+            queue.push({ teamIndex: tIndex, playerIndex: i });
+          }
+        });
+      }
+
+      // Si plus de questions que de joueurs, on ajoute des tours "Buzzer"
+      if (!isSoloMode) {
+        const totalQuestions = dbQuestions.length > 0 ? dbQuestions.length : MOCK_QUESTIONS.length;
+        const extraTurns = Math.max(0, totalQuestions - queue.length);
+        for (let i = 0; i < extraTurns; i++) {
+          queue.push({ type: 'buzzer' });
         }
-      });
-    }
-
-    // Si plus de questions que de joueurs, on ajoute des tours "Buzzer"
-    const totalQuestions = dbQuestions.length > 0 ? dbQuestions.length : MOCK_QUESTIONS.length;
-    const extraTurns = Math.max(0, totalQuestions - queue.length);
-    for (let i = 0; i < extraTurns; i++) {
-      queue.push({ type: 'buzzer' });
+      }
     }
 
     if (queue.length === 0) {
@@ -501,7 +592,7 @@ export default function GVGDC() {
       {/* HEADER / PRESENTER AREA */}
       <div className="border-b-4 border-white pb-4 mb-6 flex justify-between items-end relative">
         <div>
-          {phase === 'SETUP' && (
+          {(phase === 'SETUP' || phase === 'PRE_MENU') && (
             <button onClick={() => navigate('/')} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-2 text-sm font-bold"><ArrowLeft size={16} /> RETOUR ACCUEIL</button>
           )}
           <div className="flex items-center gap-3">
@@ -533,7 +624,7 @@ export default function GVGDC() {
       </div>
 
       {/* VERTICAL LEVEL BAR */}
-      {phase !== 'SETUP' && (
+      {phase !== 'SETUP' && phase !== 'PRE_MENU' && (
         <div className="absolute right-6 top-[300px] bottom-[100px] flex gap-4 z-40 pointer-events-none items-center h-auto">
           {maxLevel > 15 ? (
             <>
@@ -596,6 +687,30 @@ export default function GVGDC() {
               })}
             </div>
           )}
+        </div>
+      )}
+
+      {phase === 'PRE_MENU' && (
+        <div className="flex-1 flex items-center justify-center gap-8 animate-in zoom-in duration-500">
+          <button
+            onClick={startSoloSetup}
+            className="w-80 h-80 bg-slate-800 border-8 border-yellow-500 hover:border-white text-yellow-500 hover:text-white rounded-3xl flex flex-col items-center justify-center gap-6 shadow-[0_0_40px_rgba(234,179,8,0.2)] hover:shadow-[0_0_60px_rgba(234,179,8,0.5)] hover:scale-105 transition-all group"
+          >
+            <div className="bg-yellow-500 text-slate-900 p-6 rounded-full group-hover:bg-white transition-colors">
+              <User size={64} />
+            </div>
+            <div className="text-3xl font-black uppercase tracking-widest">JOUER SEUL</div>
+          </button>
+          <div className="text-slate-500 font-bold text-xl">OU</div>
+          <button
+            onClick={() => setPhase('SETUP')}
+            className="w-80 h-80 bg-slate-800 border-8 border-blue-500 hover:border-white text-blue-500 hover:text-white rounded-3xl flex flex-col items-center justify-center gap-6 shadow-[0_0_40px_rgba(59,130,246,0.2)] hover:shadow-[0_0_60px_rgba(59,130,246,0.5)] hover:scale-105 transition-all group"
+          >
+            <div className="bg-blue-500 text-slate-900 p-6 rounded-full group-hover:bg-white transition-colors">
+              <Monitor size={64} />
+            </div>
+            <div className="text-3xl font-black uppercase tracking-widest text-center leading-tight">JOUER EN<br />ÉQUIPE</div>
+          </button>
         </div>
       )}
 
@@ -737,21 +852,36 @@ export default function GVGDC() {
                   <span className="text-sm text-slate-300">Qui sera le plus rapide ?</span>
                 </div>
               ) : (
-                <>
-                  <div className="bg-blue-600 text-white px-3 py-1 font-bold border-2 border-blue-400">
-                    {teams[currentTeamIndex].name}
+                isSoloMode ? (
+                  <div className="flex items-center gap-2">
+                    <div className="bg-yellow-600 text-white px-3 py-1 font-bold border-2 border-yellow-400">
+                      JOUEUR
+                    </div>
+                    <span className="text-yellow-400 font-bold text-lg">{teams[currentTeamIndex]?.name}</span>
                   </div>
-                  <div className="text-sm">
-                    Joueur : <span className="text-yellow-400 font-bold text-lg">{teams[currentTeamIndex].players[currentPlayerIndex]}</span>
-                  </div>
-                </>
+                ) : (
+                  <>
+                    <div className="bg-blue-600 text-white px-3 py-1 font-bold border-2 border-blue-400">
+                      {teams[currentTeamIndex].name}
+                    </div>
+                    <div className="text-sm">
+                      Joueur : <span className="text-yellow-400 font-bold text-lg">{teams[currentTeamIndex].players[currentPlayerIndex]}</span>
+                    </div>
+                  </>
+                )
               )}
             </div>
 
             {/* JOKERS */}
             <div className="flex gap-2">
               {JOKERS.map(joker => {
-                const isAvailable = teams[currentTeamIndex].jokers.find(j => j.id === joker.id);
+                if (isSoloMode && joker.id === 'public') return null;
+
+                let label = joker.label;
+                if (isSoloMode && joker.id === 'call') label = "Appel à un parent";
+
+                const isAvailable = teams[currentTeamIndex]?.jokers.find(j => j.id === joker.id);
+
                 return (
                   <button
                     key={joker.id}
@@ -763,7 +893,7 @@ export default function GVGDC() {
                         : 'bg-slate-900 border-slate-800 text-slate-700 line-through cursor-not-allowed opacity-50'
                       } `}
                   >
-                    {joker.icon} {joker.label}
+                    {joker.icon} {label}
                   </button>
                 );
               })}
@@ -857,14 +987,14 @@ export default function GVGDC() {
           {/* GAME MASTER CONTROLS */}
           <div className="border-t-4 border-slate-800 pt-4 mt-4 grid grid-cols-4 gap-4">
             <button
-              onClick={step === 'QUESTION' ? launchSuspense : revealAnswer}
-              disabled={(step === 'QUESTION' && currentQuestion.type !== 'oral' && selectedOption === null) || (step === 'QUESTION' && turnQueue[currentTurnIndex]?.type === 'buzzer' && buzzerTeamIndex === null) || (step !== 'QUESTION' && step !== 'SUSPENSE')}
-              className={`text-white py-3 font-bold border-b-4 active:border-b-0 active:translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${step === 'SUSPENSE'
+              onClick={isSoloMode ? revealAnswer : (step === 'QUESTION' ? launchSuspense : revealAnswer)}
+              disabled={(step === 'QUESTION' && currentQuestion.type !== 'oral' && selectedOption === null) || (step === 'QUESTION' && turnQueue[currentTurnIndex]?.type === 'buzzer' && buzzerTeamIndex === null) || (!isSoloMode && step !== 'QUESTION' && step !== 'SUSPENSE') || (isSoloMode && step !== 'QUESTION')}
+              className={`text-white py-3 font-bold border-b-4 active:border-b-0 active:translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${(step === 'SUSPENSE' && !isSoloMode) || (isSoloMode && step === 'QUESTION' && selectedOption !== null)
                 ? "bg-blue-700 hover:bg-blue-600 border-blue-900 animate-pulse"
                 : "bg-orange-700 hover:bg-orange-600 border-orange-900"
                 } `}
             >
-              {step === 'SUSPENSE' ? "VALIDER / RÉVÉLER" : "MUSIQUE / SUSPENSE"}
+              {isSoloMode ? "VALIDER / RÉVÉLER" : (step === 'SUSPENSE' ? "VALIDER / RÉVÉLER" : "MUSIQUE / SUSPENSE")}
             </button>
 
             <button
@@ -883,7 +1013,7 @@ export default function GVGDC() {
             </button>
 
             <div className="bg-black p-2 font-mono text-xs text-green-500 border border-green-900 overflow-hidden">
-              {`> STATUS: ${step} \n > MODE: ${turnQueue[currentTurnIndex]?.type === 'buzzer' ? 'BUZZER' : 'NORMAL'} \n > TEAM: ${buzzerTeamIndex !== null ? teams[buzzerTeamIndex].name : teams[currentTeamIndex].name} `}
+              {`> STATUS: ${step} \n > MODE: ${turnQueue[currentTurnIndex]?.type === 'buzzer' ? 'BUZZER' : (isSoloMode ? 'SOLO' : 'NORMAL')} \n > TEAM: ${buzzerTeamIndex !== null ? teams[buzzerTeamIndex]?.name : teams[currentTeamIndex]?.name} `}
             </div>
           </div>
 
@@ -891,21 +1021,92 @@ export default function GVGDC() {
       )}
 
       {phase === 'FINISHED' && (
-        <div className="flex-1 flex flex-col items-center justify-center animate-in zoom-in duration-500">
+        <div className="flex-1 flex flex-col items-center justify-center animate-in zoom-in duration-500 overflow-hidden w-full max-w-6xl mx-auto">
           <h2 className="text-6xl font-black text-yellow-400 mb-10 drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]">RÉSULTATS</h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
-            {teams.sort((a, b) => b.score - a.score).map((team, index) => (
-              <div key={team.id} className="bg-slate-800 border-4 border-white p-6 relative shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)]">
-                {index === 0 && <div className="absolute-top-6 -right-6 text-yellow-400 animate-bounce"><Trophy size={48} /></div>}
-                <h3 className="text-2xl font-bold mb-2">{team.name}</h3>
-                <div className="text-4xl font-black text-green-400">{team.score} PTS</div>
-                <div className="mt-4 text-sm text-slate-400">
-                  Joueurs : {team.players.join(', ')}
-                </div>
+          {isSoloMode ? (
+            <div className="w-full flex flex-col items-center gap-8">
+              {/* PODIUM */}
+              <div className="flex items-end justify-center w-full gap-4 mb-4">
+                {/* 2nd */}
+                {leaderboard[1] && (
+                  <div className="flex flex-col items-center animate-in slide-in-from-left duration-700 delay-200">
+                    <div className="text-xl font-bold text-slate-300 mb-2 whitespace-nowrap">{leaderboard[1].name}</div>
+                    <div className="bg-slate-700 w-32 h-32 border-4 border-slate-500 flex flex-col items-center justify-center relative shadow-lg">
+                      <span className="text-4xl font-black text-slate-400">2</span>
+                      <span className="text-xs font-bold text-slate-400 mt-1">{leaderboard[1].class}</span>
+                      <div className="absolute -bottom-8 bg-slate-800 px-3 py-1 rounded border border-slate-600 font-bold">{leaderboard[1].score} PTS</div>
+                    </div>
+                  </div>
+                )}
+                {/* 1st */}
+                {leaderboard[0] && (
+                  <div className="flex flex-col items-center z-10 animate-in slide-in-from-bottom duration-700">
+                    <Trophy size={48} className="text-yellow-400 mb-2 animate-bounce" />
+                    <div className="text-2xl font-black text-yellow-400 mb-2 whitespace-nowrap">{leaderboard[0].name}</div>
+                    <div className="bg-yellow-600 w-40 h-48 border-4 border-yellow-400 flex flex-col items-center justify-center relative shadow-[0_0_30px_rgba(234,179,8,0.4)]">
+                      <span className="text-6xl font-black text-yellow-900">1</span>
+                      <span className="text-sm font-bold text-yellow-900 mt-1">{leaderboard[0].class}</span>
+                      <div className="absolute -bottom-8 bg-slate-900 text-yellow-400 px-4 py-2 rounded border border-yellow-600 font-black text-xl">{leaderboard[0].score} PTS</div>
+                    </div>
+                  </div>
+                )}
+                {/* 3rd */}
+                {leaderboard[2] && (
+                  <div className="flex flex-col items-center animate-in slide-in-from-right duration-700 delay-400">
+                    <div className="text-xl font-bold text-orange-300 mb-2 whitespace-nowrap">{leaderboard[2].name}</div>
+                    <div className="bg-orange-800 w-32 h-24 border-4 border-orange-600 flex flex-col items-center justify-center relative shadow-lg">
+                      <span className="text-4xl font-black text-orange-400">3</span>
+                      <span className="text-xs font-bold text-orange-400 mt-1">{leaderboard[2].class}</span>
+                      <div className="absolute -bottom-8 bg-slate-800 px-3 py-1 rounded border border-slate-600 font-bold">{leaderboard[2].score} PTS</div>
+                    </div>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
+
+              {/* LISTE DÉROULANTE */}
+              <div className="w-full max-w-2xl bg-slate-800 border-4 border-slate-700 p-4 h-64 overflow-y-auto custom-scrollbar">
+                <table className="w-full text-left border-collapse">
+                  <thead className="bg-slate-900 text-slate-400 sticky top-0">
+                    <tr>
+                      <th className="p-2 border-b border-slate-700">RANG</th>
+                      <th className="p-2 border-b border-slate-700">NOM</th>
+                      <th className="p-2 border-b border-slate-700">CLASSE</th>
+                      <th className="p-2 border-b border-slate-700 text-right">SCORE</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {leaderboard.slice(3).map((entry, idx) => (
+                      <tr key={idx} className="border-b border-slate-700/50 hover:bg-slate-700/50 transition-colors">
+                        <td className="p-2 font-bold text-slate-500">#{idx + 4}</td>
+                        <td className="p-2 font-bold">{entry.name}</td>
+                        <td className="p-2 text-sm text-slate-400">{entry.class}</td>
+                        <td className="p-2 font-bold text-green-400 text-right">{entry.score}</td>
+                      </tr>
+                    ))}
+                    {leaderboard.length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="p-8 text-center text-slate-500 italic">Chargement du classement...</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
+              {teams.sort((a, b) => b.score - a.score).map((team, index) => (
+                <div key={team.id} className="bg-slate-800 border-4 border-white p-6 relative shadow-[8px_8px_0px_0px_rgba(0,0,0,0.5)]">
+                  {index === 0 && <div className="absolute -top-6 -right-6 text-yellow-400 animate-bounce"><Trophy size={48} /></div>}
+                  <h3 className="text-2xl font-bold mb-2">{team.name}</h3>
+                  <div className="text-4xl font-black text-green-400">{team.score} PTS</div>
+                  <div className="mt-4 text-sm text-slate-400">
+                    Joueurs : {team.players.join(', ')}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           <button
             onClick={resetGame}
@@ -913,6 +1114,56 @@ export default function GVGDC() {
           >
             NOUVELLE PARTIE
           </button>
+        </div>
+      )}
+
+      {/* SOLO SETUP MODAL */}
+      {showSoloSetup && (
+        <div className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-slate-800 border-4 border-white p-8 max-w-lg w-full text-center shadow-[0_0_50px_rgba(255,255,255,0.2)]">
+            <h2 className="text-3xl font-black text-yellow-400 mb-6 uppercase flex items-center justify-center gap-4">
+              <User size={40} /> MODE SOLO
+            </h2>
+            <div className="space-y-4 mb-8 text-left">
+              <div>
+                <label className="block text-sm font-bold text-slate-400 mb-1">PRÉNOM DU JOUEUR</label>
+                <input
+                  value={soloPlayer.name}
+                  onChange={e => setSoloPlayer({ ...soloPlayer, name: e.target.value })}
+                  className="w-full bg-slate-900 border-2 border-slate-600 p-3 text-white focus:border-yellow-400 outline-none font-bold"
+                  placeholder="Ex: Thomas"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-400 mb-1">CLASSE</label>
+                <div className="flex gap-4">
+                  {['CE1 A', 'CE1 B'].map(cls => (
+                    <button
+                      key={cls}
+                      onClick={() => setSoloPlayer({ ...soloPlayer, class: cls })}
+                      className={`flex-1 py-3 border-2 font-bold transition-all ${soloPlayer.class === cls ? 'bg-yellow-600 border-yellow-400 text-white' : 'bg-slate-900 border-slate-700 text-slate-500 hover:bg-slate-800'}`}
+                    >
+                      {cls}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-4">
+              <button
+                onClick={() => setShowSoloSetup(false)}
+                className="flex-1 py-3 bg-slate-700 text-white font-bold hover:bg-slate-600 transition-colors border-4 border-slate-900"
+              >
+                ANNULER
+              </button>
+              <button
+                onClick={confirmSoloStart}
+                className="flex-1 py-3 bg-green-600 text-black font-black hover:bg-green-500 transition-colors border-4 border-green-800"
+              >
+                COMMENCER
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
