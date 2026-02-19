@@ -51,6 +51,8 @@ import ReportBug from './modules/ReportBug';
 import CompteurUser from './modules/CompteurUser';
 import GVGDC from './Edoxia-QVGDC/pages/GVGDC';
 import DashboardQVGDC from './Edoxia-QVGDC/pages/DashboardQVGDC';
+import PublicCalendar from './Edoxia-Calendar/pages/PublicCalendar';
+import AdminCalendar from './Edoxia-Calendar/pages/AdminCalendar';
 
 // --- UTILITAIRE DE SÉCURITÉ (Obfuscation) ---
 // Permet de cacher les liens dans le code source (Inspect Element)
@@ -103,7 +105,19 @@ const DEFAULT_MODULES = [
     tag: 'Jeux',
     active: true,
     isProtected: false,
+    isProtected: false,
     requiresSchoolAuth: false
+  },
+  {
+    id: 'calendar',
+    name: 'Calendrier',
+    path: '/calendar',
+    desc: 'Agenda partagé interactif.',
+    icon: <Calendar className="w-6 h-6 text-purple-400" />,
+    tag: 'Vie scolaire',
+    active: true,
+    isProtected: false,
+    requiresSchoolAuth: true
   }
 ];
 
@@ -504,6 +518,12 @@ const AppLayout = () => {
           <Route path="/events" element={
             <ProtectedRoute isAllowed={isSchoolUnlocked || (user && (user.role === 'admin' || user.role === 'enseignant'))}>
               <EventApp user={user} />
+            </ProtectedRoute>
+          } />
+          <Route path="/calendar" element={<PublicCalendar user={user} />} />
+          <Route path="/calendar/admin" element={
+            <ProtectedRoute isAllowed={user && user.role === 'admin'}>
+              <AdminCalendar />
             </ProtectedRoute>
           } />
           <Route path="/JS2026" element={<HubPage />} />
