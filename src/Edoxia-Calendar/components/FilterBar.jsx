@@ -4,8 +4,8 @@ import { ROLES } from '../constants';
 
 const FilterBar = ({ selectedRoles, onToggleRole }) => {
     return (
-        <div className="flex flex-wrap gap-2 p-4 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 mb-6">
-            <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 flex items-center mr-2">
+        <div className="flex flex-wrap gap-2 p-4 bg-white/60 backdrop-blur-md rounded-2xl shadow-sm border border-white/50 mb-6">
+            <span className="text-sm font-bold text-brand-text/60 flex items-center mr-2 uppercase tracking-wide">
                 Filtrer par :
             </span>
             {ROLES.map((role) => {
@@ -19,8 +19,8 @@ const FilterBar = ({ selectedRoles, onToggleRole }) => {
                         className={`
               px-3 py-1.5 rounded-full text-xs font-bold transition-all border
               ${isSelected ?
-                                `${role.color} text-white border-transparent shadow-md` :
-                                'bg-transparent text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                `${role.color} text-white border-transparent shadow-soft` :
+                                'bg-white/50 text-brand-text/50 border-white hover:bg-white hover:text-brand-text shadow-inner hover:shadow-sm'
                             }
             `}
                     >

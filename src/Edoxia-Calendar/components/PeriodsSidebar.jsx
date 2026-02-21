@@ -36,18 +36,18 @@ const EventItem = ({ event }) => {
     }
 
     return (
-        <div className="border-b border-slate-100 dark:border-slate-800 last:border-0">
+        <div className="border-b border-white/40 last:border-0">
             <button
                 onClick={() => setExpanded(!expanded)}
-                className="w-full text-left py-2 px-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors flex justify-between items-center group"
+                className="w-full text-left py-2.5 px-3 hover:bg-white/50 transition-colors flex justify-between items-center group rounded-md"
             >
                 <div className="flex items-center gap-2 overflow-hidden">
-                    {isRecurrent && <span className="text-xs bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300 px-1.5 py-0.5 rounded">R</span>}
-                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300 capitalize group-hover:text-cyan-600 dark:group-hover:text-cyan-400 truncate">
+                    {isRecurrent && <span className="text-xs bg-brand-teal/20 text-brand-teal px-1.5 py-0.5 rounded-md font-bold">R</span>}
+                    <span className="text-sm font-bold text-brand-text capitalize group-hover:text-brand-teal transition-colors truncate">
                         {label}
                     </span>
                 </div>
-                {expanded ? <ChevronDown size={14} className="text-slate-400 flex-shrink-0" /> : <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />}
+                {expanded ? <ChevronDown size={14} className="text-brand-text/50 flex-shrink-0" /> : <ChevronRight size={14} className="text-brand-text/50 flex-shrink-0" />}
             </button>
 
             <AnimatePresence>
@@ -56,18 +56,18 @@ const EventItem = ({ event }) => {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden bg-slate-50 dark:bg-slate-900/50 px-3 pb-2 text-xs text-slate-500 space-y-1"
+                        className="overflow-hidden bg-black/5 px-4 pb-3 pt-1 text-xs text-brand-text/70 space-y-2 rounded-b-xl shadow-inner mb-2 mx-1"
                     >
                         <div className="pt-2 flex items-center gap-2">
-                            <Calendar size={12} className="text-cyan-500" />
+                            <Calendar size={12} className="text-brand-teal" />
                             {isRecurrent ? (
-                                <span>
+                                <span className="font-medium">
                                     Du {new Date(event.start).toLocaleDateString()} au {new Date(event.end).toLocaleDateString()}
                                     <br />
                                     {event.recurrence?.startTime} - {event.recurrence?.endTime}
                                 </span>
                             ) : (
-                                <span>
+                                <span className="font-medium">
                                     {new Date(event.start).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
                                     {' -> '}
                                     {new Date(event.end).toLocaleString('fr-FR', { timeStyle: 'short' })}
@@ -76,20 +76,20 @@ const EventItem = ({ event }) => {
                         </div>
                         {event.location && (
                             <div className="flex items-center gap-2">
-                                <MapPin size={12} className="text-rose-500" />
-                                <span>{event.location}</span>
+                                <MapPin size={12} className="text-brand-coral" />
+                                <span className="font-medium">{event.location}</span>
                             </div>
                         )}
                         {event.intervener && (
                             <div className="flex items-center gap-2">
-                                <User size={12} className="text-indigo-500" />
-                                <span>Intervenant: <span className="text-slate-700 dark:text-slate-300 font-bold">{event.intervener}</span></span>
+                                <User size={12} className="text-brand-peach" />
+                                <span>Intervenant: <span className="text-brand-text font-black">{event.intervener}</span></span>
                             </div>
                         )}
                         {event.contact && (
                             <div className="flex items-center gap-2">
                                 <Phone size={12} className="text-emerald-500" />
-                                <span>{event.contact}</span>
+                                <span className="font-medium">{event.contact}</span>
                             </div>
                         )}
                     </motion.div>
@@ -112,19 +112,19 @@ const PeriodSection = ({ period, events }) => {
     if (periodEvents.length === 0) return null;
 
     return (
-        <div className="mb-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+        <div className="mb-3 bg-white/60 backdrop-blur-md rounded-[24px] border border-white/50 overflow-hidden shadow-soft">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-950 font-bold text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors"
+                className="w-full flex items-center justify-between p-4 bg-white/40 font-black tracking-tight text-brand-text hover:bg-white/60 transition-colors"
             >
-                <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-cyan-500" />
+                <div className="flex items-center gap-3">
+                    <Calendar className="w-5 h-5 text-brand-teal" />
                     {period.label}
-                    <span className="text-xs font-normal text-slate-500 dark:text-slate-400 ml-2">
+                    <span className="text-[10px] uppercase font-bold text-brand-text/50 ml-2 tracking-wide block mt-0.5">
                         ({period.start.toLocaleDateString()} - {period.end.toLocaleDateString()})
                     </span>
                 </div>
-                {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                {isOpen ? <ChevronDown size={18} className="text-brand-text/50 hover:text-brand-text transition-colors" /> : <ChevronRight size={18} className="text-brand-text/50 hover:text-brand-text transition-colors" />}
             </button>
 
             <AnimatePresence>
@@ -135,7 +135,7 @@ const PeriodSection = ({ period, events }) => {
                         exit={{ height: 0 }}
                         className="overflow-hidden"
                     >
-                        <div className="border-t border-slate-200 dark:border-slate-800">
+                        <div className="border-t border-white/50">
                             {periodEvents.map(event => (
                                 <EventItem key={event.id} event={event} />
                             ))}
@@ -150,10 +150,10 @@ const PeriodSection = ({ period, events }) => {
 const PeriodsSidebar = ({ events }) => {
     return (
         <div className="space-y-4">
-            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 px-1">
+            <h3 className="text-sm font-black text-brand-text/50 uppercase tracking-widest mb-4 px-2">
                 Programmation par Période
             </h3>
-            <div className="space-y-4">
+            <div className="space-y-3">
                 {PERIODS.map(period => (
                     <PeriodSection key={period.id} period={period} events={events} />
                 ))}

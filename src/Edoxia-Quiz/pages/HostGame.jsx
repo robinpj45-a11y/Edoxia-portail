@@ -23,20 +23,20 @@ export default function HostGame() {
     await updateDoc(doc(db, "lobbies", lobbyId), { status: 'playing', currentQuestion: 0, showAnswer: false, players: playersReset });
   };
 
-  const cancelLobby = async () => { if(window.confirm("Annuler ?")) await deleteDoc(doc(db, "lobbies", lobbyId)); };
+  const cancelLobby = async () => { if (window.confirm("Annuler ?")) await deleteDoc(doc(db, "lobbies", lobbyId)); };
 
   const startReview = async () => {
-      // Passage en mode REVIEW
-      await updateDoc(doc(db, "lobbies", lobbyId), { status: 'review', reviewQuestionIndex: 0 });
+    // Passage en mode REVIEW
+    await updateDoc(doc(db, "lobbies", lobbyId), { status: 'review', reviewQuestionIndex: 0 });
   };
 
   const nextReviewQuestion = async () => {
-      if(lobby.reviewQuestionIndex + 1 < lobby.questions.length) {
-          await updateDoc(doc(db, "lobbies", lobbyId), { reviewQuestionIndex: lobby.reviewQuestionIndex + 1 });
-      } else {
-          // Fin de la review -> Clôture
-          archiveAndClose();
-      }
+    if (lobby.reviewQuestionIndex + 1 < lobby.questions.length) {
+      await updateDoc(doc(db, "lobbies", lobbyId), { reviewQuestionIndex: lobby.reviewQuestionIndex + 1 });
+    } else {
+      // Fin de la review -> Clôture
+      archiveAndClose();
+    }
   };
 
   const nextQuestionLive = async () => {
@@ -51,14 +51,14 @@ export default function HostGame() {
   };
 
   const archiveAndClose = async () => {
-      try {
-          const sortedPlayers = [...lobby.players].sort((a, b) => b.score - a.score);
-          const historyData = { code: lobby.code, date: new Date().toISOString(), winner: sortedPlayers[0]?.pseudo || 'Aucun', winnerScore: sortedPlayers[0]?.score || 0, totalPlayers: lobby.players.length, quizTitle: lobby.quizTitle || 'Quiz', players: sortedPlayers };
-          await setDoc(doc(collection(db, "gameHistory")), historyData);
-          await updateDoc(doc(db, "lobbies", lobbyId), { status: 'finished' }); // On notifie les joueurs pour le podium
-          // On ne supprime pas tout de suite pour laisser le temps de voir le podium
-          // await deleteDoc(doc(db, "lobbies", lobbyId)); 
-      } catch (error) { console.error(error); }
+    try {
+      const sortedPlayers = [...lobby.players].sort((a, b) => b.score - a.score);
+      const historyData = { code: lobby.code, date: new Date().toISOString(), winner: sortedPlayers[0]?.pseudo || 'Aucun', winnerScore: sortedPlayers[0]?.score || 0, totalPlayers: lobby.players.length, quizTitle: lobby.quizTitle || 'Quiz', players: sortedPlayers };
+      await setDoc(doc(collection(db, "gameHistory")), historyData);
+      await updateDoc(doc(db, "lobbies", lobbyId), { status: 'finished' }); // On notifie les joueurs pour le podium
+      // On ne supprime pas tout de suite pour laisser le temps de voir le podium
+      // await deleteDoc(doc(db, "lobbies", lobbyId)); 
+    } catch (error) { console.error(error); }
   };
 
   const cleanUp = async () => { await deleteDoc(doc(db, "lobbies", lobbyId)); navigate('/admin'); };
@@ -68,131 +68,160 @@ export default function HostGame() {
   // 1. SALLE D'ATTENTE
   if (lobby.status === 'waiting') {
     return (
-      <div className="flex min-h-screen bg-edoxia-bg">
-        <div className="w-1/3 bg-edoxia-card border-r border-white/10 p-8 flex flex-col justify-center items-center text-center shadow-2xl z-10">
-            <h2 className="text-edoxia-muted uppercase tracking-widest text-sm mb-4">Code de la partie</h2>
-            <div className="bg-white text-black px-8 py-4 rounded-xl text-6xl font-mono font-black mb-4 select-all">{lobby.code}</div>
-            <div className="mb-8"><span className={`px-3 py-1 rounded text-xs uppercase font-bold ${lobby.mode==='async'?'bg-purple-600':'bg-blue-600'}`}>{lobby.mode === 'async' ? 'Mode Soirée' : 'Mode Live'}</span></div>
-            <div className="mb-12"><div className="text-6xl font-bold text-edoxia-accent mb-2">{lobby.players.length}</div><div className="text-edoxia-muted uppercase tracking-widest text-xs">Joueurs prêts</div></div>
-            <div className="w-full space-y-4">
-                <button onClick={startGame} className="w-full bg-green-500 hover:bg-green-600 text-black py-4 rounded-xl font-bold text-xl shadow-lg transition">Lancer la partie</button>
-                <button onClick={cancelLobby} className="w-full py-3 rounded-xl font-bold text-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 flex items-center justify-center gap-2"><XCircle size={20} /> Annuler</button>
-            </div>
+      <div className="flex h-screen bg-brand-bg relative overflow-hidden">
+        {/* Background Decorative Element */}
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-brand-teal/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+
+        <div className="w-1/3 bg-white/40 border-r border-white/50 p-8 flex flex-col justify-center items-center text-center shadow-soft z-10 backdrop-blur-xl">
+          <h2 className="text-brand-text/60 uppercase tracking-widest text-sm font-bold mb-4">Code de la partie</h2>
+          <div className="bg-white text-brand-text px-8 py-4 rounded-[20px] text-6xl font-mono font-black mb-4 select-all shadow-inner border border-white/50">{lobby.code}</div>
+          <div className="mb-8"><span className={`px-4 py-2 rounded-full text-xs uppercase font-black shadow-sm ${lobby.mode === 'async' ? 'bg-brand-peach text-brand-text' : 'bg-brand-teal text-white'}`}>{lobby.mode === 'async' ? 'Mode Soirée' : 'Mode Live'}</span></div>
+          <div className="mb-12"><div className="text-7xl font-black text-brand-coral mb-2 drop-shadow-sm">{lobby.players.length}</div><div className="text-brand-text/60 uppercase tracking-widest text-xs font-bold">Joueurs prêts</div></div>
+          <div className="w-full space-y-4 max-w-sm">
+            <button onClick={startGame} className="w-full bg-brand-teal hover:bg-brand-teal/90 text-white py-4 rounded-[20px] font-black text-xl shadow-soft transition-all active:scale-95">Lancer la partie</button>
+            <button onClick={cancelLobby} className="w-full py-4 rounded-[20px] font-bold text-lg border-2 border-brand-coral/20 text-brand-coral hover:bg-brand-coral/10 hover:border-brand-coral/40 transition-all flex items-center justify-center gap-2"><XCircle size={20} /> Annuler</button>
+          </div>
         </div>
-        <div className="w-2/3 p-8 overflow-y-auto bg-edoxia-bg"><h1 className="text-3xl font-bold mb-8 flex items-center gap-3 text-white"><Users className="text-blue-400" /> Participants</h1><div className="grid grid-cols-3 gap-4">{lobby.players.map(p=><div key={p.id} className="bg-edoxia-card border border-white/10 px-4 py-3 rounded-lg font-bold">{p.pseudo}</div>)}</div></div>
+        <div className="w-2/3 p-12 overflow-y-auto bg-transparent relative z-10 pl-24 pt-20">
+          <h1 className="text-4xl font-black mb-12 flex items-center gap-4 text-brand-text">
+            <Users className="text-brand-teal" size={36} /> Participants
+          </h1>
+          <div className="grid grid-cols-3 gap-6">
+            {lobby.players.map(p =>
+              <div key={p.id} className="bg-white/60 border border-white/50 px-6 py-4 rounded-[16px] font-black text-brand-text shadow-sm text-center text-lg">{p.pseudo}</div>
+            )}
+          </div>
+        </div>
       </div>
     );
   }
 
   // 2. JEU EN COURS (LIVE OU ASYNC)
   if (lobby.status === 'playing') {
-      if(lobby.mode === 'async') {
-          // MODE SOIRÉE : TABLEAU DE SUIVI
-          return (
-            <div className="p-8 min-h-screen bg-edoxia-bg flex flex-col">
-                <div className="flex justify-between items-center mb-8">
-                    <div>
-                        <h1 className="text-4xl font-bold text-white mb-2">Soirée en cours...</h1>
-                        <p className="text-edoxia-muted">Code: <span className="font-mono text-white font-bold text-xl">{lobby.code}</span></p>
-                    </div>
-                    <button onClick={startReview} className="bg-yellow-500 hover:bg-yellow-600 text-black px-8 py-4 rounded-xl font-bold text-xl shadow-lg flex items-center gap-3"><Eye /> Clôturer et Vérifier</button>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {lobby.players.map(p => {
-                        const progress = (p.currentQuestionIndex || 0) / lobby.questions.length * 100;
-                        return (
-                            <div key={p.id} className="bg-edoxia-card p-4 rounded-xl border border-white/10">
-                                <div className="flex justify-between mb-2">
-                                    <span className="font-bold">{p.pseudo}</span>
-                                    <span className="text-xs text-edoxia-muted">{p.currentQuestionIndex || 0} / {lobby.questions.length}</span>
-                                </div>
-                                <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
-                                    <div className="h-full bg-blue-500 transition-all duration-500" style={{width: `${Math.min(progress, 100)}%`}}></div>
-                                </div>
-                            </div>
-                        )
-                    })}
-                </div>
+    if (lobby.mode === 'async') {
+      // MODE SOIRÉE : TABLEAU DE SUIVI
+      return (
+        <div className="p-8 min-h-screen bg-brand-bg flex flex-col relative overflow-hidden">
+          <div className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] bg-brand-coral/5 rounded-full blur-[100px] pointer-events-none"></div>
+
+          <div className="flex justify-between items-center mb-12 relative z-10">
+            <div>
+              <h1 className="text-5xl font-black text-brand-text mb-2">Soirée en cours...</h1>
+              <p className="text-brand-text/60 font-bold uppercase tracking-widest text-sm">Code: <span className="font-mono text-brand-coral font-black text-xl">{lobby.code}</span></p>
             </div>
-          )
-      } else {
-          // MODE LIVE : CONTROLEUR CLASSIQUE
-          const question = lobby.questions[lobby.currentQuestion];
-          const answeredCount = lobby.players.filter(p => p.hasAnswered).length;
-          return (
-            <div className="flex flex-col h-screen p-6 bg-edoxia-bg">
-              <div className="flex-1 flex flex-col items-center justify-center">
-                <h2 className="text-4xl font-bold text-center mb-12 max-w-5xl leading-tight">{question.question}</h2>
-                {question.image && <img src={question.image} className="h-64 mb-8 rounded shadow"/>}
-              </div>
-              <div className="h-24 flex items-center justify-between border-t border-white/10 mt-6 pt-4 px-4 bg-edoxia-bg">
-                <div className="flex items-center gap-6 text-2xl font-bold">Q: {lobby.currentQuestion + 1} <span className="text-green-400 ml-4">{answeredCount} Réponses</span></div>
-                <button onClick={nextQuestionLive} className="bg-white hover:bg-gray-200 text-black px-8 py-4 rounded-xl font-bold shadow-lg text-xl flex items-center gap-2 hover:scale-105 transition">Suivant →</button>
-              </div>
+            <button onClick={startReview} className="bg-brand-peach hover:bg-brand-peach/80 text-brand-text px-8 py-4 rounded-[20px] font-black text-lg shadow-soft flex items-center gap-3 transition-colors border border-brand-coral/20"><Eye size={24} /> Clôturer et Vérifier</button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+            {lobby.players.map(p => {
+              const progress = (p.currentQuestionIndex || 0) / lobby.questions.length * 100;
+              return (
+                <div key={p.id} className="bg-white/40 p-5 rounded-[20px] border border-white/50 backdrop-blur-md shadow-sm">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="font-black text-lg text-brand-text">{p.pseudo}</span>
+                    <span className="text-xs font-bold text-brand-text/60 uppercase tracking-widest">{p.currentQuestionIndex || 0} / {lobby.questions.length}</span>
+                  </div>
+                  <div className="h-4 bg-white/60 rounded-full overflow-hidden border border-white/80 shadow-inner">
+                    <div className="h-full bg-brand-teal transition-all duration-700 ease-out" style={{ width: `${Math.min(progress, 100)}%` }}></div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )
+    } else {
+      // MODE LIVE : CONTROLEUR CLASSIQUE
+      const question = lobby.questions[lobby.currentQuestion];
+      const answeredCount = lobby.players.filter(p => p.hasAnswered).length;
+      return (
+        <div className="flex flex-col h-screen bg-brand-bg relative overflow-hidden">
+          <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-brand-teal/5 rounded-full blur-[80px] pointer-events-none translate-x-1/4 translate-y-1/4"></div>
+
+          <div className="flex-1 flex flex-col items-center justify-center p-8 relative z-10 w-full max-w-5xl mx-auto">
+            {question.image && <img src={question.image} className="max-h-[30vh] mb-12 rounded-[24px] shadow-soft border border-white/50" />}
+            <div className="bg-white/40 border border-white/50 p-12 rounded-[30px] backdrop-blur-xl shadow-soft w-full">
+              <h2 className="text-5xl font-black text-center text-brand-text leading-tight">{question.question}</h2>
             </div>
-          );
-      }
+          </div>
+
+          <div className="h-28 flex items-center justify-between border-t border-white/30 pt-4 px-12 bg-white/20 backdrop-blur-md relative z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.02)]">
+            <div className="flex items-center gap-8 text-2xl font-black text-brand-text">
+              <span className="bg-white/60 px-6 py-2 rounded-full border border-white/80 shadow-inner text-brand-teal">Q: {lobby.currentQuestion + 1}</span>
+              <span className="text-brand-coral flex items-center gap-2 bg-brand-coral/10 px-6 py-2 rounded-full border border-brand-coral/20">{answeredCount} Réponses</span>
+            </div>
+            <button onClick={nextQuestionLive} className="bg-brand-teal hover:bg-brand-teal/90 text-white px-10 py-5 rounded-[20px] font-black shadow-soft text-xl flex items-center gap-3 transition-all active:scale-95">Suivant →</button>
+          </div>
+        </div>
+      );
+    }
   }
 
   // 3. MODE REVIEW (NOUVEAU)
   if (lobby.status === 'review') {
-      const qIndex = lobby.reviewQuestionIndex;
-      const question = lobby.questions[qIndex];
-      
-      // Trouver les gagnants de CETTE question
-      const winners = lobby.players.filter(p => {
-          const answer = p.answers ? p.answers[qIndex] : undefined;
-          if (answer === undefined) return false;
-          if (question.type === 'text') return String(answer).toLowerCase().trim() === String(question.correct).toLowerCase().trim();
-          return answer === question.correct;
-      });
+    const qIndex = lobby.reviewQuestionIndex;
+    const question = lobby.questions[qIndex];
 
-      return (
-        <div className="flex min-h-screen bg-edoxia-bg">
-            {/* Colonne Question */}
-            <div className="w-2/3 p-8 flex flex-col justify-center items-center border-r border-white/10">
-                <div className="mb-4 text-edoxia-muted uppercase tracking-widest font-bold">Vérification - Question {qIndex + 1} / {lobby.questions.length}</div>
-                {question.image && <img src={question.image} className="max-h-60 mb-6 rounded shadow border border-white/10"/>}
-                <h2 className="text-4xl font-bold text-center mb-8">{question.question}</h2>
-                
-                <div className="bg-green-500/20 text-green-400 border border-green-500/50 px-8 py-4 rounded-xl text-2xl font-bold mb-8">
-                    Réponse : {question.type === 'mcq' || question.type === 'tf' ? question.options[question.correct] : question.correct}
-                </div>
+    // Trouver les gagnants de CETTE question
+    const winners = lobby.players.filter(p => {
+      const answer = p.answers ? p.answers[qIndex] : undefined;
+      if (answer === undefined) return false;
+      if (question.type === 'text') return String(answer).toLowerCase().trim() === String(question.correct).toLowerCase().trim();
+      return answer === question.correct;
+    });
 
-                <button onClick={nextReviewQuestion} className="bg-white text-black px-8 py-3 rounded-lg font-bold hover:bg-gray-200 shadow-lg">
-                    {qIndex + 1 === lobby.questions.length ? "Voir le Podium Final" : "Question Suivante →"}
-                </button>
-            </div>
+    return (
+      <div className="flex h-screen bg-brand-bg relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-brand-teal/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
 
-            {/* Colonne Gagnants */}
-            <div className="w-1/3 p-8 bg-edoxia-card overflow-y-auto">
-                <h3 className="text-2xl font-bold mb-6 flex items-center gap-2"><Award className="text-yellow-400"/> Bonnes Réponses ({winners.length})</h3>
-                <div className="space-y-2">
-                    {winners.length === 0 ? <p className="text-edoxia-muted">Personne n'a trouvé !</p> : 
-                    winners.map(p => (
-                        <div key={p.id} className="bg-green-500/10 border border-green-500/30 p-3 rounded flex justify-between items-center animate-in slide-in-from-right-4">
-                            <span className="font-bold">{p.pseudo}</span>
-                            <CheckCircle size={16} className="text-green-400"/>
-                        </div>
-                    ))}
-                </div>
-            </div>
+        {/* Colonne Question */}
+        <div className="w-2/3 p-12 flex flex-col justify-center items-center border-r border-white/50 backdrop-blur-sm z-10">
+          <div className="mb-6 text-brand-text/50 uppercase tracking-widest font-black text-sm bg-white/40 px-6 py-2 rounded-full border border-white/60 shadow-inner">Vérification - Question {qIndex + 1} / {lobby.questions.length}</div>
+          {question.image && <img src={question.image} className="max-h-60 mb-8 rounded-[20px] shadow-sm border border-white/50" />}
+          <div className="bg-white/40 border border-white/50 p-10 rounded-[30px] backdrop-blur-xl shadow-soft w-full max-w-4xl text-center mb-10">
+            <h2 className="text-4xl font-black text-brand-text leading-tight">{question.question}</h2>
+          </div>
+
+          <div className="bg-brand-teal/10 text-brand-teal border border-brand-teal/20 px-10 py-5 rounded-[20px] text-2xl font-black mb-10 shadow-sm backdrop-blur-md text-center max-w-3xl w-full">
+            Réponse : {question.type === 'mcq' || question.type === 'tf' ? question.options[question.correct] : question.correct}
+          </div>
+
+          <button onClick={nextReviewQuestion} className="bg-brand-teal text-white px-10 py-4 rounded-[20px] font-black hover:bg-brand-teal/90 shadow-soft transition-all active:scale-95 text-lg">
+            {qIndex + 1 === lobby.questions.length ? "Voir le Podium Final 🏆" : "Question Suivante →"}
+          </button>
         </div>
-      )
+
+        {/* Colonne Gagnants */}
+        <div className="w-1/3 p-10 bg-white/30 backdrop-blur-xl border-l border-white/40 z-10 overflow-y-auto">
+          <h3 className="text-2xl font-black mb-8 flex items-center gap-3 text-brand-text"><Award className="text-brand-coral" size={32} /> Bonnes Réponses ({winners.length})</h3>
+          <div className="space-y-4">
+            {winners.length === 0 ? <p className="text-brand-text/50 font-bold text-lg text-center mt-10">Personne n'a trouvé ! 😕</p> :
+              winners.map(p => (
+                <div key={p.id} className="bg-brand-teal/10 border border-brand-teal/20 p-4 rounded-[16px] flex justify-between items-center animate-in slide-in-from-right-4 shadow-sm backdrop-blur-md">
+                  <span className="font-black text-brand-text text-lg">{p.pseudo}</span>
+                  <div className="bg-brand-teal text-white rounded-full p-1"><CheckCircle size={20} /></div>
+                </div>
+              ))}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // 4. FIN (PODIUM)
   if (lobby.status === 'finished') {
     const sortedPlayers = [...lobby.players].sort((a, b) => b.score - a.score);
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-center bg-edoxia-bg relative overflow-hidden">
-        <h1 className="text-5xl font-bold mb-16 text-white z-10">Podium Final</h1>
+      <div className="flex flex-col items-center justify-center min-h-screen text-center bg-brand-bg relative overflow-hidden">
+        <div className="absolute top-[10%] left-[20%] w-[600px] h-[600px] bg-brand-coral/10 rounded-full blur-[100px] pointer-events-none"></div>
+        <div className="absolute bottom-[10%] right-[20%] w-[500px] h-[500px] bg-brand-teal/10 rounded-full blur-[80px] pointer-events-none"></div>
+
+        <h1 className="text-5xl font-black mb-16 text-brand-text z-10 drop-shadow-sm">Podium Final</h1>
         <div className="flex items-end gap-6 mb-20 z-10">
-            {sortedPlayers[1] && <div className="flex flex-col items-center"><div className="w-20 h-20 rounded-full bg-gray-300 border-4 border-gray-500 mb-4 flex items-center justify-center text-gray-800 font-black text-3xl">2</div><div className="h-32 w-24 bg-gradient-to-t from-gray-800 to-gray-600 rounded-t-lg"></div><p className="mt-4 font-bold text-xl text-white">{sortedPlayers[1].pseudo}</p><p className="text-sm text-gray-400">{sortedPlayers[1].score} pts</p></div>}
-            {sortedPlayers[0] && <div className="flex flex-col items-center"><div className="w-28 h-28 rounded-full bg-yellow-400 border-4 border-yellow-600 mb-4 flex items-center justify-center text-yellow-900 font-black text-5xl">1</div><div className="h-48 w-32 bg-gradient-to-t from-yellow-700 to-yellow-500 rounded-t-lg shadow-2xl"></div><p className="mt-4 font-bold text-2xl text-yellow-400">{sortedPlayers[0].pseudo}</p><p className="text-lg text-yellow-200">{sortedPlayers[0].score} pts</p></div>}
-            {sortedPlayers[2] && <div className="flex flex-col items-center"><div className="w-20 h-20 rounded-full bg-amber-700 border-4 border-amber-900 mb-4 flex items-center justify-center text-amber-100 font-black text-3xl">3</div><div className="h-24 w-24 bg-gradient-to-t from-amber-900 to-amber-700 rounded-t-lg"></div><p className="mt-4 font-bold text-xl text-white">{sortedPlayers[2].pseudo}</p><p className="text-sm text-gray-400">{sortedPlayers[2].score} pts</p></div>}
+          {sortedPlayers[1] && <div className="flex flex-col items-center"><div className="w-20 h-20 rounded-full bg-slate-200 border-4 border-slate-300 mb-4 flex items-center justify-center text-slate-500 font-black text-3xl shadow-inner">2</div><div className="h-32 w-28 bg-white/60 border border-white/50 border-b-0 rounded-t-[20px] backdrop-blur-md shadow-[0_-10px_20px_rgba(0,0,0,0.02)]"></div><p className="mt-6 font-black text-xl text-brand-text">{sortedPlayers[1].pseudo}</p><p className="text-sm font-bold text-brand-text/50">{sortedPlayers[1].score} pts</p></div>}
+          {sortedPlayers[0] && <div className="flex flex-col items-center"><div className="w-28 h-28 rounded-full bg-brand-coral/20 border-4 border-brand-coral/50 mb-4 flex items-center justify-center text-brand-coral font-black text-5xl shadow-inner relative"><Award className="absolute -top-3 -right-3 text-brand-teal" size={32} />1</div><div className="h-48 w-36 bg-white/80 border border-white/60 border-b-0 rounded-t-[20px] backdrop-blur-xl shadow-[0_-15px_30px_rgba(0,0,0,0.05)]"></div><p className="mt-6 font-black text-2xl text-brand-coral drop-shadow-sm">{sortedPlayers[0].pseudo}</p><p className="text-lg font-black text-brand-text">{sortedPlayers[0].score} pts</p></div>}
+          {sortedPlayers[2] && <div className="flex flex-col items-center"><div className="w-20 h-20 rounded-full bg-brand-peach/30 border-4 border-brand-peach/60 mb-4 flex items-center justify-center text-brand-coral/70 font-black text-3xl shadow-inner">3</div><div className="h-24 w-28 bg-white/40 border border-white/50 border-b-0 rounded-t-[20px] backdrop-blur-sm shadow-[0_-5px_15px_rgba(0,0,0,0.01)]"></div><p className="mt-6 font-black text-xl text-brand-text">{sortedPlayers[2].pseudo}</p><p className="text-sm font-bold text-brand-text/50">{sortedPlayers[2].score} pts</p></div>}
         </div>
-        <button onClick={cleanUp} className="z-10 flex items-center gap-3 px-8 py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-lg shadow-lg hover:scale-105 transition"><Trash2 size={24}/> Supprimer le Lobby</button>
+        <button onClick={cleanUp} className="z-10 flex items-center gap-3 px-8 py-4 bg-red-500/10 border-2 border-red-500 hover:bg-red-500 hover:text-white text-red-500 rounded-full font-black text-lg shadow-soft hover:scale-105 transition-all"><Trash2 size={24} /> Supprimer le Lobby</button>
       </div>
     )
   }

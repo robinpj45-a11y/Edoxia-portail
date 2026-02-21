@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ThemeContext } from '../../ThemeContext';
+import { ArrowLeft } from 'lucide-react';
 
 export default function HomeGames() {
   const { theme } = React.useContext(ThemeContext);
@@ -8,30 +9,33 @@ export default function HomeGames() {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
-      <Link to="/" className={`relative md:absolute top-0 left-0 md:top-6 md:left-6 z-10 w-fit mb-6 md:mb-0 flex items-center gap-2 px-4 py-2 text-sm rounded-lg border transition-colors ${isDark ? 'text-cyan-400 bg-cyan-950/30 border-cyan-900/50 hover:bg-cyan-900/50' : 'text-cyan-700 bg-cyan-100/50 border-cyan-200 hover:bg-cyan-200/50'}`}>
-        ← Retour
-      </Link>
+      <div className="w-full flex justify-start mb-6">
+        <Link to="/" className="flex flex-shrink-0 items-center justify-center gap-2 px-5 py-2.5 text-sm font-bold text-brand-text bg-white/40 rounded-full border border-white/50 hover:bg-white/80 transition-all shadow-soft backdrop-blur-md w-fit">
+          <ArrowLeft size={18} />
+          Retour Accueil
+        </Link>
+      </div>
 
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8">
-        <div className={`max-w-3xl p-4 rounded-xl border text-sm ${isDark ? 'bg-red-500/10 border-red-500/20 text-red-200' : 'bg-red-50 border-red-200 text-red-700'}`}>
+        <div className="max-w-3xl p-4 rounded-2xl border bg-brand-peach/20 border-brand-coral/20 text-brand-coral text-sm font-medium shadow-soft">
           <p>⚠️ « Les pseudonymes issus d'un registre familier ou jugés inappropriés seront retirés des classements. Ces activités s'inscrivent dans un cadre strictement pédagogique. Seulement le plus haut score par personne est gardé, dans la mesure du possible merci de garder exactement le même pseudonyme. »</p>
         </div>
         <div className="space-y-2">
-          <h1 className={`text-4xl md:text-5xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Jeux Éducatifs 🎮</h1>
-          <p className={`${isDark ? 'text-slate-400' : 'text-slate-600'} text-lg`}>Choisis ta matière :</p>
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-brand-text">Jeux Éducatifs 🎮</h1>
+          <p className="text-brand-text/70 text-lg">Choisis ta matière :</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full max-w-2xl">
-          <Link to="/games/maths" className={`group relative flex flex-col items-center p-8 rounded-2xl border transition-all cursor-pointer backdrop-blur-sm ${isDark ? 'border-slate-800 bg-slate-900/50 hover:bg-slate-800/80 hover:border-cyan-500/30' : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-cyan-500/50 shadow-sm'}`}>
-            <span className="text-6xl mb-4 group-hover:scale-110 transition-transform duration-300">📐</span>
-            <h3 className={`text-2xl font-semibold group-hover:text-cyan-600 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>Mathématiques</h3>
-            <p className={`${isDark ? 'text-slate-400' : 'text-slate-500'} mt-2`}>Calcul mental, logique...</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
+          <Link to="/games/maths" className="group relative flex flex-col items-center p-8 rounded-[24px] border border-white/50 bg-white/40 hover:bg-white/80 transition-all cursor-pointer backdrop-blur-xl shadow-soft">
+            <span className="text-6xl mb-4 group-hover:scale-110 transition-transform duration-300 drop-shadow-md">📐</span>
+            <h3 className="text-2xl font-bold group-hover:text-brand-teal text-brand-text transition-colors">Mathématiques</h3>
+            <p className="text-brand-text/60 font-medium mt-2">Calcul mental, logique...</p>
           </Link>
 
-          <Link to="/games/french" className={`group relative flex flex-col items-center p-8 rounded-2xl border transition-all cursor-pointer backdrop-blur-sm ${isDark ? 'border-slate-800 bg-slate-900/50 hover:bg-slate-800/80 hover:border-violet-500/30' : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-violet-500/50 shadow-sm'}`}>
-            <span className="text-6xl mb-4 group-hover:scale-110 transition-transform duration-300">📚</span>
-            <h3 className={`text-2xl font-semibold group-hover:text-violet-600 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>Français</h3>
-            <p className={`${isDark ? 'text-slate-400' : 'text-slate-500'} mt-2`}>Grammaire, conjugaison...</p>
+          <Link to="/games/french" className="group relative flex flex-col items-center p-8 rounded-[24px] border border-white/50 bg-white/40 hover:bg-white/80 transition-all cursor-pointer backdrop-blur-xl shadow-soft">
+            <span className="text-6xl mb-4 group-hover:scale-110 transition-transform duration-300 drop-shadow-md">📚</span>
+            <h3 className="text-2xl font-bold group-hover:text-brand-coral text-brand-text transition-colors">Français</h3>
+            <p className="text-brand-text/60 font-medium mt-2">Grammaire, conjugaison...</p>
           </Link>
         </div>
       </div>

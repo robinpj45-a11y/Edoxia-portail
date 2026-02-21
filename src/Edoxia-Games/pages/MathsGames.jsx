@@ -235,15 +235,15 @@ function MathsGames() {
   // --- RENDER ---
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
-      <Link to="/games" className={`relative md:absolute top-0 left-0 md:top-6 md:left-6 z-10 w-fit mb-6 md:mb-0 flex items-center gap-2 px-4 py-2 text-sm rounded-lg border transition-colors ${isDark ? 'text-cyan-400 bg-cyan-950/30 border-cyan-900/50 hover:bg-cyan-900/50' : 'text-cyan-700 bg-cyan-100/50 border-cyan-200 hover:bg-cyan-200/50'}`}>
+      <Link to="/games" className="relative md:absolute top-0 left-0 md:top-6 md:left-6 z-10 w-fit mb-6 md:mb-0 flex items-center gap-2 px-4 py-2 text-sm rounded-full font-bold text-brand-text bg-white/40 border border-white/50 hover:bg-white/80 transition-all shadow-soft backdrop-blur-md">
         ← Retour
       </Link>
 
       {!selectedGame ? (
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8">
           <div className="space-y-2">
-            <h1 className={`text-4xl md:text-5xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Mathématiques 📐</h1>
-            <p className={`${isDark ? 'text-slate-400' : 'text-slate-600'} text-lg`}>Choisis ton épreuve :</p>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-brand-text">Mathématiques 📐</h1>
+            <p className="text-brand-text/70 text-lg">Choisis ton épreuve :</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 w-full max-w-4xl">
@@ -258,32 +258,32 @@ function MathsGames() {
             ].map((game) => (
               <div
                 key={game.id}
-                className={`group relative flex flex-col items-center p-6 rounded-2xl border transition-all cursor-pointer backdrop-blur-sm ${isDark ? 'border-slate-800 bg-slate-900/50 hover:bg-slate-800/80 hover:border-cyan-500/30' : 'border-slate-200 bg-white hover:bg-slate-50 hover:border-cyan-500/50 shadow-sm'}`}
+                className="group relative flex flex-col items-center p-6 rounded-[24px] border border-white/50 bg-white/40 hover:bg-white/80 transition-all cursor-pointer backdrop-blur-xl shadow-soft"
                 onClick={() => setSelectedGame(game.id)}
               >
-                <span className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300">{game.icon}</span>
-                <h3 className={`text-lg font-semibold group-hover:text-cyan-600 ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{game.title}</h3>
-                <p className={`${isDark ? 'text-slate-400' : 'text-slate-500'} text-sm`}>{game.desc}</p>
+                <span className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300 drop-shadow-sm">{game.icon}</span>
+                <h3 className="text-lg font-bold group-hover:text-brand-teal text-brand-text transition-colors">{game.title}</h3>
+                <p className="text-brand-text/60 text-sm font-medium">{game.desc}</p>
               </div>
             ))}
           </div>
         </div>
       ) : (
-        /* --- ECRAN DE JEU (Identique à avant) --- */
-        <div className={`w-full max-w-2xl mx-auto border p-8 rounded-2xl backdrop-blur-xl shadow-2xl mt-10 ${isDark ? 'bg-slate-900/80 border-slate-700/50' : 'bg-white/90 border-slate-200'}`}>
+        /* --- ECRAN DE JEU --- */
+        <div className="w-full max-w-2xl mx-auto border border-white/50 p-8 rounded-[30px] bg-white/40 backdrop-blur-xl shadow-soft mt-10">
           <div className="flex justify-between items-center mb-8">
             <button
-              className={`px-4 py-2 text-sm rounded-lg transition-colors ${isDark ? 'text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-800' : 'text-slate-500 hover:text-slate-900 bg-slate-100 hover:bg-slate-200'}`}
+              className="px-4 py-2 text-sm font-bold rounded-full bg-white text-brand-text border border-brand-text/10 hover:bg-brand-coral hover:text-white transition-all shadow-sm"
               onClick={goMenu}
             >
               ⬅ Menu Maths
             </button>
-            <h1 className={`text-2xl font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>{getGameTitle()} 🏆</h1>
+            <h1 className="text-2xl font-bold flex items-center gap-2 text-brand-text">{getGameTitle()} 🏆</h1>
           </div>
 
-          <div className={`p-6 rounded-xl mb-8 border ${isDark ? 'bg-slate-950/50 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-            <h3 className={`font-semibold mb-4 flex items-center gap-2 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>
-              <Trophy size={20} className="text-yellow-500" /> Classement
+          <div className="p-6 rounded-[24px] mb-8 border border-white/40 bg-white/60 shadow-inner">
+            <h3 className="font-bold mb-4 flex items-center gap-2 text-brand-teal">
+              <Trophy size={20} className="text-brand-coral" /> Classement
             </h3>
 
             {topScores.length > 0 ? (
@@ -294,12 +294,12 @@ function MathsGames() {
                   <div className="flex flex-col items-center w-1/3">
                     {topScores[1] ? (
                       <>
-                        <div className={`relative flex flex-col items-center justify-end w-full rounded-t-xl p-2 border-t border-l border-r ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-100 border-slate-200'}`} style={{ height: '120px' }}>
-                          <span className="text-2xl mb-1">🥈</span>
-                          <span className={`font-bold text-center text-sm truncate w-full ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{topScores[1].pseudo}</span>
-                          <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{topScores[1].score} pts</span>
+                        <div className="relative flex flex-col items-center justify-end w-full rounded-t-2xl p-2 border-t border-l border-r border-white/50 bg-brand-bg/50 backdrop-blur-sm" style={{ height: '120px' }}>
+                          <span className="text-2xl mb-1 drop-shadow-sm">🥈</span>
+                          <span className="font-bold text-center text-sm truncate w-full text-brand-text">{topScores[1].pseudo}</span>
+                          <span className="text-xs text-brand-text/60 font-medium">{topScores[1].score} pts</span>
                         </div>
-                        <div className={`w-full h-2 ${isDark ? 'bg-slate-600' : 'bg-slate-300'}`}></div>
+                        <div className="w-full h-2 bg-brand-teal mt-1 rounded-full"></div>
                       </>
                     ) : <div className="h-[120px]"></div>}
                   </div>
@@ -308,13 +308,13 @@ function MathsGames() {
                   <div className="flex flex-col items-center w-1/3">
                     {topScores[0] ? (
                       <>
-                        <div className="mb-2"><Trophy size={24} className="text-yellow-400 animate-bounce" /></div>
-                        <div className={`relative flex flex-col items-center justify-end w-full rounded-t-xl p-2 border-t border-l border-r shadow-[0_0_15px_rgba(250,204,21,0.3)] ${isDark ? 'bg-gradient-to-b from-yellow-500/20 to-slate-900 border-yellow-500/50' : 'bg-gradient-to-b from-yellow-100 to-white border-yellow-400'}`} style={{ height: '150px' }}>
-                          <span className="text-3xl mb-1">👑</span>
-                          <span className={`font-bold text-center truncate w-full ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`}>{topScores[0].pseudo}</span>
-                          <span className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{topScores[0].score} pts</span>
+                        <div className="mb-2"><Trophy size={28} className="text-brand-coral drop-shadow-md animate-bounce" /></div>
+                        <div className="relative flex flex-col items-center justify-end w-full rounded-t-2xl p-2 border-t border-l border-r border-white/60 bg-gradient-to-b from-brand-peach/40 to-white/20 backdrop-blur-md shadow-[0_0_20px_rgba(235,172,162,0.4)]" style={{ height: '150px' }}>
+                          <span className="text-3xl mb-1 drop-shadow-sm">👑</span>
+                          <span className="font-bold text-center truncate w-full text-brand-coral">{topScores[0].pseudo}</span>
+                          <span className="font-black text-brand-text">{topScores[0].score} pts</span>
                         </div>
-                        <div className="w-full h-2 bg-yellow-400"></div>
+                        <div className="w-full h-2 bg-brand-coral mt-1 rounded-full"></div>
                       </>
                     ) : null}
                   </div>
@@ -323,12 +323,12 @@ function MathsGames() {
                   <div className="flex flex-col items-center w-1/3">
                     {topScores[2] ? (
                       <>
-                        <div className={`relative flex flex-col items-center justify-end w-full rounded-t-xl p-2 border-t border-l border-r ${isDark ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-100 border-slate-200'}`} style={{ height: '100px' }}>
-                          <span className="text-2xl mb-1">🥉</span>
-                          <span className={`font-bold text-center text-sm truncate w-full ${isDark ? 'text-amber-700' : 'text-amber-800'}`}>{topScores[2].pseudo}</span>
-                          <span className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>{topScores[2].score} pts</span>
+                        <div className="relative flex flex-col items-center justify-end w-full rounded-t-2xl p-2 border-t border-l border-r border-white/50 bg-brand-bg/40 backdrop-blur-sm" style={{ height: '100px' }}>
+                          <span className="text-2xl mb-1 drop-shadow-sm">🥉</span>
+                          <span className="font-bold text-center text-sm truncate w-full text-brand-text/80">{topScores[2].pseudo}</span>
+                          <span className="text-xs text-brand-text/70">{topScores[2].score} pts</span>
                         </div>
-                        <div className={`w-full h-2 ${isDark ? 'bg-amber-900' : 'bg-amber-700'}`}></div>
+                        <div className="w-full h-2 bg-brand-text/30 mt-1 rounded-full"></div>
                       </>
                     ) : <div className="h-[100px]"></div>}
                   </div>
@@ -336,23 +336,23 @@ function MathsGames() {
 
                 {/* LIST (4th - 15th) */}
                 {topScores.length > 3 && (
-                  <div className="mt-2">
+                  <div className="mt-4">
                     <button
                       onClick={() => setShowAllScores(!showAllScores)}
-                      className={`w-full flex items-center justify-center gap-2 py-2 text-sm font-medium transition-colors rounded-lg ${isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-600'}`}
+                      className="w-full flex items-center justify-center gap-2 py-3 px-4 text-sm font-bold transition-all rounded-xl hover:bg-white text-brand-text/60 hover:text-brand-text bg-white/40 shadow-sm border border-white/50"
                     >
                       {showAllScores ? <><ChevronUp size={16} /> Masquer la suite</> : <><ChevronDown size={16} /> Voir la suite ({topScores.length - 3})</>}
                     </button>
 
                     {showAllScores && (
-                      <div className={`mt-2 space-y-1 rounded-xl p-2 ${isDark ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
+                      <div className="mt-3 space-y-2 rounded-2xl p-2 bg-white/30 backdrop-blur-sm border border-white/30">
                         {topScores.slice(3).map((score, index) => (
-                          <div key={score.id || index} className={`flex items-center justify-between px-3 py-2 rounded-lg ${isDark ? 'bg-slate-800/50' : 'bg-white border border-slate-100'}`}>
+                          <div key={score.id || index} className="flex items-center justify-between px-4 py-3 rounded-[16px] bg-white/60 hover:bg-white/90 border border-white/50 shadow-sm transition-colors">
                             <div className="flex items-center gap-3">
-                              <span className={`flex items-center justify-center w-6 h-6 text-xs font-bold rounded-full ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-600'}`}>{index + 4}</span>
-                              <span className={`text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{score.pseudo} <span className="opacity-50 text-xs font-normal">({score.classLabel || "?"})</span></span>
+                              <span className="flex items-center justify-center w-8 h-8 text-xs font-bold rounded-full bg-brand-bg text-brand-text shadow-inner border border-brand-text/5">{index + 4}</span>
+                              <span className="text-sm font-bold text-brand-text">{score.pseudo} <span className="opacity-60 text-xs font-medium">({score.classLabel || "?"})</span></span>
                             </div>
-                            <strong className={`text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>{score.score}</strong>
+                            <strong className="text-sm text-brand-teal font-black">{score.score}</strong>
                           </div>
                         ))}
                       </div>
@@ -365,24 +365,24 @@ function MathsGames() {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-8">
-            <div className={`p-4 rounded-xl border text-center flex flex-col relative overflow-hidden ${isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-slate-100 border-slate-200'}`}>
-              <span className={`text-xs uppercase tracking-wider mb-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Temps</span>
-              <strong className={`text-3xl ${isDark ? 'text-white' : 'text-slate-900'}`}>{isPracticeMode ? "∞" : `${timeLeft.toFixed(0)} s`}</strong>
-              {showPenalty && !isPracticeMode && <span className="absolute top-2 right-2 text-red-500 text-xs font-bold animate-ping">-5s</span>}
+          <div className="grid grid-cols-2 gap-6 mb-8">
+            <div className="p-4 rounded-[20px] border border-white/50 text-center flex flex-col relative overflow-hidden bg-brand-teal text-white shadow-soft">
+              <span className="text-[10px] font-bold uppercase tracking-wider mb-1 text-white/70">Temps</span>
+              <strong className="text-4xl font-black drop-shadow-sm">{isPracticeMode ? "∞" : `${timeLeft.toFixed(0)} s`}</strong>
+              {showPenalty && !isPracticeMode && <span className="absolute top-2 right-2 text-brand-coral bg-white px-2 py-0.5 rounded-full text-xs font-black animate-ping">-5s</span>}
             </div>
-            <div className={`p-4 rounded-xl border text-center flex flex-col ${isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-slate-100 border-slate-200'}`}>
-              <span className={`text-xs uppercase tracking-wider mb-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Score</span>
-              <strong className={`text-3xl ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>{score}</strong>
+            <div className="p-4 rounded-[20px] border border-white/60 text-center flex flex-col bg-white/80 backdrop-blur-sm shadow-soft">
+              <span className="text-[10px] font-bold uppercase tracking-wider mb-1 text-brand-text/50">Score</span>
+              <strong className="text-4xl font-black text-brand-coral drop-shadow-sm">{score}</strong>
             </div>
           </div>
 
           {!running && (
-            <div className="mb-6 space-y-4">
-              <div className="flex gap-2">
+            <div className="mb-6 space-y-6">
+              <div className="flex gap-4">
                 <input
                   type="text"
-                  className={`flex-1 border rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-950 border-slate-700 text-white placeholder-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500' : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500'}`}
+                  className="flex-1 w-2/3 border border-white/50 rounded-2xl px-5 py-4 outline-none transition-all bg-white/60 text-brand-text placeholder-brand-text/40 focus:border-brand-teal focus:bg-white shadow-inner font-semibold"
                   placeholder="Ton pseudo"
                   value={playerName}
                   onChange={(e) => setPlayerName(e.target.value)}
@@ -390,26 +390,26 @@ function MathsGames() {
                   autoFocus
                 />
                 <select
-                  className={`w-1/3 border rounded-xl px-4 py-3 outline-none transition-all ${isDark ? 'bg-slate-950 border-slate-700 text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500' : 'bg-white border-slate-300 text-slate-900 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500'}`}
+                  className="w-1/3 border border-white/50 rounded-2xl px-5 py-4 outline-none transition-all bg-white/60 text-brand-text focus:border-brand-teal focus:bg-white shadow-inner font-semibold cursor-pointer"
                   value={playerClass}
                   onChange={(e) => setPlayerClass(e.target.value)}
                 >
-                  <option value="">Choisir sa classe</option>
+                  <option value="">Ta classe</option>
                   {CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div className="flex justify-center gap-4">
                 <button
                   onClick={() => setIsAudioMode(!isAudioMode)}
-                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors border flex items-center gap-2 ${isAudioMode ? 'bg-cyan-500/20 border-cyan-500 text-cyan-500' : 'bg-transparent border-slate-500 text-slate-500 hover:border-slate-400 hover:text-slate-400'}`}
+                  className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all border flex items-center gap-2 shadow-sm ${isAudioMode ? 'bg-brand-teal text-white border-brand-teal' : 'bg-white/40 border-white/60 text-brand-text/60 hover:bg-white hover:text-brand-text'}`}
                 >
-                  {isAudioMode ? <><Volume2 size={18} /> Audio Activé</> : <><VolumeX size={18} /> Audio Désactivé</>}
+                  {isAudioMode ? <><Volume2 size={16} /> Audio Activé</> : <><VolumeX size={16} /> Audio Désactivé</>}
                 </button>
                 <button
                   onClick={() => setIsPracticeMode(!isPracticeMode)}
-                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors border flex items-center gap-2 ${isPracticeMode ? 'bg-emerald-500/20 border-emerald-500 text-emerald-500' : 'bg-transparent border-slate-500 text-slate-500 hover:border-slate-400 hover:text-slate-400'}`}
+                  className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all border flex items-center gap-2 shadow-sm ${isPracticeMode ? 'bg-brand-peach text-brand-text border-brand-coral/30' : 'bg-white/40 border-white/60 text-brand-text/60 hover:bg-white hover:text-brand-text'}`}
                 >
-                  {isPracticeMode ? "🧘 Mode Entraînement (Activé)" : "⚡ Activer Mode Entraînement"}
+                  {isPracticeMode ? "🧘 Entraînement : ON" : "⚡ Entraînement : OFF"}
                 </button>
               </div>
             </div>
@@ -417,7 +417,7 @@ function MathsGames() {
 
           {!running && !gameOver && playerName && playerClass && (
             <button
-              className="w-full py-3 px-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg shadow-cyan-900/20 transition-all active:scale-95"
+              className="w-full py-4 px-6 bg-brand-coral hover:bg-brand-coral/90 text-white text-lg font-black rounded-2xl shadow-soft transition-all active:scale-95"
               onClick={startGame}
             >
               🎮 Démarrer ({playerName})
@@ -425,20 +425,20 @@ function MathsGames() {
           )}
 
           {running && !gameOver && (
-            <>
+            <div className="flex flex-col items-center max-w-sm mx-auto w-full">
               <div className="text-center mb-8">
-                <span className={`${isDark ? 'text-slate-400' : 'text-slate-500'} text-sm`}>Combien font :</span>
-                <div className={`text-6xl font-bold mt-4 tracking-tighter flex items-center justify-center gap-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                <span className="text-brand-text/60 font-bold uppercase tracking-widest text-xs">Combien font :</span>
+                <div className="text-7xl font-black mt-4 tracking-tighter flex items-center justify-center gap-4 text-brand-text drop-shadow-sm">
                   {current.question}
-                  <button onClick={() => speak(getSpokenText(current))} className="p-2 rounded-full hover:bg-slate-500/20 transition-colors text-slate-400 hover:text-cyan-500" title="Répéter">
-                    <Volume2 size={32} />
+                  <button onClick={() => speak(getSpokenText(current))} className="p-3 rounded-full hover:bg-white/60 bg-white/40 transition-all text-brand-teal shadow-sm border border-white/50" title="Répéter">
+                    <Volume2 size={28} />
                   </button>
                 </div>
               </div>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4 w-full">
                 <input
                   type="number"
-                  className={`w-full text-center text-4xl font-bold border rounded-xl px-4 py-4 outline-none transition-all ${isDark ? 'bg-slate-950 border-slate-700 text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500' : 'bg-white border-slate-300 text-slate-900 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500'}`}
+                  className="w-full text-center text-5xl font-black border border-white/60 rounded-[24px] px-6 py-6 outline-none transition-all bg-white/60 text-brand-text focus:border-brand-teal focus:bg-white shadow-inner"
                   value={userAnswer}
                   onChange={(e) => setUserAnswer(e.target.value)}
                   placeholder="?"
@@ -446,7 +446,7 @@ function MathsGames() {
                 />
                 <button
                   type="submit"
-                  className="w-full py-3 px-4 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl transition-all active:scale-95"
+                  className="w-full py-4 text-xl bg-brand-teal hover:bg-brand-teal/90 text-white font-black rounded-[20px] transition-all active:scale-95 shadow-soft"
                 >
                   Valider
                 </button>
@@ -454,22 +454,25 @@ function MathsGames() {
               {isPracticeMode && (
                 <button
                   onClick={() => { setRunning(false); setGameOver(true); }}
-                  className="mt-4 w-full py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+                  className="mt-6 w-full py-2 text-sm font-bold text-brand-coral/70 hover:text-brand-coral hover:bg-brand-coral/10 rounded-full transition-colors"
                 >
                   Arrêter l'entraînement
                 </button>
               )}
-            </>
+            </div>
           )}
 
           {gameOver && (
-            <div className="text-center space-y-6 py-4">
-              <h2 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{isPracticeMode ? "Entraînement terminé" : "⏰ Temps écoulé !"}</h2>
-              <p className={`${isDark ? 'text-slate-300' : 'text-slate-700'} text-xl`}>Score final : <strong className={isDark ? 'text-cyan-400' : 'text-cyan-600'}>{score}</strong></p>
-              <div className="space-y-3">
+            <div className="text-center space-y-8 py-6">
+              <h2 className="text-4xl font-black text-brand-text">{isPracticeMode ? "Entraînement terminé" : "⏰ Temps écoulé !"}</h2>
+              <div className="bg-white/50 border border-white/60 p-6 rounded-[24px] shadow-inner inline-block">
+                <p className="text-brand-text/60 font-bold uppercase tracking-widest text-sm mb-2">Score final</p>
+                <div className="text-6xl font-black text-brand-teal drop-shadow-md">{score}</div>
+              </div>
+              <div className="space-y-4 max-w-sm mx-auto">
                 {!scoreSaved && !isPracticeMode && (
                   <button
-                    className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-4 text-lg bg-brand-coral hover:bg-brand-coral/90 text-white font-black rounded-2xl shadow-soft transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={saveScore}
                     disabled={savingScore}
                   >
@@ -477,7 +480,7 @@ function MathsGames() {
                   </button>
                 )}
                 <button
-                  className={`w-full py-3 px-4 font-semibold rounded-xl transition-all ${isDark ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' : 'bg-slate-200 hover:bg-slate-300 text-slate-800'}`}
+                  className="w-full py-4 text-lg font-bold rounded-2xl transition-all bg-white/60 text-brand-text/80 hover:bg-white hover:text-brand-text border border-white/50 shadow-sm"
                   onClick={startGame}
                 >
                   {scoreSaved ? "🔄 Rejouer" : "Rejouer sans sauvegarder"}

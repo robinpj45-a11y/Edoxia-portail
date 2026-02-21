@@ -79,17 +79,17 @@ const AdminCalendar = ({ isEmbedded = false }) => {
     };
 
     return (
-        <div className={isEmbedded ? "h-full" : "min-h-screen bg-slate-50 dark:bg-[#020617] p-4 md:p-8 pt-20"}>
+        <div className={isEmbedded ? "h-full" : "min-h-screen bg-brand-bg text-brand-text p-4 md:p-8 pt-20"}>
             <div className={isEmbedded ? "" : "max-w-6xl mx-auto space-y-6"}>
 
                 {isEmbedded ? (
                     <div className="flex justify-between items-center mb-8">
-                        <h2 className="text-2xl font-bold flex items-center gap-2 text-white">
-                            <CalendarIcon className="text-cyan-400" /> Gestion du Calendrier
+                        <h2 className="text-2xl font-black flex items-center gap-2 text-brand-text tracking-tight">
+                            <CalendarIcon className="text-brand-teal" /> Gestion du Calendrier
                         </h2>
                         <button
                             onClick={() => { setEditingEvent(null); setShowForm(true); }}
-                            className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-lg shadow-lg shadow-cyan-500/20 flex items-center gap-2 transition-all"
+                            className="bg-brand-teal hover:bg-brand-teal/90 text-white font-bold py-2 px-4 rounded-full shadow-soft hover:scale-105 flex items-center gap-2 transition-all"
                         >
                             <Plus size={20} /> Nouvel Événement
                         </button>
@@ -97,14 +97,14 @@ const AdminCalendar = ({ isEmbedded = false }) => {
                 ) : (
                     <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                         <div>
-                            <button onClick={() => navigate('/admin')} className="text-slate-500 hover:text-cyan-500 flex items-center gap-2 mb-2 transition-colors">
+                            <button onClick={() => navigate('/admin')} className="text-brand-text/50 font-bold text-sm hover:text-brand-teal flex items-center gap-2 mb-2 transition-colors">
                                 <ArrowLeft size={16} /> Retour Dashboard
                             </button>
-                            <h1 className="text-3xl md:text-4xl font-bold text-slate-800 dark:text-white">Gestion du Calendrier</h1>
+                            <h1 className="text-3xl md:text-4xl font-black text-brand-text tracking-tight">Gestion du Calendrier</h1>
                         </div>
                         <button
                             onClick={() => { setEditingEvent(null); setShowForm(true); }}
-                            className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-cyan-500/20 flex items-center gap-2 transition-all"
+                            className="bg-brand-teal hover:bg-brand-teal/90 text-white font-bold py-3 px-6 rounded-full shadow-soft hover:scale-105 flex items-center gap-2 transition-all"
                         >
                             <Plus size={20} /> Nouvel Événement
                         </button>
@@ -113,7 +113,7 @@ const AdminCalendar = ({ isEmbedded = false }) => {
 
                 {loading ? (
                     <div className="flex justify-center items-center h-64">
-                        <Loader2 className="w-10 h-10 text-cyan-500 animate-spin" />
+                        <Loader2 className="w-10 h-10 text-brand-teal animate-spin" />
                     </div>
                 ) : (
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>

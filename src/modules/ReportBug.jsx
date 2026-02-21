@@ -1,21 +1,18 @@
 // c:\Projets\Edoxia\src\modules\ReportBug.jsx
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Bug, X, MessageSquare, Send } from 'lucide-react';
 import { addDoc, collection } from 'firebase/firestore';
 import { db } from '../firebase';
-import { ThemeContext } from '../ThemeContext';
 
-export default function ReportBug() {
-    const { theme } = useContext(ThemeContext);
-    const isDark = theme === 'dark';
+export default function ReportBug({ isMobileNav = false }) {
     const [isOpen, setIsOpen] = useState(false);
     const [formData, setFormData] = useState({ type: 'bug', message: '', email: '', name: '' });
     const [sending, setSending] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if(!formData.message.trim()) return;
+        if (!formData.message.trim()) return;
         setSending(true);
         try {
             await addDoc(collection(db, "feedback"), {
@@ -35,91 +32,101 @@ export default function ReportBug() {
         setSending(false);
     };
 
+    const toggleButton = isMobileNav ? (
+        <button onClick={() => setIsOpen(true)} className="flex flex-col items-center gap-1 p-2 text-brand-text/40 hover:text-brand-coral transition-colors">
+            <Bug className="w-6 h-6" />
+            <span className="text-[10px] font-bold">Avis</span>
+        </button>
+    ) : (
+        <button
+            onClick={() => setIsOpen(true)}
+            className="flex items-center justify-center p-2 transition-colors rounded-full text-white hover:bg-white/30"
+            title="Signaler un bug ou donner un avis"
+        >
+            <Bug className="w-6 h-6" />
+        </button>
+    );
+
     return (
         <>
-            <button
-                onClick={() => setIsOpen(true)}
-                className={`p-2 transition-colors rounded-lg ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800/50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'}`}
-                title="Signaler un bug ou donner un avis"
-            >
-                <Bug className="w-6 h-6" />
-            </button>
+            {toggleButton}
 
             {isOpen && createPortal(
-                <div className="fixed inset-0 h-screen w-screen bg-black/80 z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className={`w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                        <div className={`p-4 flex justify-between items-center border-b ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-100'}`}>
-                            <h3 className={`font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                                <Bug size={20} className="text-red-500"/> Signaler un problème
+                <div className="fixed inset-0 h-screen w-screen bg-brand-text/40 backdrop-blur-md z-[9999] flex items-center justify-center p-4">
+                    <div className="w-full max-w-md rounded-[30px] shadow-2xl overflow-hidden border border-white/50 bg-brand-bg text-brand-text">
+
+                        <div className="p-5 border-b border-white/50 flex justify-between items-center bg-white/40">
+                            <h3 className="font-black text-xl flex items-center gap-3">
+                                <Bug size={24} className="text-brand-coral" /> Signaler / Avis
                             </h3>
-                            <button onClick={() => setIsOpen(false)} className={`p-1 rounded-lg transition-colors ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200'}`}>
+                            <button onClick={() => setIsOpen(false)} className="p-2 rounded-full transition-all bg-white/50 hover:bg-white text-brand-text/50 hover:text-brand-coral shadow-sm">
                                 <X size={20} />
                             </button>
                         </div>
-                        
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                            <div className="flex gap-2 p-1 bg-slate-100/50 rounded-lg border border-slate-200/50 dark:bg-slate-950/50 dark:border-slate-800">
+
+                        <form onSubmit={handleSubmit} className="p-6 space-y-5 bg-white/20 backdrop-blur-sm">
+                            <div className="flex gap-2 p-1.5 bg-white/50 rounded-[20px] border border-white shadow-inner">
                                 <button
                                     type="button"
-                                    onClick={() => setFormData({...formData, type: 'bug'})}
-                                    className={`flex-1 py-2 text-sm font-bold rounded-md transition-all flex items-center justify-center gap-2 ${formData.type === 'bug' ? 'bg-red-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200/50 dark:text-slate-400 dark:hover:bg-slate-800'}`}
+                                    onClick={() => setFormData({ ...formData, type: 'bug' })}
+                                    className={`flex-1 py-2 text-sm font-bold rounded-[16px] transition-all flex items-center justify-center gap-2 ${formData.type === 'bug' ? 'bg-brand-coral text-white shadow-soft scale-[1.02]' : 'text-brand-text/50 hover:text-brand-text hover:bg-white/40'}`}
                                 >
-                                    <Bug size={16}/> Bug
+                                    <Bug size={16} /> Bug
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={() => setFormData({...formData, type: 'feedback'})}
-                                    className={`flex-1 py-2 text-sm font-bold rounded-md transition-all flex items-center justify-center gap-2 ${formData.type === 'feedback' ? 'bg-blue-500 text-white shadow-md' : 'text-slate-500 hover:bg-slate-200/50 dark:text-slate-400 dark:hover:bg-slate-800'}`}
+                                    onClick={() => setFormData({ ...formData, type: 'feedback' })}
+                                    className={`flex-1 py-2 text-sm font-bold rounded-[16px] transition-all flex items-center justify-center gap-2 ${formData.type === 'feedback' ? 'bg-brand-teal text-white shadow-soft scale-[1.02]' : 'text-brand-text/50 hover:text-brand-text hover:bg-white/40'}`}
                                 >
-                                    <MessageSquare size={16}/> Avis
+                                    <MessageSquare size={16} /> Avis
                                 </button>
                             </div>
 
-                            <div>
-                                <label className={`block text-xs font-bold uppercase mb-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Votre message</label>
+                            <div className="space-y-1">
+                                <label className="block text-xs font-bold uppercase text-brand-text/50 tracking-wide">Votre message</label>
                                 <textarea
                                     required
                                     rows="4"
-                                    className={`w-full p-3 rounded-xl border outline-none transition-all resize-none ${isDark ? 'bg-slate-950 border-slate-800 text-white focus:border-cyan-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-cyan-500'}`}
+                                    className="w-full p-4 rounded-[20px] border bg-white/60 border-white text-brand-text focus:ring-2 focus:ring-brand-teal focus:bg-white shadow-inner outline-none transition-all resize-none font-medium"
                                     placeholder={formData.type === 'bug' ? "Décrivez le problème rencontré..." : "Vos suggestions sont les bienvenues..."}
                                     value={formData.message}
-                                    onChange={e => setFormData({...formData, message: e.target.value})}
+                                    onChange={e => setFormData({ ...formData, message: e.target.value })}
                                 />
                             </div>
 
-                            <div>
-                                <label className={`block text-xs font-bold uppercase mb-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Nom et Prénom (optionnel)</label>
+                            <div className="space-y-1">
+                                <label className="block text-xs font-bold uppercase text-brand-text/50 tracking-wide">Nom et Prénom (optionnel)</label>
                                 <input
                                     type="text"
-                                    className={`w-full p-3 rounded-xl border outline-none transition-all ${isDark ? 'bg-slate-950 border-slate-800 text-white focus:border-cyan-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-cyan-500'}`}
+                                    className="w-full p-4 rounded-[20px] border bg-white/60 border-white text-brand-text focus:ring-2 focus:ring-brand-teal focus:bg-white shadow-inner outline-none transition-all font-medium"
                                     placeholder="Votre identité..."
                                     value={formData.name}
-                                    onChange={e => setFormData({...formData, name: e.target.value})}
+                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
                                 />
                             </div>
 
-                            <div>
-                                <label className={`block text-xs font-bold uppercase mb-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Email (optionnel)</label>
+                            <div className="space-y-1">
+                                <label className="block text-xs font-bold uppercase text-brand-text/50 tracking-wide">Email (optionnel)</label>
                                 <input
                                     type="email"
-                                    className={`w-full p-3 rounded-xl border outline-none transition-all ${isDark ? 'bg-slate-950 border-slate-800 text-white focus:border-cyan-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-cyan-500'}`}
+                                    className="w-full p-4 rounded-[20px] border bg-white/60 border-white text-brand-text focus:ring-2 focus:ring-brand-teal focus:bg-white shadow-inner outline-none transition-all font-medium"
                                     placeholder="Pour vous recontacter..."
                                     value={formData.email}
-                                    onChange={e => setFormData({...formData, email: e.target.value})}
+                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
                                 />
                             </div>
 
                             <button
                                 type="submit"
                                 disabled={sending}
-                                className={`w-full py-3 rounded-xl font-bold text-white shadow-lg transition-all flex items-center justify-center gap-2 ${formData.type === 'bug' ? 'bg-red-600 hover:bg-red-500 shadow-red-500/20' : 'bg-blue-600 hover:bg-blue-500 shadow-blue-500/20'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                className={`w-full py-4 rounded-full font-bold text-white shadow-soft transition-all flex items-center justify-center gap-2 ${formData.type === 'bug' ? 'bg-brand-coral hover:bg-brand-coral/90' : 'bg-brand-teal hover:bg-brand-teal/90'} disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-95 disabled:hover:scale-100 mt-2`}
                             >
-                                {sending ? "Envoi..." : <><Send size={18}/> Envoyer</>}
+                                {sending ? "Envoi..." : <><Send size={18} /> Envoyer le signalement</>}
                             </button>
                         </form>
                     </div>
                 </div>
-            , document.body)}
+                , document.body)}
         </>
     );
 }

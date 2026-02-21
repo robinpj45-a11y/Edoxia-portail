@@ -30,10 +30,8 @@ export default function RegisterUser({ event, user, onBack }) {
 
     // Helper pour les couleurs
     const isRepas = event.type === TEMPLATE_REPAS;
-    const themeColor = isRepas ? 'text-orange-500' : 'text-violet-500';
-    const themeBg = isRepas
-        ? (isDark ? 'bg-orange-500/20' : 'bg-orange-50')
-        : (isDark ? 'bg-violet-500/20' : 'bg-violet-50');
+    const themeColor = isRepas ? 'text-brand-coral' : 'text-brand-teal';
+    const themeBg = isRepas ? 'bg-brand-coral/10' : 'bg-brand-teal/10';
 
     // Calcul Prix
     useEffect(() => {
@@ -174,24 +172,24 @@ export default function RegisterUser({ event, user, onBack }) {
         };
 
         return (
-            <div className={`min-h-screen flex items-center justify-center p-6 ${isDark ? 'bg-[#020617]' : 'bg-slate-50'}`}>
-                <div className={`p-8 rounded-[2rem] shadow-xl text-center max-w-lg w-full border flex flex-col gap-6 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+            <div className="min-h-screen flex items-center justify-center p-6 bg-brand-bg text-brand-text">
+                <div className="p-8 rounded-[30px] shadow-2xl text-center max-w-lg w-full border flex flex-col gap-6 bg-white/90 backdrop-blur-md border-white/50">
                     <div>
-                        <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600'}`}>
+                        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-green-500/20 text-green-600 shadow-inner">
                             <CheckCircle size={32} />
                         </div>
-                        <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Inscription validée !</h2>
-                        <p className={`mt-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Merci {formEntry.firstName}, c'est enregistré. Il est conseillé de sauvegarder vos choix.</p>
+                        <h2 className="text-2xl font-black tracking-tight text-brand-text">Inscription validée !</h2>
+                        <p className="mt-2 text-brand-text/70 font-medium">Merci {formEntry.firstName}, c'est enregistré. Il est conseillé de sauvegarder vos choix.</p>
                     </div>
 
-                    <div className={`p-6 rounded-2xl text-left text-sm border flex flex-col gap-3 shadow-inner ${isDark ? 'bg-slate-950 border-slate-800/50' : 'bg-slate-50 border-slate-200/50'}`}>
+                    <div className="p-6 rounded-[20px] text-left text-sm border flex flex-col gap-3 shadow-inner bg-white/50 border-white/60">
                         {/* En-tête du ticket */}
-                        <div className="flex justify-between items-start border-b border-dashed pb-3 border-slate-500/30">
+                        <div className="flex justify-between items-start border-b border-dashed pb-3 border-brand-text/20">
                             <div>
-                                <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Évènement</p>
-                                <p className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{event.title}</p>
+                                <p className="text-[10px] uppercase font-bold text-brand-text/50 tracking-wider">Évènement</p>
+                                <p className="font-bold text-brand-text">{event.title}</p>
                             </div>
-                            <div className={`px-2 py-1 rounded text-[10px] font-bold ${isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-200 text-slate-600'}`}>
+                            <div className="px-2 py-1 rounded text-[10px] font-bold bg-white/60 text-brand-text/70 shadow-sm">
                                 {new Date().toLocaleDateString()}
                             </div>
                         </div>
@@ -200,8 +198,8 @@ export default function RegisterUser({ event, user, onBack }) {
                         <div className="space-y-2 py-1">
                             {event.type === TEMPLATE_REPAS && (
                                 <div className="flex justify-between items-center">
-                                    <span className="text-slate-500 font-medium">Formule</span>
-                                    <span className={`font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                                    <span className="text-brand-text/60 font-medium">Formule</span>
+                                    <span className="font-bold text-brand-text">
                                         {formEntry.selectionType === 'carte' ? 'À la carte' : (event.menus?.find(m => m.id === formEntry.selectionType)?.name || 'Menu')}
                                     </span>
                                 </div>
@@ -213,36 +211,36 @@ export default function RegisterUser({ event, user, onBack }) {
                                 const cleanVal = val.toString().startsWith('APERO:') ? val.split(':')[1] : val.split('|')[0];
                                 return (
                                     <div key={key} className="flex justify-between items-start text-xs group">
-                                        <span className="text-slate-500 capitalize shrink-0 pr-4">{key}</span>
-                                        <span className={`font-medium text-right ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{cleanVal}</span>
+                                        <span className="text-brand-text/60 capitalize shrink-0 pr-4">{key}</span>
+                                        <span className="font-bold text-right text-brand-text/90">{cleanVal}</span>
                                     </div>
                                 );
                             })}
 
                             {/* Commentaire */}
                             {formEntry.comment && (
-                                <div className={`p-3 rounded-lg text-xs italic mt-2 flex gap-2 ${isDark ? 'bg-slate-900/50 text-slate-400' : 'bg-slate-100 text-slate-600'}`}>
-                                    <MessageSquare size={14} className="shrink-0 mt-0.5 opacity-70" />
-                                    <span>"{formEntry.comment}"</span>
+                                <div className="p-3 rounded-xl text-xs flex gap-2 bg-brand-bg/50 text-brand-text/80 mt-2 shadow-inner">
+                                    <MessageSquare size={14} className="shrink-0 mt-0.5 opacity-50 text-brand-teal" />
+                                    <span className="italic font-medium">"{formEntry.comment}"</span>
                                 </div>
                             )}
                         </div>
 
                         {/* Pied du ticket */}
-                        <div className="mt-1 pt-3 border-t-2 border-dashed border-slate-500/30 flex justify-between items-center">
-                            <span className="font-bold text-slate-500 uppercase text-xs tracking-wider">Total à payer</span>
-                            <span className={`text-xl font-black ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>{formEntry.total.toFixed(2)}€</span>
+                        <div className="mt-1 pt-3 border-t-2 border-dashed border-brand-text/20 flex justify-between items-center">
+                            <span className="font-bold text-brand-text/50 uppercase text-xs tracking-wider">Total à payer</span>
+                            <span className="text-xl font-black text-brand-coral">{formEntry.total.toFixed(2)}€</span>
                         </div>
                     </div>
 
                     <div className="flex flex-col gap-3">
-                        <button onClick={handleCopy} className={`w-full py-3 rounded-xl font-bold border transition-colors flex items-center justify-center gap-2 ${isDark ? 'border-slate-700 hover:bg-slate-800 text-slate-300' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}`}>
+                        <button onClick={handleCopy} className="w-full py-3 rounded-full font-bold border transition-all flex items-center justify-center gap-2 border-white/50 bg-white/50 hover:bg-white text-brand-text shadow-sm hover:scale-[1.02] active:scale-95">
                             <MessageSquare size={18} /> Copier le récapitulatif
                         </button>
-                        <button onClick={addToCalendar} className={`w-full py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 ${isDark ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>
+                        <button onClick={addToCalendar} className="w-full py-3 rounded-full font-bold transition-all flex items-center justify-center gap-2 bg-brand-teal text-white hover:bg-brand-teal/90 shadow-soft hover:scale-[1.02] active:scale-95">
                             <CalendarPlus size={18} /> Ajouter au calendrier
                         </button>
-                        <button onClick={onBack} className="w-full bg-cyan-600 text-white py-3 rounded-xl font-bold hover:bg-cyan-700 transition-colors">
+                        <button onClick={onBack} className="w-full py-3 rounded-full font-bold transition-all bg-white/30 hover:bg-white/50 text-brand-text shadow-sm">
                             Retour
                         </button>
                     </div>
@@ -252,10 +250,10 @@ export default function RegisterUser({ event, user, onBack }) {
     }
 
     return (
-        <div className={`min-h-screen font-sans pb-32 md:pb-24 ${isDark ? 'bg-[#020617] text-slate-200' : 'bg-slate-50 text-slate-800'}`}>
-            <header className={`p-4 px-6 flex items-center gap-4 sticky top-0 z-40 shadow-md backdrop-blur-md ${isDark ? 'bg-slate-900/80 border-b border-slate-800' : 'bg-white/80 border-b border-slate-200'}`}>
-                <button onClick={onBack} className={`p-2 rounded-full transition-colors ${isDark ? 'bg-slate-800 hover:bg-slate-700 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}><ArrowLeft size={20} /></button>
-                <h1 className={`font-bold text-lg truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>{event.title}</h1>
+        <div className="min-h-screen font-sans pb-32 md:pb-24 bg-brand-bg text-brand-text">
+            <header className="p-4 px-6 flex items-center gap-4 sticky top-0 z-40 shadow-md backdrop-blur-md bg-white/40 border-b border-white/50">
+                <button onClick={onBack} className="p-2 rounded-full transition-colors bg-white/50 hover:bg-white text-brand-text shadow-sm"><ArrowLeft size={20} /></button>
+                <h1 className="font-black text-lg truncate text-brand-text tracking-tight">{event.title}</h1>
             </header>
 
             <main className="p-6 max-w-2xl mx-auto space-y-6 mt-4">
@@ -264,13 +262,13 @@ export default function RegisterUser({ event, user, onBack }) {
                 {(event.date || event.address) && (
                     <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
-                            <div className={`p-4 rounded-2xl border shadow-sm flex flex-col items-center text-center gap-2 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                <div className={`${themeBg} p-3 rounded-full ${themeColor}`}><Clock size={24} /></div>
-                                <div><div className="text-[10px] font-bold text-slate-500 uppercase">Quand ?</div><div className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}>{event.date || 'À définir'} <br /> {event.time}</div></div>
+                            <div className="p-4 rounded-[20px] border shadow-soft flex flex-col items-center text-center gap-2 bg-white/50 border-white/50">
+                                <div className={`${themeBg} p-3 rounded-full ${themeColor} shadow-inner bg-white/60`}><Clock size={24} /></div>
+                                <div><div className="text-[10px] font-bold text-brand-text/50 uppercase tracking-wider">Quand ?</div><div className="font-bold text-sm text-brand-text">{event.date || 'À définir'} <br /> {event.time}</div></div>
                             </div>
-                            <div className={`p-4 rounded-2xl border shadow-sm flex flex-col items-center text-center gap-2 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                <div className={`${themeBg} p-3 rounded-full ${themeColor}`}><MapPin size={24} /></div>
-                                <div><div className="text-[10px] font-bold text-slate-500 uppercase">Où ?</div><div className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}>{event.address || 'Non spécifié'}</div></div>
+                            <div className="p-4 rounded-[20px] border shadow-soft flex flex-col items-center text-center gap-2 bg-white/50 border-white/50">
+                                <div className={`${themeBg} p-3 rounded-full ${themeColor} shadow-inner bg-white/60`}><MapPin size={24} /></div>
+                                <div><div className="text-[10px] font-bold text-brand-text/50 uppercase tracking-wider">Où ?</div><div className="font-bold text-sm text-brand-text">{event.address || 'Non spécifié'}</div></div>
                             </div>
                         </div>
 
@@ -279,7 +277,7 @@ export default function RegisterUser({ event, user, onBack }) {
                                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.address)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className={`block w-full h-48 rounded-2xl overflow-hidden border shadow-sm relative group ${isDark ? 'border-slate-800' : 'border-slate-200'}`}
+                                className="block w-full h-48 rounded-[20px] overflow-hidden border shadow-soft relative group border-white/60"
                             >
                                 <iframe
                                     title="Map Preview"
@@ -292,9 +290,9 @@ export default function RegisterUser({ event, user, onBack }) {
                                     src={`https://maps.google.com/maps?q=${encodeURIComponent(event.address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
                                     className="w-full h-full object-cover pointer-events-none group-hover:opacity-80 transition-opacity"
                                 ></iframe>
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/10 transition-colors">
-                                    <span className="bg-white/90 text-slate-800 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
-                                        <MapPin size={14} /> Voir sur Maps
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-brand-coral/10 transition-colors backdrop-blur-[1px]">
+                                    <span className="bg-white text-brand-text text-xs font-bold px-4 py-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
+                                        <MapPin size={14} className="text-brand-coral" /> Voir sur Maps
                                     </span>
                                 </div>
                             </a>
@@ -304,40 +302,40 @@ export default function RegisterUser({ event, user, onBack }) {
 
                 {/* Description (COMMUN) */}
                 {event.description && (
-                    <div className={`p-6 rounded-2xl shadow-sm border flex gap-4 items-start ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                        <Info className="text-slate-400 shrink-0 mt-1" size={20} />
-                        <p className={`italic text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{event.description}</p>
+                    <div className="p-6 rounded-[20px] shadow-soft border flex gap-4 items-start bg-white/50 border-white/50">
+                        <Info className="text-brand-teal shrink-0 mt-1" size={20} />
+                        <p className="italic text-sm text-brand-text/80 font-medium">{event.description}</p>
                     </div>
                 )}
 
                 {/* LOGIQUE DE VERROUILLAGE */}
                 {event.isLocked ? (
-                    <div className={`border-2 rounded-3xl p-8 text-center animate-in zoom-in ${isDark ? 'bg-red-950/30 border-red-900/50' : 'bg-red-50 border-red-100'}`}>
-                        <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${isDark ? 'bg-red-900/50 text-red-400' : 'bg-red-100 text-red-500'}`}>
+                    <div className="border border-white/50 shadow-soft rounded-[30px] p-8 text-center bg-white/60">
+                        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-brand-coral/10 text-brand-coral shadow-inner">
                             <Lock size={32} />
                         </div>
-                        <h3 className={`text-xl font-bold mb-2 ${isDark ? 'text-red-400' : 'text-red-800'}`}>Inscriptions closes</h3>
-                        <p className={isDark ? 'text-slate-400' : 'text-slate-600'}>Il n'est plus possible de s'inscrire à cet événement.</p>
-                        <button onClick={onBack} className="mt-6 text-sm text-slate-400 underline hover:text-slate-600">Retourner à la liste</button>
+                        <h3 className="text-xl font-black mb-2 text-brand-text">Inscriptions closes</h3>
+                        <p className="text-brand-text/60 font-medium">Il n'est plus possible de s'inscrire à cet événement.</p>
+                        <button onClick={onBack} className="mt-6 text-sm text-brand-coral font-bold hover:underline">Retourner à la liste</button>
                     </div>
                 ) : (
                     <>
-                        <section className={`p-6 rounded-2xl shadow-sm border ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                            <h3 className={`text-xs font-bold uppercase mb-4 flex items-center gap-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}><User size={16} /> Qui êtes-vous ?</h3>
+                        <section className="p-6 rounded-[20px] shadow-soft border bg-white/50 border-white/50">
+                            <h3 className="text-xs font-bold uppercase mb-4 flex items-center gap-2 text-brand-teal tracking-wider"><User size={16} /> Qui êtes-vous ?</h3>
                             <div className="space-y-4">
-                                <input required placeholder="Votre Prénom" className={`w-full border rounded-xl p-3 font-bold outline-none focus:border-cyan-500 transition-colors ${isDark ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'}`} value={formEntry.firstName} onChange={e => setFormEntry({ ...formEntry, firstName: e.target.value })} />
-                                <input required placeholder="Votre Nom" className={`w-full border rounded-xl p-3 font-bold outline-none focus:border-cyan-500 transition-colors ${isDark ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'}`} value={formEntry.lastName} onChange={e => setFormEntry({ ...formEntry, lastName: e.target.value })} />
+                                <input required placeholder="Votre Prénom" className="w-full border rounded-xl p-3 font-bold outline-none focus:border-brand-teal transition-colors bg-white/60 border-white text-brand-text placeholder-brand-text/40 shadow-inner" value={formEntry.firstName} onChange={e => setFormEntry({ ...formEntry, firstName: e.target.value })} />
+                                <input required placeholder="Votre Nom" className="w-full border rounded-xl p-3 font-bold outline-none focus:border-brand-teal transition-colors bg-white/60 border-white text-brand-text placeholder-brand-text/40 shadow-inner" value={formEntry.lastName} onChange={e => setFormEntry({ ...formEntry, lastName: e.target.value })} />
                             </div>
                         </section>
 
                         {event.hasApero && event.aperoChoices && (
-                            <section className={`p-6 rounded-2xl shadow-sm border ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                <h3 className={`text-xs font-bold uppercase mb-4 flex items-center gap-2 ${isDark ? 'text-pink-400' : 'text-pink-600'}`}><Wine size={16} /> Apéritif offert</h3>
+                            <section className="p-6 rounded-[20px] shadow-soft border bg-white/50 border-white/50">
+                                <h3 className="text-xs font-bold uppercase mb-4 flex items-center gap-2 text-brand-peach tracking-wider"><Wine size={16} /> Apéritif offert</h3>
                                 <div className="grid grid-cols-2 gap-3">
                                     {event.aperoChoices.map((choice, idx) => {
                                         const isSelected = formEntry.selections['Apéritif'] === `APERO:${choice}`;
                                         return (
-                                            <button key={idx} type="button" onClick={() => handleAperoChange(choice)} className={`p-4 rounded-xl border-2 font-bold text-sm transition-all ${isSelected ? 'border-pink-500 bg-pink-500/10 text-pink-500' : (isDark ? 'border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-600' : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-300')}`}>{choice}</button>
+                                            <button key={idx} type="button" onClick={() => handleAperoChange(choice)} className={`p-4 rounded-xl border-2 font-bold text-sm transition-all ${isSelected ? 'border-brand-peach bg-brand-peach/10 text-brand-peach shadow-sm' : 'border-white/60 bg-white/30 text-brand-text/60 hover:bg-white hover:border-white shadow-inner'}`}>{choice}</button>
                                         )
                                     })}
                                 </div>
@@ -346,15 +344,15 @@ export default function RegisterUser({ event, user, onBack }) {
 
                         {/* CHOIX REPAS */}
                         {event.type === TEMPLATE_REPAS && (
-                            <section className={`p-6 rounded-2xl shadow-sm border ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                <h3 className={`text-xs font-bold uppercase mb-4 flex items-center gap-2 ${isDark ? 'text-orange-400' : 'text-orange-600'}`}><Utensils size={16} /> Votre Repas</h3>
+                            <section className="p-6 rounded-[20px] shadow-soft border bg-white/50 border-white/50">
+                                <h3 className="text-xs font-bold uppercase mb-4 flex items-center gap-2 text-brand-coral tracking-wider"><Utensils size={16} /> Votre Repas</h3>
 
                                 {/* TABS SI MENUS EXISTENT */}
                                 {event.menus && event.menus.length > 0 && (
-                                    <div className={`flex p-1 rounded-xl border mb-6 ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
+                                    <div className="flex p-1 rounded-xl border mb-6 bg-white/40 border-white shadow-inner">
                                         <button
                                             onClick={() => handleTypeChange('carte')}
-                                            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${formEntry.selectionType === 'carte' ? (isDark ? 'bg-slate-800 text-white shadow' : 'bg-white text-slate-800 shadow') : (isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')}`}
+                                            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${formEntry.selectionType === 'carte' ? 'bg-white text-brand-text shadow-soft scale-[1.02]' : 'text-brand-text/50 hover:text-brand-text'}`}
                                         >
                                             À la carte
                                         </button>
@@ -362,7 +360,7 @@ export default function RegisterUser({ event, user, onBack }) {
                                             <button
                                                 key={menu.id}
                                                 onClick={() => handleTypeChange(menu.id)}
-                                                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${formEntry.selectionType === menu.id ? (isDark ? 'bg-slate-800 text-white shadow' : 'bg-white text-slate-800 shadow') : (isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-500 hover:text-slate-700')}`}
+                                                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${formEntry.selectionType === menu.id ? 'bg-white text-brand-text shadow-soft scale-[1.02]' : 'text-brand-text/50 hover:text-brand-text'}`}
                                             >
                                                 {menu.name}
                                             </button>
@@ -376,15 +374,12 @@ export default function RegisterUser({ event, user, onBack }) {
                                         {['entrees', 'plats', 'desserts'].map(type => (
                                             event.carte && event.carte[type] && event.carte[type].length > 0 && (
                                                 <div key={type}>
-                                                    <label className={`block text-xs font-bold uppercase mb-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{type}</label>
+                                                    <label className="block text-xs font-bold uppercase mb-2 text-brand-text/60">{type}</label>
                                                     <div className="relative">
                                                         <select
                                                             value={formEntry.selections[type] || ""}
                                                             onChange={e => handleSelectionChange(type, e.target.value)}
-                                                            className={`w-full p-3 rounded-xl border appearance-none outline-none transition-colors ${isDark
-                                                                ? 'bg-slate-950 border-slate-700 text-white focus:border-cyan-500'
-                                                                : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-cyan-600'
-                                                                }`}
+                                                            className="w-full p-3 rounded-xl border appearance-none outline-none transition-colors bg-white/70 border-white/50 text-brand-text font-medium focus:border-brand-teal shadow-inner"
                                                         >
                                                             <option value="">-- Choisir --</option>
                                                             {event.carte[type].map((item, idx) => (
@@ -393,7 +388,7 @@ export default function RegisterUser({ event, user, onBack }) {
                                                                 </option>
                                                             ))}
                                                         </select>
-                                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">
+                                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50 text-brand-teal">
                                                             <ChevronDown size={16} />
                                                         </div>
                                                     </div>
@@ -405,34 +400,31 @@ export default function RegisterUser({ event, user, onBack }) {
 
                                 {/* CONTENU MENU */}
                                 {formEntry.selectionType !== 'carte' && (
-                                    <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                    <div className="p-4 rounded-xl border bg-white/60 border-white/50 shadow-inner">
                                         {(() => {
                                             const menu = event.menus.find(m => m.id === formEntry.selectionType);
                                             return menu ? (
                                                 <div className="space-y-4">
-                                                    <div className="flex justify-between items-center border-b border-slate-200/10 pb-2 mb-2">
-                                                        <span className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{menu.name}</span>
-                                                        {event.isPaid && <span className="font-bold text-orange-500">{menu.price}€</span>}
+                                                    <div className="flex justify-between items-center border-b border-brand-text/10 pb-2 mb-2">
+                                                        <span className="font-bold text-brand-text">{menu.name}</span>
+                                                        {event.isPaid && <span className="font-bold text-brand-coral">{menu.price}€</span>}
                                                     </div>
                                                     {['entrees', 'plats', 'desserts'].map(type => (
                                                         menu[type] && menu[type].length > 0 && (
                                                             <div key={type}>
-                                                                <label className={`block text-xs font-bold uppercase mb-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{type}</label>
+                                                                <label className="block text-[10px] tracking-wider font-bold uppercase mb-2 text-brand-text/50">{type}</label>
                                                                 <div className="relative">
                                                                     <select
                                                                         value={formEntry.selections[type] || ""}
                                                                         onChange={e => handleSelectionChange(type, e.target.value)}
-                                                                        className={`w-full p-3 rounded-xl border appearance-none outline-none transition-colors ${isDark
-                                                                            ? 'bg-slate-950 border-slate-700 text-white focus:border-cyan-500'
-                                                                            : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-cyan-600'
-                                                                            }`}
+                                                                        className="w-full p-3 rounded-xl border appearance-none outline-none transition-colors bg-white/70 border-white text-brand-text font-medium focus:border-brand-teal shadow-sm"
                                                                     >
                                                                         <option value="">-- Choisir --</option>
                                                                         {menu[type].map((item, i) => (
                                                                             <option key={i} value={item}>{item}</option>
                                                                         ))}
                                                                     </select>
-                                                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">
+                                                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50 text-brand-teal">
                                                                         <ChevronDown size={16} />
                                                                     </div>
                                                                 </div>
@@ -449,42 +441,42 @@ export default function RegisterUser({ event, user, onBack }) {
 
                         {/* CHOIX ACTIVITE */}
                         {event.type === TEMPLATE_ACTIVITE && event.activityOptions && event.activityOptions.length > 0 && (
-                            <section className={`p-6 rounded-2xl shadow-sm border ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                                <h3 className={`text-xs font-bold uppercase mb-4 flex items-center gap-2 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}><List size={16} /> Options</h3>
+                            <section className="p-6 rounded-[20px] shadow-soft border bg-white/50 border-white/50">
+                                <h3 className="text-xs font-bold uppercase mb-4 flex items-center gap-2 text-brand-teal tracking-wider"><List size={16} /> Options</h3>
                                 <div className="space-y-2">
                                     {event.activityOptions.map((opt, idx) => (
-                                        <label key={idx} className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${formEntry.selections[opt.name] ? (isDark ? 'border-cyan-500/50 bg-cyan-500/10' : 'border-cyan-200 bg-cyan-50') : (isDark ? 'border-slate-800 hover:border-slate-700' : 'border-slate-100 hover:border-slate-200')}`}>
+                                        <label key={idx} className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${formEntry.selections[opt.name] ? 'border-brand-teal bg-white shadow-soft scale-[1.01]' : 'border-white/50 bg-white/40 hover:bg-white/60 shadow-inner'}`}>
                                             <div className="flex items-center gap-3">
                                                 <input
                                                     type="checkbox"
-                                                    className={`w-5 h-5 rounded border ${isDark ? 'bg-slate-900 border-slate-700 checked:bg-cyan-500' : 'bg-white border-slate-300 checked:bg-cyan-500'} accent-cyan-500`}
+                                                    className="w-5 h-5 rounded border border-white/80 bg-white/50 checked:bg-brand-teal accent-brand-teal shadow-inner cursor-pointer"
                                                     checked={!!formEntry.selections[opt.name]}
                                                     onChange={(e) => handleOptionCheck(opt.name, opt.price, e.target.checked)}
                                                 />
-                                                <span className={`font-medium ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{opt.name}</span>
+                                                <span className={`font-bold ${formEntry.selections[opt.name] ? 'text-brand-text' : 'text-brand-text/70'}`}>{opt.name}</span>
                                             </div>
-                                            {event.isPaid && <span className={`font-bold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{opt.price}€</span>}
+                                            {event.isPaid && <span className="font-bold text-brand-text/50">{opt.price}€</span>}
                                         </label>
                                     ))}
                                 </div>
                             </section>
                         )}
 
-                        <section className={`p-6 rounded-2xl shadow-sm border ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-                            <h3 className={`text-xs font-bold uppercase mb-2 flex items-center gap-2 ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}><MessageSquare size={16} /> Remarques</h3>
-                            <textarea rows="2" className={`w-full border rounded-xl p-3 text-sm focus:border-cyan-500 outline-none resize-none ${isDark ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'}`} placeholder="Allergies, infos..." value={formEntry.comment} onChange={e => setFormEntry({ ...formEntry, comment: e.target.value })} />
+                        <section className="p-6 rounded-[20px] shadow-soft border bg-white/50 border-white/50">
+                            <h3 className="text-xs font-bold uppercase mb-2 flex items-center gap-2 text-brand-teal tracking-wider"><MessageSquare size={16} /> Remarques</h3>
+                            <textarea rows="2" className="w-full border rounded-xl p-3 text-sm focus:border-brand-teal outline-none resize-none bg-white/60 border-white text-brand-text placeholder-brand-text/40 shadow-inner font-medium" placeholder="Allergies, infos..." value={formEntry.comment} onChange={e => setFormEntry({ ...formEntry, comment: e.target.value })} />
                         </section>
                     </>
                 )}
             </main>
 
             {!event.isLocked && (
-                <div className={`fixed bottom-0 left-0 right-0 border-t p-4 px-6 flex items-center justify-between shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-50 ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-200'}`}>
+                <div className="fixed bottom-0 left-0 right-0 border-t p-4 px-6 flex items-center justify-between shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50 bg-white/80 backdrop-blur-md border-white/50 rounded-t-[30px]">
                     <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase">Total</p>
-                        <p className={`text-2xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>{formEntry.total.toFixed(2)}€</p>
+                        <p className="text-[10px] font-bold text-brand-text/50 uppercase tracking-widest">Total</p>
+                        <p className="text-2xl font-black text-brand-text">{formEntry.total.toFixed(2)}€</p>
                     </div>
-                    <button onClick={handleSubmit} disabled={submitting || !formEntry.firstName} className="bg-cyan-600 hover:bg-cyan-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-cyan-900/20 transition-all disabled:opacity-50 disabled:shadow-none">
+                    <button onClick={handleSubmit} disabled={submitting || !formEntry.firstName} className="bg-brand-coral hover:bg-brand-coral/90 text-white px-8 py-3 rounded-full font-bold shadow-soft transition-all disabled:opacity-50 disabled:shadow-none hover:scale-105 active:scale-95 disabled:hover:scale-100 disabled:cursor-not-allowed">
                         {submitting ? '...' : 'Valider'}
                     </button>
                 </div>

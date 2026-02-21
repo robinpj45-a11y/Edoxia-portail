@@ -67,27 +67,27 @@ const CalendarGrid = ({ events, onEventClick, filterRoles }) => {
     const calendarDays = generateCalendarDays();
 
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div className="bg-white/60 backdrop-blur-md rounded-[30px] shadow-soft border border-white/50 overflow-hidden">
             {/* Header */}
-            <div className="p-4 flex items-center justify-between bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
-                <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2 text-slate-800 dark:text-white capitalize">
-                    <CalendarIcon className="w-6 h-6 text-cyan-500" />
+            <div className="p-4 flex items-center justify-between bg-white/40 border-b border-white/50">
+                <h2 className="text-xl md:text-2xl font-black flex items-center gap-2 text-brand-text tracking-tight capitalize">
+                    <CalendarIcon className="w-6 h-6 text-brand-teal" />
                     {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
                 </h2>
                 <div className="flex gap-1">
-                    <button onClick={prevMonth} className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors">
+                    <button onClick={prevMonth} className="p-2 rounded-xl hover:bg-white/50 text-brand-text/60 hover:text-brand-text transition-all active:scale-95 shadow-sm hover:shadow-md">
                         <ChevronLeft size={20} />
                     </button>
-                    <button onClick={nextMonth} className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 transition-colors">
+                    <button onClick={nextMonth} className="p-2 rounded-xl hover:bg-white/50 text-brand-text/60 hover:text-brand-text transition-all active:scale-95 shadow-sm hover:shadow-md">
                         <ChevronRight size={20} />
                     </button>
                 </div>
             </div>
 
             {/* Grid Header days */}
-            <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+            <div className="grid grid-cols-7 border-b border-white/50 bg-black/5">
                 {DAYS.map(day => (
-                    <div key={day} className="py-2 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    <div key={day} className="py-2 text-center text-xs font-bold text-brand-text/50 uppercase tracking-wider">
                         {day}
                     </div>
                 ))}
@@ -100,12 +100,12 @@ const CalendarGrid = ({ events, onEventClick, filterRoles }) => {
                     return (
                         <div
                             key={index}
-                            className={`min-h-[100px] md:min-h-[120px] p-1 border-b border-r border-slate-100 dark:border-slate-800 relative transition-colors ${!date ? 'bg-slate-50/30 dark:bg-slate-950/30' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
+                            className={`min-h-[100px] md:min-h-[120px] p-1 border-b border-r border-white/40 relative transition-colors ${!date ? 'bg-white/30 hover:bg-white/40' : 'hover:bg-white/60 bg-white/10'}`}
                         >
                             {date && (
                                 <>
-                                    <div className={`text-right px-2 py-1 text-sm font-semibold mb-1 ${isToday(date) ? 'text-cyan-600 dark:text-cyan-400' : 'text-slate-400'}`}>
-                                        {isToday(date) && <span className="inline-block w-6 h-6 bg-cyan-100 dark:bg-cyan-900/30 rounded-full text-center leading-6 mr-1 absolute top-1 right-1 -z-0"></span>}
+                                    <div className={`text-right px-2 py-1 text-sm font-semibold mb-1 ${isToday(date) ? 'text-brand-teal' : 'text-brand-text/40'}`}>
+                                        {isToday(date) && <span className="inline-block w-6 h-6 bg-brand-teal/20 backdrop-blur-sm rounded-full text-center leading-6 mr-1 absolute top-1 right-1 -z-0"></span>}
                                         <span className="relative z-10">{date.getDate()}</span>
                                     </div>
                                     <div className="flex flex-col gap-0.5 overflow-y-auto max-h-[80px]">

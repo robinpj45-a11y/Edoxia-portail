@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, ArrowLeft, Printer, Plus, Search, Lock, Eye, FileText, Flag, User, Trash2 } from 'lucide-react';
 import jsPDF from 'jspdf';
@@ -6,7 +6,6 @@ import autoTable from 'jspdf-autotable';
 import { addDoc, updateDoc, deleteDoc, doc, collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { CLASSES } from '../utils/constants';
-import { ThemeContext } from '../../ThemeContext';
 
 const generateClassPDF = (classLabel, students, teams) => {
   const doc = new jsPDF();
@@ -38,8 +37,6 @@ const generateClassPDF = (classLabel, students, teams) => {
 };
 
 export default function TeacherPage({ students: propStudents, teams: propTeams, loading: propLoading }) {
-  const { theme } = useContext(ThemeContext);
-  const isDark = theme === 'dark';
   const navigate = useNavigate();
   const [currentClass, setCurrentClass] = useState(CLASSES[0]);
   const [teamsVisibility, setTeamsVisibility] = useState({});
@@ -136,40 +133,40 @@ export default function TeacherPage({ students: propStudents, teams: propTeams, 
     })
     .sort((a, b) => (a.lastName || a.name).localeCompare(b.lastName || b.name));
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-slate-500">Chargement...</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-brand-text/50 font-bold tracking-wide">Chargement...</div>;
 
   return (
-    <div className={`flex flex-col font-sans h-full transition-colors duration-300 ${isDark ? 'bg-[#020617] text-slate-300' : 'bg-edoxia-bg text-slate-700'}`}>
-      <header className={`border-b p-4 px-8 flex justify-between items-center shadow-sm ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white'}`}>
-        <button onClick={() => navigate('/JS2026')} className={`flex items-center gap-2 transition-colors font-medium ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-edoxia-blue'}`}><ArrowLeft size={20} /> Retour</button>
-        <h1 className={`text-xl font-bold flex items-center gap-2 ${isDark ? 'text-cyan-400' : 'text-edoxia-blue'}`}><GraduationCap /> Espace enseignant</h1>
+    <div className="flex flex-col font-sans min-h-screen transition-colors duration-300 bg-brand-bg text-brand-text">
+      <header className="sticky top-0 z-[60] border-b border-white/50 p-4 px-8 flex justify-between items-center shadow-soft bg-white/40 backdrop-blur-md">
+        <button onClick={() => navigate('/JS2026')} className="flex items-center gap-2 transition-colors font-bold text-brand-text/50 hover:text-brand-text"><ArrowLeft size={20} /> Retour</button>
+        <h1 className="text-xl font-black tracking-tight flex items-center gap-2 text-brand-text"><GraduationCap className="text-brand-teal" /> Espace enseignant</h1>
       </header>
-      <div className={`px-8 mt-6 border-b-2 flex gap-2 overflow-x-auto pb-1 scrollbar-hide ${isDark ? 'border-slate-800 bg-[#020617]' : 'border-edoxia-blue/20 bg-edoxia-bg'}`}>
+      <div className="shrink-0 px-8 mt-6 flex gap-2 overflow-x-auto overflow-y-hidden pb-4 border-b border-white/50 bg-white/70 backdrop-blur-xl rounded-t-[30px] pt-4 shadow-inner mx-4 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-brand-teal/30 hover:scrollbar-thumb-brand-teal/50 [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-brand-teal/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-brand-teal/50">
         {CLASSES.map((cls) => (
-          <button key={cls} onClick={() => setCurrentClass(cls)} className={`px-5 py-2 rounded-t-xl font-bold transition-all duration-200 border-t-2 border-x-2 whitespace-nowrap text-sm ${currentClass === cls ? (isDark ? 'z-10 bg-slate-800 text-cyan-400 border-slate-700' : 'z-10 bg-edoxia-blue text-white border-edoxia-blue translate-y-[2px]') : (isDark ? 'bg-slate-900/60 text-slate-500 border-transparent hover:bg-slate-900' : 'bg-white text-slate-400 border-transparent hover:text-edoxia-blue hover:bg-slate-50')}`}>{cls}</button>
+          <button key={cls} onClick={() => setCurrentClass(cls)} className={`px-5 py-3 rounded-t-[20px] font-bold transition-all duration-200 border-x border-t whitespace-nowrap text-sm ${currentClass === cls ? 'z-10 bg-white text-brand-teal border-white/50 shadow-soft translate-y-[1px]' : 'bg-white/40 text-brand-text/50 border-white/40 hover:bg-white/60 hover:text-brand-text'}`}>{cls}</button>
         ))}
       </div>
-      <main className="flex-1 flex gap-8 p-8 overflow-hidden h-[calc(100vh-160px)]">
-        <div className={`w-1/3 flex flex-col border-2 rounded-3xl p-5 shadow-sm h-full ${isDark ? 'bg-slate-900 border-slate-800' : 'border-edoxia-blue bg-slate-50'}`}>
+      <main className="flex gap-8 p-8 relative items-start">
+        <div className="w-1/3 flex flex-col rounded-[30px] p-5 shadow-soft bg-white/60 backdrop-blur-md border border-white/50 sticky top-[150px] z-[40]">
           <div className="flex justify-between items-center mb-4">
-            <h2 className={`font-bold text-lg ${isDark ? 'text-cyan-400' : 'text-edoxia-blue'}`}>{currentClass}</h2>
+            <h2 className="font-black tracking-tight text-xl text-brand-teal">{currentClass}</h2>
             <div className="flex items-center gap-2">
-              <span className={`text-xs font-bold px-2 py-1 rounded-lg border ${isDark ? 'bg-slate-950 border-slate-800 text-slate-400' : 'bg-white border-slate-200 text-slate-500'}`}>{students.filter(s => s.classLabel === currentClass && !s.isAdult).length} élèves</span>
-              <button onClick={() => generateClassPDF(currentClass, students, teams)} className={`p-2 rounded-lg transition-colors ${isDark ? 'text-slate-400 hover:text-cyan-400 bg-slate-950' : 'text-slate-400 hover:text-blue-600 bg-slate-100'}`} title="Imprimer la classe"><Printer size={18} /></button>
+              <span className="text-[10px] font-bold uppercase tracking-wide px-3 py-1.5 rounded-full bg-black/5 text-brand-text/60 shadow-inner">{students.filter(s => s.classLabel === currentClass && !s.isAdult).length} élèves</span>
+              <button onClick={() => generateClassPDF(currentClass, students, teams)} className="p-2 rounded-full transition-colors text-brand-text/50 hover:text-brand-teal bg-white/50 hover:bg-white shadow-sm" title="Imprimer la classe"><Printer size={18} /></button>
             </div>
           </div>
-          <form onSubmit={handleAddAdult} className="flex flex-col gap-2 mb-2">
-            <input type="text" placeholder="Nom de l'adulte..." className={`w-full px-3 py-2 rounded-lg border focus:outline-none text-sm ${isDark ? 'bg-slate-950 border-slate-800 text-white focus:border-cyan-500' : 'bg-white border-slate-300 focus:border-edoxia-blue'}`} value={newAdultName} onChange={(e) => setNewAdultName(e.target.value)} />
+          <form onSubmit={handleAddAdult} className="flex flex-col gap-2 mb-2 p-3 bg-white/40 rounded-[20px] shadow-inner border border-white/50">
+            <input type="text" placeholder="Nom de l'adulte..." className="w-full px-4 py-3 rounded-[16px] focus:outline-none text-sm bg-white/80 border border-white shadow-inner focus:ring-2 focus:ring-brand-teal text-brand-text placeholder-brand-text/40 transition-all font-bold" value={newAdultName} onChange={(e) => setNewAdultName(e.target.value)} />
             <div className="flex gap-2">
-              <select value={newAdultRole} onChange={(e) => setNewAdultRole(e.target.value)} className={`flex-1 px-3 py-2 rounded-lg border focus:outline-none text-sm ${isDark ? 'bg-slate-950 border-slate-800 text-white focus:border-cyan-500' : 'bg-white border-slate-300 focus:border-edoxia-blue text-slate-700'}`}><option value="Parent">Parent</option><option value="AESH">AESH</option><option value="AVS">AVS</option><option value="ASEM">ASEM</option></select>
-              <button type="submit" disabled={loading} className={`p-2 rounded-lg transition disabled:opacity-50 ${isDark ? 'bg-cyan-600 text-white hover:bg-cyan-500' : 'bg-edoxia-blue text-white hover:bg-blue-700'}`}><Plus size={20} /></button>
+              <select value={newAdultRole} onChange={(e) => setNewAdultRole(e.target.value)} className="flex-1 px-4 py-3 rounded-[16px] focus:outline-none text-sm bg-white/80 border border-white shadow-inner focus:ring-2 focus:ring-brand-teal text-brand-text/70 transition-all font-bold"><option value="Parent">Parent</option><option value="AESH">AESH</option><option value="AVS">AVS</option><option value="ASEM">ASEM</option></select>
+              <button type="submit" disabled={loading} className="px-4 py-3 rounded-[16px] transition-all disabled:opacity-50 bg-brand-teal text-white hover:bg-brand-teal/90 shadow-soft hover:scale-105 active:scale-95"><Plus size={20} /></button>
             </div>
           </form>
-          <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border mb-4 ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-100 border-slate-200'}`}><Search size={16} className="text-slate-400" /><input type="text" placeholder="Rechercher..." className={`bg-transparent text-sm w-full focus:outline-none ${isDark ? 'text-white' : 'text-slate-600'}`} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />{searchTerm && <button onClick={() => setSearchTerm("")} className="text-slate-400 hover:text-slate-600 text-xs font-bold">✕</button>}</div>
-          <div className={`flex-1 overflow-y-auto space-y-3 p-2 border-t shadow-inner rounded-xl ${isDark ? 'bg-slate-950/50 border-slate-800' : 'bg-slate-50/50 border-slate-100'}`} onDragOver={(e) => e.preventDefault()} onDrop={(e) => handleDrop(e, null)}>{poolStudents.map(student => (<PersonCard key={student.id} student={student} onDragStart={handleDragStart} onToggle={toggleAttribute} onDelete={handleDeleteStudent} isDark={isDark} />))}{poolStudents.length === 0 && <div className="text-center text-slate-400 italic text-sm py-10">{searchTerm ? "Aucun résultat" : "Aucun élève à placer"}</div>}</div>
-          <div className={`mt-4 rounded-2xl p-4 shadow-inner shrink-0 ${isDark ? 'bg-slate-800' : 'bg-edoxia-blue'}`}><h3 className="text-white font-bold text-sm mb-2">Commentaires</h3><textarea className={`w-full h-16 rounded-xl p-3 text-sm focus:outline-none resize-none ${isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}`} placeholder="Notes..." value={comment} onChange={(e) => setComment(e.target.value)} /></div>
+          <div className="flex items-center gap-2 px-4 py-3 rounded-[20px] mb-4 bg-white/60 border border-white shadow-inner focus-within:ring-2 focus-within:ring-brand-teal transition-all"><Search size={18} className="text-brand-text/40" /><input type="text" placeholder="Rechercher..." className="bg-transparent text-sm font-bold w-full focus:outline-none text-brand-text placeholder-brand-text/40" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />{searchTerm && <button onClick={() => setSearchTerm("")} className="text-brand-text/40 hover:text-brand-text/70 p-1 bg-white/50 rounded-full shadow-sm">✕</button>}</div>
+          <div className="h-[430px] overflow-y-auto space-y-3 p-3 shadow-inner rounded-[20px] bg-black/5 border border-white/40 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-brand-teal/30 hover:scrollbar-thumb-brand-teal/50 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-brand-teal/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-brand-teal/50" onDragOver={(e) => e.preventDefault()} onDrop={(e) => handleDrop(e, null)}>{poolStudents.map(student => (<PersonCard key={student.id} student={student} onDragStart={handleDragStart} onToggle={toggleAttribute} onDelete={handleDeleteStudent} />))}{poolStudents.length === 0 && <div className="text-center text-brand-text/40 font-bold uppercase tracking-wide text-[10px] py-10 opacity-70">{searchTerm ? "Aucun résultat" : "Aucun élève à placer"}</div>}</div>
+          <div className="mt-4 rounded-[20px] p-4 shadow-inner shrink-0 bg-brand-teal/10 border border-brand-teal/20"><h3 className="text-brand-teal font-black tracking-tight text-sm mb-2 uppercase">Commentaires</h3><textarea className="w-full h-16 rounded-[16px] p-3 text-sm focus:outline-none resize-none bg-white/80 text-brand-text border border-white shadow-inner focus:ring-2 focus:ring-brand-teal transition-all font-medium placeholder-brand-text/30" placeholder="Notes..." value={comment} onChange={(e) => setComment(e.target.value)} /></div>
         </div>
-        <div className="w-2/3 overflow-y-auto pr-2">
+        <div className="w-2/3">
           <div className="grid grid-cols-2 gap-6 pb-10">
             {teams.map(team => {
               const teamId = team.numId; const teamName = team.name; const teamColor = team.color || '#0077b6'; const isLocked = team.locked;
@@ -190,19 +187,20 @@ export default function TeacherPage({ students: propStudents, teams: propTeams, 
 
               return (
                 <div key={team.id} className="flex flex-col">
-                  <div className={`rounded-3xl overflow-hidden flex flex-col shadow-sm min-h-[220px] transition-all ${isLocked ? 'opacity-90' : ''} ${isDark ? 'bg-slate-900' : 'bg-white'}`} style={{ border: `3px solid ${isLocked ? '#475569' : teamColor}` }}>
-                    <div className="text-white px-5 py-3 flex justify-between items-center" style={{ backgroundColor: isLocked ? '#64748b' : teamColor }}>
-                      <div className="flex items-center gap-2"><span className="font-bold text-lg truncate pr-2">{teamName}</span>{isLocked && <Lock size={16} className="text-white/80" />}</div>
-                      <button onClick={() => toggleVisibility(teamId)} className="hover:scale-110 transition-transform"><Eye size={20} className={isVisible ? "" : "opacity-70"} /></button>
+                  <div className={`rounded-[30px] overflow-hidden flex flex-col shadow-soft min-h-[220px] transition-all bg-white/80 backdrop-blur-md border border-white/50 relative ${isLocked ? 'opacity-90 grayscale-[20%]' : ''}`}>
+                    <div className="absolute top-0 left-0 bottom-0 w-[6px]" style={{ backgroundColor: isLocked ? '#a1a1aa' : teamColor }}></div>
+                    <div className="pl-6 pr-5 py-4 flex justify-between items-center bg-white/40 border-b border-white/50">
+                      <div className="flex items-center gap-2"><span className="font-black text-xl tracking-tight text-brand-text truncate">{teamName}</span>{isLocked && <Lock size={16} className="text-brand-text/40" />}</div>
+                      <button onClick={() => toggleVisibility(teamId)} className="hover:scale-110 transition-transform bg-white/50 hover:bg-white p-2 text-brand-text/50 hover:text-brand-teal rounded-full shadow-sm"><Eye size={20} className={isVisible ? "text-brand-teal" : ""} /></button>
                     </div>
-                    <div className={`border-b px-3 py-2 flex justify-between items-center text-xs font-semibold ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-100'}`}><span className="text-slate-400 uppercase tracking-wider text-[10px]">{isVisible ? "Total" : "Moi"}</span><div className="flex items-center gap-3"><div className="flex gap-2"><span className="text-blue-600 flex items-center">G: {boysCount}</span><span className="text-pink-600 flex items-center">F: {girlsCount}</span>{adultCount > 0 && <span className="text-slate-500 flex items-center border-l border-slate-300 pl-2 ml-1">A: {adultCount}</span>}</div><div className="h-3 w-px bg-slate-300"></div><div className="flex gap-3"><span className={`flex items-center gap-1 ${paiCount > 0 ? 'text-blue-600 font-bold' : 'text-slate-300'}`} title="Nombre de PAI"><FileText size={12} strokeWidth={3} /> {paiCount}</span><span className={`flex items-center gap-1 ${disruptiveCount > 0 ? 'text-red-500 font-bold' : 'text-slate-300'}`} title="Nombre d'élèves perturbateurs"><Flag size={12} strokeWidth={3} /> {disruptiveCount}</span></div></div></div>
-                    <div className={`flex-1 p-3 space-y-2 ${isLocked ? (isDark ? 'cursor-not-allowed bg-slate-950' : 'cursor-not-allowed bg-slate-50') : (isDark ? 'bg-slate-900' : 'bg-white')}`} onDragOver={(e) => { if (isLocked) { e.dataTransfer.dropEffect = "none"; } e.preventDefault(); }} onDrop={(e) => handleDrop(e, teamId)}>
+                    <div className="px-5 py-3 flex justify-between items-center text-xs font-bold bg-black/5 border-b border-white/50 shadow-inner"><span className="text-brand-text/40 uppercase tracking-widest text-[9px]">{isVisible ? "Total" : "Moi"}</span><div className="flex items-center gap-3"><div className="flex gap-2"><span className="text-blue-600 flex items-center">G: {boysCount}</span><span className="text-pink-600 flex items-center">F: {girlsCount}</span>{adultCount > 0 && <span className="text-brand-coral flex items-center border-l border-brand-text/20 pl-2 ml-1">A: {adultCount}</span>}</div><div className="h-4 w-px bg-brand-text/20"></div><div className="flex gap-3"><span className={`flex items-center gap-1 ${paiCount > 0 ? 'text-brand-teal font-black' : 'text-brand-text/30'}`} title="Nombre de PAI"><FileText size={14} strokeWidth={3} /> {paiCount}</span><span className={`flex items-center gap-1 ${disruptiveCount > 0 ? 'text-brand-coral font-black' : 'text-brand-text/30'}`} title="Nombre d'élèves perturbateurs"><Flag size={14} strokeWidth={3} /> {disruptiveCount}</span></div></div></div>
+                    <div className={`flex-1 p-4 space-y-3 ${isLocked ? 'cursor-not-allowed bg-black/5' : 'bg-transparent'}`} onDragOver={(e) => { if (isLocked) { e.dataTransfer.dropEffect = "none"; } e.preventDefault(); }} onDrop={(e) => handleDrop(e, teamId)}>
                       {isVisible && otherStudents.map(s => {
                         const displayName = s.name && s.name.trim() ? s.name : `${s.lastName || ''} ${s.firstName || ''}`;
-                        return (<div key={s.id} className={`border border-dashed rounded-lg p-2 text-sm flex items-center gap-2 select-none ${isDark ? 'bg-slate-950 text-slate-500 border-slate-800' : 'bg-slate-100 text-slate-500 border-slate-300'} ${s.isAdult ? 'border-red-300 bg-red-50' : ''}`}><User size={14} className={s.isAdult ? "text-red-500" : ""} /> <span className="truncate"><span className={`font-bold ${s.isAdult ? 'text-red-700' : ''}`}>{displayName}</span> <span className="text-xs">({s.isAdult ? <span className="text-red-600 font-bold">{s.role} - {s.classLabel}</span> : s.classLabel})</span></span></div>);
+                        return (<div key={s.id} className={`border border-dashed rounded-[16px] p-2 text-sm flex items-center gap-2 select-none bg-black/5 text-brand-text/50 border-brand-text/20 shadow-inner ${s.isAdult ? 'border-brand-coral/40 bg-brand-coral/5 text-brand-coral/70' : ''}`}><User size={14} className={s.isAdult ? "text-brand-coral/70" : ""} /> <span className="truncate"><span className={`font-bold ${s.isAdult ? 'text-brand-coral' : ''}`}>{displayName}</span> <span className="text-[10px] uppercase tracking-wide">({s.isAdult ? <span className="font-bold">{s.role} - {s.classLabel}</span> : s.classLabel})</span></span></div>);
                       })}
-                      {myStudents.map(s => <PersonCard key={s.id} student={s} onDragStart={handleDragStart} onToggle={toggleAttribute} onDelete={handleDeleteStudent} isDark={isDark} />)}
-                      {myStudents.length === 0 && (!isVisible || otherStudents.length === 0) && <div className="h-full flex items-center justify-center text-slate-200 text-sm italic py-4">{isLocked ? "Équipe fermée" : "Glisser un élève"}</div>}
+                      {myStudents.map(s => <PersonCard key={s.id} student={s} onDragStart={handleDragStart} onToggle={toggleAttribute} onDelete={handleDeleteStudent} />)}
+                      {myStudents.length === 0 && (!isVisible || otherStudents.length === 0) && <div className="h-full flex items-center justify-center text-brand-text/30 text-[10px] font-bold uppercase tracking-widest py-6">{isLocked ? "Équipe fermée" : "Glisser un élève ici"}</div>}
                     </div>
                   </div>
                 </div>
@@ -215,10 +213,10 @@ export default function TeacherPage({ students: propStudents, teams: propTeams, 
   );
 }
 
-function PersonCard({ student, onDragStart, onToggle, onDelete, isDark }) {
+function PersonCard({ student, onDragStart, onToggle, onDelete }) {
   const isAdult = student.isAdult;
   const displayName = student.name && student.name.trim() ? student.name : `${student.lastName || ''} ${student.firstName || ''}`;
-  const handleLocalDragStart = (e) => { onDragStart(e, student.id); requestAnimationFrame(() => { requestAnimationFrame(() => { if (e.target) { e.target.classList.add('opacity-20', 'grayscale', 'border-dashed'); } }); }); };
-  const handleDragEnd = (e) => { if (e.target) { e.target.classList.remove('opacity-20', 'grayscale', 'border-dashed'); } };
-  return (<div draggable onDragStart={handleLocalDragStart} onDragEnd={handleDragEnd} className={`border-2 rounded-xl p-3 shadow-sm cursor-grab active:cursor-grabbing relative hover:shadow-md transition-all group flex justify-between items-start select-none ${isAdult ? 'border-red-500' : (isDark ? 'border-cyan-500' : 'border-edoxia-blue')} ${isDark ? 'bg-slate-800' : 'bg-white'}`}><div className="pr-2 overflow-hidden"><div className={`font-bold text-sm truncate ${isDark ? 'text-white' : 'text-slate-800'}`}>{displayName}</div><div className="text-xs text-slate-500 mt-0.5 font-medium truncate">{isAdult ? <span className="text-red-600 font-bold">{student.role}</span> : student.classLabel}{student.team && <span className={isDark ? 'text-cyan-400' : 'text-edoxia-blue'}> • Équipe {student.team}</span>}</div></div><div className="flex gap-1 shrink-0">{!isAdult && (<><button onClick={() => onToggle(student.id, 'pai')} className={`p-1.5 rounded-full hover:bg-slate-100 ${student.pai ? 'text-blue-600 scale-110' : 'text-slate-300 opacity-40 hover:opacity-100'}`}><FileText size={18} fill={student.pai ? "currentColor" : "none"} /></button><button onClick={() => onToggle(student.id, 'disruptive')} className={`p-1.5 rounded-full hover:bg-slate-100 ${student.disruptive ? 'text-red-500 scale-110' : 'text-slate-300 opacity-40 hover:opacity-100'}`}><Flag size={18} fill={student.disruptive ? "currentColor" : "none"} /></button></>)}<button onClick={() => onDelete(student.id)} className="text-slate-300 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity p-1.5"><Trash2 size={16} /></button></div></div>);
+  const handleLocalDragStart = (e) => { onDragStart(e, student.id); requestAnimationFrame(() => { requestAnimationFrame(() => { if (e.target) { e.target.classList.add('opacity-40', 'grayscale', 'border-dashed'); } }); }); };
+  const handleDragEnd = (e) => { if (e.target) { e.target.classList.remove('opacity-40', 'grayscale', 'border-dashed'); } };
+  return (<div draggable onDragStart={handleLocalDragStart} onDragEnd={handleDragEnd} className={`border border-white/50 rounded-[20px] p-3 shadow-sm cursor-grab active:cursor-grabbing relative hover:shadow-md transition-all group flex justify-between items-start select-none bg-white text-brand-text ${isAdult ? 'border-brand-coral bg-brand-coral/5' : ''}`}><div className="pr-2 overflow-hidden"><div className="font-bold text-sm truncate tracking-tight">{displayName}</div><div className="text-[10px] uppercase text-brand-text/50 mt-0.5 font-bold truncate tracking-wide">{isAdult ? <span className="text-brand-coral">{student.role}</span> : student.classLabel}{student.team && <span className="text-brand-teal"> • Équipe {student.team}</span>}</div></div><div className="flex gap-1 shrink-0">{!isAdult && (<><button onClick={() => onToggle(student.id, 'pai')} className={`p-1.5 rounded-full shadow-inner hover:scale-110 active:scale-95 transition-all ${student.pai ? 'text-brand-teal bg-brand-teal/20' : 'text-brand-text/20 bg-black/5 hover:text-brand-teal/80 hover:bg-white'}`}><FileText size={16} fill={student.pai ? "currentColor" : "none"} /></button><button onClick={() => onToggle(student.id, 'disruptive')} className={`p-1.5 rounded-full shadow-inner hover:scale-110 active:scale-95 transition-all ${student.disruptive ? 'text-brand-coral bg-brand-coral/20' : 'text-brand-text/20 bg-black/5 hover:text-brand-coral/80 hover:bg-white'}`}><Flag size={16} fill={student.disruptive ? "currentColor" : "none"} /></button></>)}<button onClick={() => onDelete(student.id)} className="text-brand-text/30 hover:text-brand-coral opacity-0 group-hover:opacity-100 transition-opacity p-1.5 bg-white shadow-soft rounded-full absolute -top-2 -right-2"><Trash2 size={12} /></button></div></div>);
 }

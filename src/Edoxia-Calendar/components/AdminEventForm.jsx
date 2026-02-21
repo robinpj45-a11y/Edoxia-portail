@@ -121,18 +121,18 @@ const AdminEventForm = ({ onClose, onSave, onDelete, initialData }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-text/20 backdrop-blur-sm">
             <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh]"
+                className="bg-white/90 backdrop-blur-xl w-full max-w-lg rounded-[30px] shadow-2xl border border-white/50 flex flex-col max-h-[90vh]"
             >
-                <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                <div className="p-5 border-b border-white/50 flex justify-between items-center bg-white/40 rounded-t-[30px]">
+                    <h2 className="text-xl font-black text-brand-text tracking-tight flex items-center gap-2">
                         {initialData ? 'Modifier l\'événement' : 'Nouvel Événement'}
                     </h2>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-500 transition-colors">
+                    <button onClick={onClose} className="p-2 bg-white/50 hover:bg-white rounded-full text-brand-text/50 hover:text-brand-coral shadow-sm transition-all active:scale-95">
                         <X size={20} />
                     </button>
                 </div>
@@ -141,15 +141,15 @@ const AdminEventForm = ({ onClose, onSave, onDelete, initialData }) => {
                     <form id="event-form" onSubmit={handleSubmit} className="space-y-4">
 
                         {/* Type Selector */}
-                        <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                        <div className="flex gap-2 p-1.5 bg-black/5 rounded-[20px] shadow-inner">
                             {['general', 'sport'].map(t => (
                                 <button
                                     key={t}
                                     type="button"
                                     onClick={() => setFormData({ ...formData, type: t })}
-                                    className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${formData.type === t
-                                        ? 'bg-white dark:bg-slate-700 shadow text-cyan-600 dark:text-cyan-400'
-                                        : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                    className={`flex-1 py-2 text-sm font-bold rounded-[16px] transition-all ${formData.type === t
+                                        ? 'bg-white shadow-soft text-brand-teal'
+                                        : 'text-brand-text/50 hover:text-brand-text hover:bg-white/30'
                                         }`}
                                 >
                                     {t === 'general' ? 'Général' : 'Sport / Activité'}
@@ -159,13 +159,13 @@ const AdminEventForm = ({ onClose, onSave, onDelete, initialData }) => {
 
                         {/* Title */}
                         <div className="space-y-1">
-                            <label className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+                            <label className="text-xs font-bold text-brand-text/50 uppercase tracking-wide">
                                 {formData.type === 'sport' ? 'Activité / Sport' : 'Titre'}
                             </label>
                             <input
                                 type="text"
                                 required
-                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-slate-800 dark:text-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all"
+                                className="w-full bg-white/50 border border-white rounded-[20px] p-3 text-brand-text focus:ring-2 focus:ring-brand-teal focus:bg-white shadow-inner outline-none transition-all"
                                 placeholder={formData.type === 'sport' ? "Ex: Tennis, Piscine..." : "Réunion Pédagogique..."}
                                 value={formData.title}
                                 onChange={e => setFormData({ ...formData, title: e.target.value })}
@@ -176,40 +176,40 @@ const AdminEventForm = ({ onClose, onSave, onDelete, initialData }) => {
                         {formData.type === 'sport' && (
                             <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
                                 <div className="space-y-1">
-                                    <label className="text-sm font-semibold text-slate-500 dark:text-slate-400">Enseignant</label>
+                                    <label className="text-xs font-bold text-brand-text/50 uppercase tracking-wide">Enseignant</label>
                                     <input
                                         type="text"
-                                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-slate-800 dark:text-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all"
+                                        className="w-full bg-white/50 border border-white rounded-[20px] p-3 text-brand-text focus:ring-2 focus:ring-brand-teal focus:bg-white shadow-inner outline-none transition-all"
                                         placeholder="M. Dupont"
                                         value={formData.teacher}
                                         onChange={e => setFormData({ ...formData, teacher: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-sm font-semibold text-slate-500 dark:text-slate-400">Classe</label>
+                                    <label className="text-xs font-bold text-brand-text/50 uppercase tracking-wide">Classe</label>
                                     <input
                                         type="text"
-                                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-slate-800 dark:text-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all"
+                                        className="w-full bg-white/50 border border-white rounded-[20px] p-3 text-brand-text focus:ring-2 focus:ring-brand-teal focus:bg-white shadow-inner outline-none transition-all"
                                         placeholder="CM2"
                                         value={formData.classLevel}
                                         onChange={e => setFormData({ ...formData, classLevel: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-sm font-semibold text-slate-500 dark:text-slate-400">Intervenant</label>
+                                    <label className="text-xs font-bold text-brand-text/50 uppercase tracking-wide">Intervenant</label>
                                     <input
                                         type="text"
-                                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-slate-800 dark:text-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all"
+                                        className="w-full bg-white/50 border border-white rounded-[20px] p-3 text-brand-text focus:ring-2 focus:ring-brand-teal focus:bg-white shadow-inner outline-none transition-all"
                                         placeholder="Nom Prénom"
                                         value={formData.intervener}
                                         onChange={e => setFormData({ ...formData, intervener: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-sm font-semibold text-slate-500 dark:text-slate-400">Contact</label>
+                                    <label className="text-xs font-bold text-brand-text/50 uppercase tracking-wide">Contact</label>
                                     <input
                                         type="text"
-                                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-slate-800 dark:text-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all"
+                                        className="w-full bg-white/50 border border-white rounded-[20px] p-3 text-brand-text focus:ring-2 focus:ring-brand-teal focus:bg-white shadow-inner outline-none transition-all"
                                         placeholder="Tél / Email"
                                         value={formData.contact}
                                         onChange={e => setFormData({ ...formData, contact: e.target.value })}
@@ -220,9 +220,9 @@ const AdminEventForm = ({ onClose, onSave, onDelete, initialData }) => {
 
                         {/* Description */}
                         <div className="space-y-1">
-                            <label className="text-sm font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-2"><AlignLeft size={16} /> Description</label>
+                            <label className="text-xs font-bold text-brand-text/50 uppercase tracking-wide flex items-center gap-2"><AlignLeft size={16} /> Description</label>
                             <textarea
-                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-slate-800 dark:text-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all resize-none h-24"
+                                className="w-full bg-white/50 border border-white rounded-[20px] p-3 text-brand-text focus:ring-2 focus:ring-brand-teal focus:bg-white shadow-inner outline-none transition-all resize-none h-24"
                                 placeholder="Détails de l'événement..."
                                 value={formData.description}
                                 onChange={e => setFormData({ ...formData, description: e.target.value })}
@@ -233,50 +233,50 @@ const AdminEventForm = ({ onClose, onSave, onDelete, initialData }) => {
                         {formData.type === 'general' ? (
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label className="text-sm font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-2"><Calendar size={16} /> Début</label>
+                                    <label className="text-xs font-bold text-brand-text/50 uppercase tracking-wide flex items-center gap-2"><Calendar size={16} /> Début</label>
                                     <input
                                         type="datetime-local"
                                         required
-                                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-slate-800 dark:text-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all"
+                                        className="w-full bg-white/50 border border-white rounded-[20px] p-3 text-brand-text focus:ring-2 focus:ring-brand-teal focus:bg-white shadow-inner outline-none transition-all"
                                         value={formData.start}
                                         onChange={e => setFormData({ ...formData, start: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-sm font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-2"><Calendar size={16} /> Fin</label>
+                                    <label className="text-xs font-bold text-brand-text/50 uppercase tracking-wide flex items-center gap-2"><Calendar size={16} /> Fin</label>
                                     <input
                                         type="datetime-local"
                                         required
-                                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-slate-800 dark:text-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all"
+                                        className="w-full bg-white/50 border border-white rounded-[20px] p-3 text-brand-text focus:ring-2 focus:ring-brand-teal focus:bg-white shadow-inner outline-none transition-all"
                                         value={formData.end}
                                         onChange={e => setFormData({ ...formData, end: e.target.value })}
                                     />
                                 </div>
                             </div>
                         ) : (
-                            <div className="space-y-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
-                                <h3 className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                                    <Calendar className="text-cyan-500" size={18} /> Récurrence
+                            <div className="space-y-4 p-5 bg-white/50 rounded-[20px] border border-white shadow-soft">
+                                <h3 className="font-black text-brand-text flex items-center gap-2 uppercase tracking-tight">
+                                    <Calendar className="text-brand-teal" size={18} /> Récurrence
                                 </h3>
 
                                 {/* Period Range */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-slate-500 uppercase">Début Période</label>
+                                        <label className="text-[10px] font-bold text-brand-text/50 uppercase tracking-wide">Début Période</label>
                                         <input
                                             type="date"
                                             required
-                                            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm"
+                                            className="w-full bg-white/60 border border-white rounded-[16px] p-2.5 text-brand-text focus:ring-2 focus:ring-brand-teal shadow-inner text-sm outline-none transition-all"
                                             value={formData.recurrenceStart}
                                             onChange={e => setFormData({ ...formData, recurrenceStart: e.target.value })}
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-slate-500 uppercase">Fin Période</label>
+                                        <label className="text-[10px] font-bold text-brand-text/50 uppercase tracking-wide">Fin Période</label>
                                         <input
                                             type="date"
                                             required
-                                            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm"
+                                            className="w-full bg-white/60 border border-white rounded-[16px] p-2.5 text-brand-text focus:ring-2 focus:ring-brand-teal shadow-inner text-sm outline-none transition-all"
                                             value={formData.recurrenceEnd}
                                             onChange={e => setFormData({ ...formData, recurrenceEnd: e.target.value })}
                                         />
@@ -286,9 +286,9 @@ const AdminEventForm = ({ onClose, onSave, onDelete, initialData }) => {
                                 {/* Day & Time */}
                                 <div className="grid grid-cols-3 gap-4">
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-slate-500 uppercase">Jour</label>
+                                        <label className="text-[10px] font-bold text-brand-text/50 uppercase tracking-wide">Jour</label>
                                         <select
-                                            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm"
+                                            className="w-full bg-white/60 border border-white rounded-[16px] p-2.5 text-brand-text focus:ring-2 focus:ring-brand-teal shadow-inner text-sm outline-none transition-all"
                                             value={formData.recurrenceDay}
                                             onChange={e => setFormData({ ...formData, recurrenceDay: e.target.value })}
                                         >
@@ -302,21 +302,21 @@ const AdminEventForm = ({ onClose, onSave, onDelete, initialData }) => {
                                         </select>
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-slate-500 uppercase">Heure Début</label>
+                                        <label className="text-[10px] font-bold text-brand-text/50 uppercase tracking-wide">Heure Début</label>
                                         <input
                                             type="time"
                                             required
-                                            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm"
+                                            className="w-full bg-white/60 border border-white rounded-[16px] p-2.5 text-brand-text focus:ring-2 focus:ring-brand-teal shadow-inner text-sm outline-none transition-all"
                                             value={formData.startTime}
                                             onChange={e => setFormData({ ...formData, startTime: e.target.value })}
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-xs font-bold text-slate-500 uppercase">Heure Fin</label>
+                                        <label className="text-[10px] font-bold text-brand-text/50 uppercase tracking-wide">Heure Fin</label>
                                         <input
                                             type="time"
                                             required
-                                            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-sm"
+                                            className="w-full bg-white/60 border border-white rounded-[16px] p-2.5 text-brand-text focus:ring-2 focus:ring-brand-teal shadow-inner text-sm outline-none transition-all"
                                             value={formData.endTime}
                                             onChange={e => setFormData({ ...formData, endTime: e.target.value })}
                                         />
@@ -327,10 +327,10 @@ const AdminEventForm = ({ onClose, onSave, onDelete, initialData }) => {
 
                         {/* Location */}
                         <div className="space-y-1">
-                            <label className="text-sm font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-2"><MapPin size={16} /> Lieu</label>
+                            <label className="text-xs font-bold text-brand-text/50 uppercase tracking-wide flex items-center gap-2"><MapPin size={16} /> Lieu</label>
                             <input
                                 type="text"
-                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg p-3 text-slate-800 dark:text-white focus:ring-2 focus:ring-cyan-500 outline-none transition-all"
+                                className="w-full bg-white/50 border border-white rounded-[20px] p-3 text-brand-text focus:ring-2 focus:ring-brand-teal focus:bg-white shadow-inner outline-none transition-all"
                                 placeholder="Salle des profs..."
                                 value={formData.location}
                                 onChange={e => setFormData({ ...formData, location: e.target.value })}
@@ -338,8 +338,8 @@ const AdminEventForm = ({ onClose, onSave, onDelete, initialData }) => {
                         </div>
 
                         {/* Roles */}
-                        <div className="space-y-2">
-                            <label className="text-sm font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-2"><Users size={16} /> Cibles</label>
+                        <div className="space-y-2 mb-4">
+                            <label className="text-xs font-bold text-brand-text/50 uppercase tracking-wide flex items-center gap-2"><Users size={16} /> Cibles</label>
                             <div className="flex flex-wrap gap-2">
                                 {ROLES.map(role => {
                                     const isSelected = formData.roles.includes(role.id);
@@ -350,7 +350,7 @@ const AdminEventForm = ({ onClose, onSave, onDelete, initialData }) => {
                                             onClick={() => toggleRole(role.id)}
                                             className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${isSelected
                                                 ? `${role.color} text-white border-transparent`
-                                                : 'bg-transparent text-slate-500 border-slate-300 dark:border-slate-700 hover:border-cyan-500'
+                                                : 'text-brand-text/50 border-white hover:border-brand-teal bg-white/50 hover:bg-white shadow-inner'
                                                 }`}
                                         >
                                             {role.label}
@@ -363,18 +363,18 @@ const AdminEventForm = ({ onClose, onSave, onDelete, initialData }) => {
                     </form>
                 </div>
 
-                <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2">
+                <div className="p-5 border-t border-white/50 bg-white/40 rounded-b-[30px] flex justify-end gap-2">
                     {initialData && onDelete && (
                         <button
                             type="button"
                             onClick={onDelete}
-                            className="mr-auto px-4 py-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 font-bold rounded-lg transition-colors border border-transparent hover:border-rose-200 dark:hover:border-rose-800"
+                            className="mr-auto px-4 py-2 text-brand-coral hover:bg-white bg-white/50 font-bold rounded-[20px] transition-all border border-transparent hover:border-white shadow-inner hover:shadow-sm"
                         >
                             Supprimer
                         </button>
                     )}
-                    <button onClick={onClose} className="px-4 py-2 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">Annuler</button>
-                    <button form="event-form" type="submit" className="px-6 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg shadow-lg shadow-cyan-500/20 flex items-center gap-2 transition-all">
+                    <button onClick={onClose} className="px-4 py-2 text-brand-text/60 font-bold hover:bg-white/50 hover:text-brand-text rounded-[20px] transition-colors">Annuler</button>
+                    <button form="event-form" type="submit" className="px-6 py-2 bg-brand-teal hover:bg-brand-teal/90 hover:scale-105 text-white font-bold rounded-full shadow-soft flex items-center gap-2 transition-all">
                         <Save size={18} /> Enregistrer
                     </button>
                 </div>

@@ -9,8 +9,6 @@ import { ADMIN_PASSWORD, TEMPLATE_REPAS, TEMPLATE_ACTIVITE } from '../constants'
 import { ThemeContext } from '../../ThemeContext';
 
 export default function AdminDashboard({ events, entries, user, onBack }) {
-  const { theme } = useContext(ThemeContext);
-  const isDark = theme === 'dark';
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
   const [activeTab, setActiveTab] = useState('overview');
@@ -18,69 +16,69 @@ export default function AdminDashboard({ events, entries, user, onBack }) {
 
   if (!isAuthenticated) {
     return (
-      <div className={`min-h-screen flex items-center justify-center p-4 ${isDark ? 'bg-[#020617]' : 'bg-slate-100'}`}>
-        <div className={`p-8 rounded-2xl shadow-xl w-full max-w-md text-center border ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-          <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 ${isDark ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-600 text-white'}`}><Settings size={32} /></div>
-          <h2 className={`text-2xl font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>Administration</h2>
+      <div className="min-h-screen flex items-center justify-center p-4 bg-brand-bg text-brand-text">
+        <div className="p-8 rounded-[30px] shadow-2xl w-full max-w-md text-center border bg-white/90 backdrop-blur-md border-white/50">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 bg-brand-teal/20 text-brand-teal shadow-inner"><Settings size={32} /></div>
+          <h2 className="text-2xl font-black mb-2 text-brand-text">Administration</h2>
           <form onSubmit={(e) => { e.preventDefault(); if (password === "stpbb") setIsAuthenticated(true); else alert("Erreur"); }} className="flex flex-col gap-4 mt-6">
-            <input type="password" className={`w-full p-4 border rounded-xl outline-none text-center font-bold transition-colors ${isDark ? 'bg-slate-950 border-slate-700 text-white focus:border-cyan-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-cyan-600'}`} autoFocus placeholder="Mot de passe..." value={password} onChange={e => setPassword(e.target.value)} />
-            <button className={`py-4 rounded-xl font-bold shadow-lg transition-all active:scale-95 ${isDark ? 'bg-cyan-600 text-white hover:bg-cyan-500 shadow-cyan-900/20' : 'bg-cyan-600 text-white hover:bg-cyan-700 shadow-cyan-200'}`}>Connexion</button>
+            <input type="password" className="w-full p-4 border rounded-xl outline-none text-center font-bold transition-colors bg-white/50 border-white text-brand-text focus:border-brand-teal shadow-inner placeholder-brand-text/30" autoFocus placeholder="Mot de passe..." value={password} onChange={e => setPassword(e.target.value)} />
+            <button className="py-4 rounded-full font-bold shadow-soft transition-all active:scale-95 bg-brand-teal text-white hover:bg-brand-teal/90 hover:scale-[1.02]">Connexion</button>
           </form>
-          <button onClick={onBack} className={`mt-6 text-sm underline ${isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}>Retour Accueil</button>
+          <button onClick={onBack} className="mt-6 text-sm font-bold text-brand-text/50 hover:text-brand-text underline">Retour Accueil</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`min-h-screen flex flex-col md:flex-row font-sans ${isDark ? 'bg-[#020617] text-slate-300' : 'bg-slate-50 text-slate-700'}`}>
+    <div className="min-h-screen flex flex-col md:flex-row font-sans bg-brand-bg text-brand-text">
       {/* SIDEBAR ADMIN */}
-      <aside className={`hidden md:flex w-64 flex-col h-screen sticky top-0 shadow-2xl z-50 ${isDark ? 'bg-slate-900 border-r border-slate-800' : 'bg-slate-900 text-white'}`}>
-        <div className={`p-6 border-b ${isDark ? 'border-slate-800' : 'border-slate-800'}`}>
-          <button onClick={onBack} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors font-bold text-sm"><ArrowLeft size={18} /> Retour Site</button>
+      <aside className="hidden md:flex w-64 flex-col h-screen sticky top-0 shadow-2xl z-50 bg-white/80 backdrop-blur-md border-r border-white/50">
+        <div className="p-6 border-b border-brand-text/10">
+          <button onClick={onBack} className="flex items-center gap-2 text-brand-text/50 hover:text-brand-text transition-colors font-bold text-sm"><ArrowLeft size={18} /> Retour Site</button>
         </div>
         <nav className="flex-1 p-4 space-y-2">
-          <AdminTabButton active={activeTab === 'create'} onClick={() => { setActiveTab('create'); setEditingEvent(null); }} icon={<Plus size={20} />} label="Créer évènement" isDark={isDark} />
+          <AdminTabButton active={activeTab === 'create'} onClick={() => { setActiveTab('create'); setEditingEvent(null); }} icon={<Plus size={20} />} label="Créer évènement" />
         </nav>
       </aside>
 
       {/* CONTENT AREA */}
-      <div className={`flex-1 flex flex-col h-screen overflow-hidden ${isDark ? 'bg-[#020617]' : 'bg-slate-50'}`}>
-        <header className={`p-6 shadow-sm border-b flex justify-between items-center z-10 sticky top-0 ${isDark ? 'bg-slate-900/80 border-slate-800 backdrop-blur-md' : 'bg-white border-slate-200'}`}>
+      <div className="flex-1 flex flex-col h-screen overflow-hidden bg-brand-bg">
+        <header className="p-6 shadow-sm border-b flex justify-between items-center z-10 sticky top-0 bg-white/40 border-white/50 backdrop-blur-md">
           <div>
-            <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+            <h2 className="text-2xl font-black text-brand-text tracking-tight">
               {activeTab === 'overview' && "Vue Globale"}
               {activeTab === 'create' && (editingEvent ? "Modifier l'évènement" : "Nouvel évènement")}
             </h2>
-            <p className="text-xs text-slate-500 font-medium mt-1">Gérez vos inscriptions et activités</p>
+            <p className="text-xs text-brand-text/50 font-bold mt-1 uppercase tracking-wider">Administration</p>
           </div>
-          <div className={`text-sm font-bold px-4 py-2 rounded-xl border ${isDark ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' : 'bg-indigo-50 text-indigo-600 border-indigo-100'}`}>
+          <div className="text-sm font-bold px-4 py-2 rounded-full border bg-brand-coral/10 text-brand-coral border-brand-coral/20 shadow-sm">
             {events.length} évènement(s) actif(s)
           </div>
         </header>
 
         <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-24">
-          {activeTab === 'overview' && <AdminOverview events={events} entries={entries} onEdit={(e) => { setEditingEvent(e); setActiveTab('create'); }} isDark={isDark} />}
-          {activeTab === 'create' && <AdminCreateForm eventToEdit={editingEvent} user={user} onFinish={() => setActiveTab('overview')} isDark={isDark} />}
+          {activeTab === 'overview' && <AdminOverview events={events} entries={entries} onEdit={(e) => { setEditingEvent(e); setActiveTab('create'); }} />}
+          {activeTab === 'create' && <AdminCreateForm eventToEdit={editingEvent} user={user} onFinish={() => setActiveTab('overview')} />}
         </div>
       </div>
 
       {/* MOBILE NAV ADMIN */}
-      <nav className={`md:hidden fixed bottom-0 left-0 right-0 flex justify-around p-3 pb-safe z-50 border-t shadow-2xl ${isDark ? 'bg-slate-900 border-slate-800 text-slate-400' : 'bg-slate-900 text-white border-slate-800'}`}>
-        <button onClick={() => setActiveTab('overview')} className={`p-2 rounded-xl ${activeTab === 'overview' ? 'bg-cyan-600 text-white' : 'text-slate-500'}`}><LayoutDashboard size={24} /></button>
-        <button onClick={() => { setActiveTab('create'); setEditingEvent(null); }} className={`p-2 rounded-xl ${activeTab === 'create' ? 'bg-cyan-600 text-white' : 'text-slate-500'}`}><Plus size={24} /></button>
-        <button onClick={onBack} className="p-2 text-slate-500"><ArrowLeft size={24} /></button>
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 flex justify-around p-3 pb-safe z-50 border-t shadow-[0_-10px_40px_rgba(0,0,0,0.05)] bg-white/90 backdrop-blur-md border-white/50 rounded-t-[30px]">
+        <button onClick={() => setActiveTab('overview')} className={`p-2 rounded-xl transition-colors ${activeTab === 'overview' ? 'bg-brand-teal text-white shadow-soft' : 'text-brand-text/50 hover:text-brand-text hover:bg-black/5'}`}><LayoutDashboard size={24} /></button>
+        <button onClick={() => { setActiveTab('create'); setEditingEvent(null); }} className={`p-2 rounded-xl transition-colors ${activeTab === 'create' ? 'bg-brand-teal text-white shadow-soft' : 'text-brand-text/50 hover:text-brand-text hover:bg-black/5'}`}><Plus size={24} /></button>
+        <button onClick={onBack} className="p-2 text-brand-text/50 hover:text-brand-text hover:bg-black/5 transition-colors rounded-xl"><ArrowLeft size={24} /></button>
       </nav>
     </div>
   );
 }
 
-function AdminTabButton({ active, onClick, icon, label, isDark }) {
-  return <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${active ? 'bg-cyan-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'}`}>{icon}<span>{label}</span></button>
+function AdminTabButton({ active, onClick, icon, label }) {
+  return <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-[20px] transition-all font-bold ${active ? 'bg-brand-teal text-white shadow-soft scale-[1.02]' : 'text-brand-text/60 hover:bg-white/50 hover:text-brand-text'}`}>{icon}<span>{label}</span></button>
 }
 
 // --- ADMIN OVERVIEW ---
-function AdminOverview({ events, entries, onEdit, isDark }) {
+function AdminOverview({ events, entries, onEdit }) {
   const [expandedId, setExpandedId] = useState(null);
 
   const deleteEvent = async (id) => { if (confirm("Supprimer ?")) await deleteDoc(doc(db, 'events', id)); };
@@ -105,75 +103,74 @@ function AdminOverview({ events, entries, onEdit, isDark }) {
     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
       {events.map(e => {
         const isRepas = e.type === TEMPLATE_REPAS;
-        const color = isRepas ? '#f97316' : '#06b6d4';
-        const bgHeader = isRepas ? 'bg-orange-500' : 'bg-cyan-600';
+        const bgHeader = isRepas ? 'bg-brand-peach' : 'bg-brand-teal';
         const eventEntries = entries.filter(entry => entry.eventId === e.id);
 
         return (
-          <div key={e.id} className={`rounded-2xl shadow-sm overflow-hidden border-2 transition-all hover:shadow-md ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`} style={{ borderColor: isDark ? undefined : color }}>
+          <div key={e.id} className="rounded-[30px] shadow-soft overflow-hidden border transition-all hover:-translate-y-1 hover:shadow-lg bg-white/60 border-white/50 flex flex-col">
             {/* Header Card */}
-            <div className={`${bgHeader} p-4 flex justify-between items-center text-white`}>
+            <div className={`${bgHeader} p-5 flex justify-between items-center text-white shadow-sm`}>
               <div className="flex items-center gap-3">
-                <h3 className="font-bold text-lg">{e.title}</h3>
-                <button onClick={() => onEdit(e)} className="text-white/70 hover:text-white"><Edit3 size={16} /></button>
-                <button onClick={() => toggleEventLock(e)} className={`text-white/80 hover:text-white transition-colors ${e.isLocked ? 'text-red-200' : ''}`} title={e.isLocked ? "Déverrouiller" : "Verrouiller"}>
+                <h3 className="font-black text-lg tracking-tight">{e.title}</h3>
+                <button onClick={() => onEdit(e)} className="text-white/70 hover:text-white hover:scale-110 transition-transform"><Edit3 size={16} /></button>
+                <button onClick={() => toggleEventLock(e)} className={`text-white/80 hover:text-white transition-all hover:scale-110 ${e.isLocked ? 'text-red-200' : ''}`} title={e.isLocked ? "Déverrouiller" : "Verrouiller"}>
                   {e.isLocked ? <Lock size={16} /> : <Unlock size={16} />}
                 </button>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs bg-white/20 px-2 py-1 rounded border border-white/30 font-bold">{eventEntries.length} inscrits</span>
-                <button onClick={() => deleteEvent(e.id)} className="text-white/70 hover:text-red-200"><Trash2 size={18} /></button>
+              <div className="flex items-center gap-3">
+                <span className="text-xs bg-black/10 px-3 py-1.5 rounded-full font-bold backdrop-blur-sm">{eventEntries.length} inscrits</span>
+                <button onClick={() => deleteEvent(e.id)} className="text-white/70 hover:text-red-200 hover:scale-110 transition-transform"><Trash2 size={18} /></button>
               </div>
             </div>
 
             {/* Sub-header Actions */}
-            <div className={`px-4 py-2 border-b flex justify-between items-center text-xs font-bold ${isDark ? 'bg-slate-950 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-100 text-slate-500'}`}>
-              <span className="uppercase tracking-wider">{e.type}</span>
-              <div className="flex gap-2">
-                <button onClick={() => exportCsv(e)} className="flex items-center gap-1 hover:text-cyan-500"><Download size={14} /> CSV</button>
-                <button onClick={() => setExpandedId(expandedId === e.id ? null : e.id)} className={`flex items-center gap-1 hover:text-cyan-500 ${expandedId === e.id ? 'text-cyan-500' : ''}`}><Eye size={14} /> {expandedId === e.id ? 'Masquer' : 'Voir'}</button>
+            <div className="px-5 py-3 border-b flex justify-between items-center text-xs font-bold bg-white/50 border-white text-brand-text/70">
+              <span className="uppercase tracking-widest">{e.type}</span>
+              <div className="flex gap-4">
+                <button onClick={() => exportCsv(e)} className="flex items-center gap-1.5 hover:text-brand-teal transition-colors"><Download size={14} /> CSV</button>
+                <button onClick={() => setExpandedId(expandedId === e.id ? null : e.id)} className={`flex items-center gap-1.5 transition-colors ${expandedId === e.id ? 'text-brand-teal' : 'hover:text-brand-teal'}`}><Eye size={14} /> {expandedId === e.id ? 'Masquer' : 'Voir'}</button>
               </div>
             </div>
 
             {/* Table Preview */}
             {expandedId === e.id && (
-              <div className="max-h-60 overflow-y-auto p-0">
-                <table className="w-full text-left text-sm">
-                  <thead className={`text-[10px] uppercase font-bold sticky top-0 ${isDark ? 'bg-slate-950 text-slate-500' : 'bg-slate-50 text-slate-400'}`}>
+              <div className="max-h-80 overflow-y-auto p-2 bg-white/30 backdrop-blur-sm">
+                <table className="w-full text-left text-sm border-separate border-spacing-y-1">
+                  <thead className="text-[10px] uppercase font-bold sticky top-0 bg-white/80 backdrop-blur-md text-brand-text/50 z-10 rounded-xl">
                     <tr><th className="p-3">Nom</th><th className="p-3">Détails</th><th className="p-3 text-right">Total</th><th className="p-3 text-center">Paiement</th></tr>
                   </thead>
-                  <tbody className={`divide-y ${isDark ? 'divide-slate-800' : 'divide-slate-100'}`}>
+                  <tbody>
                     {eventEntries.map(ent => (
-                      <tr key={ent.id} className={isDark ? 'hover:bg-slate-800/50' : 'hover:bg-slate-50'}>
-                        <td className={`p-3 font-bold ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>{ent.lastName} {ent.firstName}</td>
+                      <tr key={ent.id} className="hover:bg-white/60 transition-colors bg-white/40 rounded-[10px] shadow-sm">
+                        <td className="p-3 font-bold text-brand-text rounded-l-[10px]">{ent.lastName} {ent.firstName}</td>
 
                         {/* Affichage Menu ou Carte */}
-                        <td className={`p-3 text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                          <span className={`inline-block px-2 py-1 rounded font-bold mr-2 uppercase tracking-wide ${ent.selectionType === 'carte' ? (isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500') : (isDark ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-100 text-indigo-600')}`}>
+                        <td className="p-3 text-xs text-brand-text/70">
+                          <span className="inline-block px-2 py-1 rounded-md font-bold mr-2 uppercase tracking-wide bg-brand-teal/10 text-brand-teal">
                             {ent.selectionType === 'carte' ? 'À la carte' : (e.menus?.find(m => m.id === ent.selectionType)?.name || 'Menu')}
                           </span>
-                          {Object.values(ent.selections).map(v => v && !v.startsWith('APERO:') && <span key={v} className={`inline-block border px-1.5 py-0.5 rounded mr-1 ${isDark ? 'bg-slate-950 border-slate-700 text-slate-400' : 'bg-white border-slate-200 text-slate-500'}`}>{v.split('|')[0]}</span>)}
+                          {Object.values(ent.selections).map(v => v && !v.startsWith('APERO:') && <span key={v} className="inline-block border px-1.5 py-0.5 rounded mr-1 bg-white/50 border-white text-brand-text/60 font-medium">{v.split('|')[0]}</span>)}
                           {Object.values(ent.selections).filter(v => v && v.toString().startsWith('APERO:')).map(v => (
-                            <span key={v} className={`inline-block border px-1.5 py-0.5 rounded font-bold mr-1 ${isDark ? 'bg-pink-500/10 text-pink-400 border-pink-500/20' : 'bg-pink-50 text-pink-600 border-pink-100'}`}>{v.split(':')[1]}</span>
+                            <span key={v} className="inline-block border px-1.5 py-0.5 rounded font-bold mr-1 bg-brand-peach/10 text-brand-peach border-brand-peach/20">{v.split(':')[1]}</span>
                           ))}
                         </td>
 
-                        <td className={`p-3 text-right font-mono font-bold ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>{ent.total}€</td>
+                        <td className="p-3 text-right font-mono font-bold text-brand-coral">{ent.total}€</td>
 
-                        <td className="p-3 text-center">
+                        <td className="p-3 text-center rounded-r-[10px]">
                           {ent.total > 0 ? (
                             <button
                               onClick={() => togglePaid(ent.id, ent.isPaid)}
-                              className={`p-1.5 rounded-full transition-all ${ent.isPaid ? (isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600') : (isDark ? 'bg-slate-800 text-slate-500 hover:bg-slate-700' : 'bg-slate-100 text-slate-300 hover:bg-slate-200')}`}
+                              className={`p-1.5 rounded-full transition-all flex items-center justify-center mx-auto hover:scale-110 ${ent.isPaid ? 'bg-green-500/20 text-green-600 shadow-inner' : 'bg-black/5 text-brand-text/30 hover:bg-brand-text/10'}`}
                               title={ent.isPaid ? "Payé" : "Marquer comme payé"}
                             >
                               {ent.isPaid ? <CheckCircle size={16} /> : <Circle size={16} />}
                             </button>
-                          ) : <span className="text-xs text-slate-300">-</span>}
+                          ) : <span className="text-xs text-brand-text/30 font-bold p-1.5">-</span>}
                         </td>
                       </tr>
                     ))}
-                    {eventEntries.length === 0 && <tr><td colSpan="4" className="p-4 text-center text-slate-500 italic">Aucune inscription</td></tr>}
+                    {eventEntries.length === 0 && <tr><td colSpan="4" className="p-4 text-center text-brand-text/40 italic font-medium">Aucune inscription</td></tr>}
                   </tbody>
                 </table>
               </div>
@@ -186,7 +183,7 @@ function AdminOverview({ events, entries, onEdit, isDark }) {
 }
 
 // --- ADMIN CREATE FORM ---
-function AdminCreateForm({ eventToEdit, user, onFinish, isDark }) {
+function AdminCreateForm({ eventToEdit, user, onFinish }) {
   const [data, setData] = useState(eventToEdit || {
     title: '', description: '', type: TEMPLATE_REPAS, isPaid: false,
     menus: [], carte: { entrees: [], plats: [], desserts: [] },
@@ -220,21 +217,21 @@ function AdminCreateForm({ eventToEdit, user, onFinish, isDark }) {
     setData({ ...data, aperoChoices: newChoices });
   };
 
-  const inputClass = `w-full border rounded-xl p-3 font-bold outline-none ${isDark ? 'bg-slate-950 border-slate-700 text-white focus:border-cyan-500' : 'bg-white border-slate-200 text-slate-800 focus:border-cyan-600'}`;
-  const labelClass = `text-xs font-bold uppercase mb-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`;
+  const inputClass = "w-full border rounded-xl p-3 font-bold outline-none transition-colors bg-white/60 border-white text-brand-text placeholder-brand-text/40 focus:border-brand-teal shadow-inner";
+  const labelClass = "text-[10px] font-bold uppercase mb-1 text-brand-text/50 tracking-wider";
 
   return (
-    <div className={`p-8 rounded-2xl shadow-sm border max-w-3xl mx-auto ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
-      <h3 className={`text-xl font-bold mb-6 flex items-center gap-2 ${isDark ? 'text-cyan-400' : 'text-cyan-600'}`}>
-        {eventToEdit ? <Edit3 /> : <Plus />} Configuration
+    <div className="p-8 rounded-[30px] shadow-soft border max-w-3xl mx-auto bg-white/60 border-white/50 backdrop-blur-sm">
+      <h3 className="text-xl font-black mb-6 flex items-center gap-2 text-brand-teal tracking-tight">
+        {eventToEdit ? <Edit3 size={24} /> : <Plus size={24} />} Configuration
       </h3>
 
       <div className="space-y-4">
         <div><label className={labelClass}>Titre</label><input className={inputClass} value={data.title} onChange={e => setData({ ...data, title: e.target.value })} /></div>
 
         <div className="flex gap-4">
-          <button onClick={() => setData({ ...data, type: TEMPLATE_REPAS })} className={`flex-1 py-3 rounded-xl font-bold border-2 transition-colors ${data.type === TEMPLATE_REPAS ? (isDark ? 'border-orange-500 text-orange-400 bg-orange-500/10' : 'border-orange-500 text-orange-600 bg-orange-50') : (isDark ? 'border-slate-800 text-slate-500' : 'border-slate-100 text-slate-400')}`}>Repas</button>
-          <button onClick={() => setData({ ...data, type: TEMPLATE_ACTIVITE })} className={`flex-1 py-3 rounded-xl font-bold border-2 transition-colors ${data.type === TEMPLATE_ACTIVITE ? (isDark ? 'border-cyan-500 text-cyan-400 bg-cyan-500/10' : 'border-cyan-600 text-cyan-600 bg-blue-50') : (isDark ? 'border-slate-800 text-slate-500' : 'border-slate-100 text-slate-400')}`}>Activité</button>
+          <button onClick={() => setData({ ...data, type: TEMPLATE_REPAS })} className={`flex-1 py-3 rounded-2xl font-bold border-2 transition-all ${data.type === TEMPLATE_REPAS ? 'border-brand-peach text-brand-peach bg-brand-peach/10 shadow-sm scale-[1.02]' : 'border-white/60 bg-white/30 text-brand-text/50 hover:bg-white hover:border-white shadow-inner'}`}>Repas</button>
+          <button onClick={() => setData({ ...data, type: TEMPLATE_ACTIVITE })} className={`flex-1 py-3 rounded-2xl font-bold border-2 transition-all ${data.type === TEMPLATE_ACTIVITE ? 'border-brand-teal text-brand-teal bg-brand-teal/10 shadow-sm scale-[1.02]' : 'border-white/60 bg-white/30 text-brand-text/50 hover:bg-white hover:border-white shadow-inner'}`}>Activité</button>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -246,7 +243,7 @@ function AdminCreateForm({ eventToEdit, user, onFinish, isDark }) {
 
         <div className="flex items-center gap-3 py-2">
           <input type="checkbox" id="isPaid" className="w-5 h-5 accent-cyan-600" checked={data.isPaid} onChange={e => setData({ ...data, isPaid: e.target.checked })} />
-          <label htmlFor="isPaid" className={`font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Évènement payant ?</label>
+          <label htmlFor="isPaid" className="font-bold text-brand-text">Évènement payant ?</label>
         </div>
 
         {data.isPaid && data.type === TEMPLATE_ACTIVITE && (
@@ -257,10 +254,10 @@ function AdminCreateForm({ eventToEdit, user, onFinish, isDark }) {
         {data.type === TEMPLATE_REPAS && (
           <div className="space-y-6 mt-6 border-t border-slate-200 pt-6">
             {/* APERO */}
-            <div className={`p-4 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+            <div className="p-4 rounded-2xl border bg-white/50 border-white/50 shadow-inner">
               <div className="flex items-center gap-3 mb-4">
-                <input type="checkbox" id="hasApero" className="w-5 h-5 accent-pink-500" checked={data.hasApero} onChange={e => setData({ ...data, hasApero: e.target.checked })} />
-                <label htmlFor="hasApero" className={`font-bold ${isDark ? 'text-pink-400' : 'text-pink-600'}`}>Proposer un apéritif ?</label>
+                <input type="checkbox" id="hasApero" className="w-5 h-5 accent-brand-peach" checked={data.hasApero} onChange={e => setData({ ...data, hasApero: e.target.checked })} />
+                <label htmlFor="hasApero" className="font-bold text-brand-peach">Proposer un apéritif ?</label>
               </div>
               {data.hasApero && (
                 <div className="grid grid-cols-2 gap-4">
@@ -274,10 +271,10 @@ function AdminCreateForm({ eventToEdit, user, onFinish, isDark }) {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className={labelClass}>Menus</label>
-                <button onClick={addMenu} className="text-xs bg-cyan-100 text-cyan-700 px-2 py-1 rounded hover:bg-cyan-200 font-bold">+ Ajouter Menu</button>
+                <button onClick={addMenu} className="text-xs bg-brand-teal/20 text-brand-teal px-3 py-1.5 rounded-full hover:bg-brand-teal/30 font-bold transition-colors">+ Ajouter Menu</button>
               </div>
               {data.menus.map((menu, idx) => (
-                <div key={menu.id} className={`p-4 rounded-xl border mb-4 ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                <div key={menu.id} className="p-4 rounded-2xl border mb-4 bg-white/50 border-white/50 shadow-inner">
                   <div className="flex gap-2 mb-4">
                     <input placeholder="Nom du menu" className={inputClass} value={menu.name} onChange={e => updateMenu(menu.id, 'name', e.target.value)} />
                     {data.isPaid && <input type="number" placeholder="Prix" className={`w-24 ${inputClass}`} value={menu.price} onChange={e => updateMenu(menu.id, 'price', e.target.value)} />}
@@ -286,10 +283,10 @@ function AdminCreateForm({ eventToEdit, user, onFinish, isDark }) {
                   <div className="grid grid-cols-3 gap-4">
                     {['entrees', 'plats', 'desserts'].map(type => (
                       <div key={type}>
-                        <div className="flex justify-between mb-1"><span className="text-[10px] uppercase font-bold opacity-50">{type}</span><button onClick={() => addMenuItem(menu.id, type)} className="text-[10px] bg-slate-200 px-1 rounded">+</button></div>
+                        <div className="flex justify-between mb-1 items-center"><span className="text-[10px] uppercase font-bold text-brand-text/50">{type}</span><button onClick={() => addMenuItem(menu.id, type)} className="text-[10px] bg-black/5 hover:bg-black/10 text-brand-text/60 px-2 rounded-md transition-colors">+</button></div>
                         {menu[type].map((item, i) => (
                           <div key={i} className="flex gap-1 mb-1">
-                            <input className={`text-xs p-1 w-full rounded border ${isDark ? 'bg-slate-900 border-slate-700 text-slate-300' : 'bg-white border-slate-300'}`} value={item} onChange={e => updateMenuItem(menu.id, type, i, e.target.value)} />
+                            <input className="text-xs p-2 w-full rounded border bg-white/70 border-white text-brand-text font-medium outline-none focus:border-brand-teal" value={item} onChange={e => updateMenuItem(menu.id, type, i, e.target.value)} />
                             <button onClick={() => setData(p => ({ ...p, menus: p.menus.map(m => m.id !== menu.id ? m : { ...m, [type]: m[type].filter((_, idx) => idx !== i) }) }))} className="text-red-400 text-xs">x</button>
                           </div>
                         ))}
@@ -303,14 +300,14 @@ function AdminCreateForm({ eventToEdit, user, onFinish, isDark }) {
             {/* CARTE */}
             <div>
               <label className={labelClass}>À la carte</label>
-              <div className={`p-4 rounded-xl border grid grid-cols-3 gap-4 ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+              <div className="p-4 rounded-2xl border grid grid-cols-3 gap-4 bg-white/50 border-white/50 shadow-inner">
                 {['entrees', 'plats', 'desserts'].map(type => (
                   <div key={type}>
-                    <div className="flex justify-between mb-2"><span className="text-xs font-bold uppercase opacity-50">{type}</span><button onClick={() => addCarteItem(type)} className="text-xs bg-slate-200 px-2 rounded font-bold">+</button></div>
+                    <div className="flex justify-between mb-2 items-center"><span className="text-[10px] font-bold uppercase text-brand-text/50">{type}</span><button onClick={() => addCarteItem(type)} className="text-[10px] bg-black/5 hover:bg-black/10 text-brand-text/60 px-2 rounded-md font-bold transition-colors">+</button></div>
                     {data.carte[type].map((item, i) => (
                       <div key={i} className="flex gap-1 mb-2">
-                        <input placeholder="Nom" className={`text-xs p-2 w-full rounded border ${isDark ? 'bg-slate-900 border-slate-700 text-slate-300' : 'bg-white border-slate-300'}`} value={item.name} onChange={e => updateCarteItem(type, i, 'name', e.target.value)} />
-                        {data.isPaid && <input type="number" placeholder="€" className={`text-xs p-2 w-16 rounded border ${isDark ? 'bg-slate-900 border-slate-700 text-slate-300' : 'bg-white border-slate-300'}`} value={item.price} onChange={e => updateCarteItem(type, i, 'price', e.target.value)} />}
+                        <input placeholder="Nom" className="text-xs p-2 w-full rounded border bg-white/70 border-white text-brand-text font-medium outline-none focus:border-brand-teal" value={item.name} onChange={e => updateCarteItem(type, i, 'name', e.target.value)} />
+                        {data.isPaid && <input type="number" placeholder="€" className="text-xs p-2 w-16 rounded border bg-white/70 border-white text-brand-text font-medium outline-none focus:border-brand-teal" value={item.price} onChange={e => updateCarteItem(type, i, 'price', e.target.value)} />}
                         <button onClick={() => setData(p => ({ ...p, carte: { ...p.carte, [type]: p.carte[type].filter((_, idx) => idx !== i) } }))} className="text-red-400 hover:text-red-600"><Trash2 size={14} /></button>
                       </div>
                     ))}
@@ -321,7 +318,7 @@ function AdminCreateForm({ eventToEdit, user, onFinish, isDark }) {
           </div>
         )}
 
-        <button onClick={save} className={`w-full font-bold py-4 rounded-xl shadow-lg mt-4 transition-all active:scale-95 ${isDark ? 'bg-cyan-600 text-white hover:bg-cyan-500 shadow-cyan-900/20' : 'bg-cyan-600 text-white hover:bg-cyan-700 shadow-cyan-200'}`}>Sauvegarder</button>
+        <button onClick={save} className="w-full font-bold py-4 rounded-full shadow-soft mt-4 transition-all active:scale-95 bg-brand-teal text-white hover:bg-brand-teal/90 hover:scale-[1.02]">Sauvegarder</button>
       </div>
     </div>
   )

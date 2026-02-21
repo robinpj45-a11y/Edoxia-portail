@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from './firebase';
-import { collection, addDoc, deleteDoc, doc, onSnapshot, query, writeBatch, getDocs, updateDoc, orderBy, limit } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, onSnapshot, query, writeBatch, getDocs, updateDoc, orderBy, limit, setDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import {
     ArrowLeft, Plus, Trash2, Lock,
@@ -8,12 +8,11 @@ import {
     ArrowRight, Sun, Moon, School, BookOpen,
     GraduationCap, Calculator, Languages, FlaskConical,
     LayoutDashboard, Trophy, PartyPopper, UserCog, Medal,
-    Bug, MessageSquare
+    Bug, MessageSquare, Save
 } from 'lucide-react';
 import AdminDashboard from './Edoxia-Quiz/pages/AdminDashboard';
 import AdminCalendar from './Edoxia-Calendar/pages/AdminCalendar';
 
-// Mapping des icônes disponibles pour le sélecteur
 export const ICON_OPTIONS = {
     Gamepad2, Bell, Calendar, School, BookOpen,
     GraduationCap, Calculator, Languages, FlaskConical,
@@ -23,129 +22,87 @@ export const ICON_OPTIONS = {
 const SidebarItem = ({ icon: Icon, label, active, onClick }) => (
     <button
         onClick={onClick}
-        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${active
-                ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-bold'
-                : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+        className={`w-full flex items-center gap-3 px-4 py-3 rounded-[20px] transition-all font-bold ${active
+            ? 'bg-white text-brand-teal shadow-soft'
+            : 'text-brand-text/60 hover:bg-white/50 hover:text-brand-text'
             }`}
     >
-        <Icon size={20} />
+        <Icon size={20} className={active ? "text-brand-teal" : ""} />
         <span>{label}</span>
     </button>
 );
 
 const HomeAdmin = ({ defaultModules }) => {
     const [modules, setModules] = useState([]);
-    const [newModule, setNewModule] = useState({
-        name: '',
-        desc: '',
-        path: '',
-        icon: 'Gamepad2',
-        iconColor: 'text-cyan-400',
-        tag: 'Nouveau',
-        active: true,
-        requiresSchoolAuth: false
-    });
+    const [homeNews, setHomeNews] = useState("");
+    const [savingNews, setSavingNews] = useState(false);
 
     useEffect(() => {
         const q = query(collection(db, "modules"));
-        const unsub = onSnapshot(q, (snap) => {
-            setModules(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        const unsubModules = onSnapshot(q, (snap) => setModules(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
+        const unsubNews = onSnapshot(doc(db, "settings", "home_news"), (docSnap) => {
+            if (docSnap.exists() && docSnap.data().message !== undefined) setHomeNews(docSnap.data().message);
         });
-        return () => unsub();
+        return () => { unsubModules(); unsubNews(); };
     }, []);
 
-    const handleAdd = async () => {
-        if (!newModule.name) return alert("Nom requis");
+    const handleSaveNews = async () => {
+        setSavingNews(true);
         try {
-            await addDoc(collection(db, "modules"), {
-                ...newModule,
-                createdAt: new Date()
-            });
-            setNewModule({ ...newModule, name: '', desc: '', path: '' });
+            await setDoc(doc(db, "settings", "home_news"), { message: homeNews }, { merge: true });
         } catch (e) {
             console.error(e);
-            alert("Erreur lors de l'ajout");
+            alert("Erreur lors de la sauvegarde.");
         }
+        setSavingNews(false);
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm("Supprimer ce module ?")) {
-            await deleteDoc(doc(db, "modules", id));
-        }
+        if (window.confirm("Supprimer ce module ?")) await deleteDoc(doc(db, "modules", id));
     };
 
-    const importDefaults = async () => {
-        if (!window.confirm("Ajouter les modules par défaut à la base de données ?")) return;
-        const batch = writeBatch(db);
-        defaultModules.forEach(m => {
-            let iconName = 'Gamepad2';
-            let iconColor = 'text-cyan-400';
-            if (m.id === 'quiz') { iconName = 'Gamepad2'; iconColor = 'text-purple-400'; }
-            if (m.id === 'events') { iconName = 'Calendar'; iconColor = 'text-yellow-400'; }
 
-            const docRef = doc(collection(db, "modules"));
-            batch.set(docRef, {
-                name: m.name,
-                desc: m.desc,
-                path: m.path,
-                icon: iconName,
-                iconColor: iconColor,
-                tag: m.tag,
-                active: m.active,
-                requiresSchoolAuth: m.requiresSchoolAuth || false,
-                restrictedToRoles: m.restrictedToRoles || null
-            });
-        });
-        await batch.commit();
-    };
 
     return (
-        <div className="max-w-4xl mx-auto">
-            <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-bold">Gestion de l'Accueil</h2>
-            </div>
+        <div className="max-w-4xl mx-auto space-y-8">
+            <h2 className="text-3xl font-black text-brand-text flex items-center gap-3"><LayoutDashboard className="text-brand-coral" size={32} /> Gestion de l'Accueil</h2>
 
-            <div className="bg-slate-900 p-6 rounded-xl border border-slate-800 mb-8">
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Plus /> Ajouter un module</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input placeholder="Nom" className="bg-slate-950 p-2 rounded border border-slate-800 text-white" value={newModule.name} onChange={e => setNewModule({ ...newModule, name: e.target.value })} />
-                    <input placeholder="Description" className="bg-slate-950 p-2 rounded border border-slate-800 text-white" value={newModule.desc} onChange={e => setNewModule({ ...newModule, desc: e.target.value })} />
-                    <input placeholder="Chemin / URL" className="bg-slate-950 p-2 rounded border border-slate-800 text-white" value={newModule.path} onChange={e => setNewModule({ ...newModule, path: e.target.value })} />
-                    <input placeholder="Tag (ex: Jeux)" className="bg-slate-950 p-2 rounded border border-slate-800 text-white" value={newModule.tag} onChange={e => setNewModule({ ...newModule, tag: e.target.value })} />
-                    <div className="flex gap-2">
-                        <select className="bg-slate-950 p-2 rounded border border-slate-800 flex-1 text-white" value={newModule.icon} onChange={e => setNewModule({ ...newModule, icon: e.target.value })}>{Object.keys(ICON_OPTIONS).map(k => <option key={k} value={k}>{k}</option>)}</select>
-                        <input placeholder="Couleur (text-cyan-400)" className="bg-slate-950 p-2 rounded border border-slate-800 flex-1 text-white" value={newModule.iconColor} onChange={e => setNewModule({ ...newModule, iconColor: e.target.value })} />
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={newModule.requiresSchoolAuth} onChange={e => setNewModule({ ...newModule, requiresSchoolAuth: e.target.checked })} /> <Lock size={16} /> Vérouillage École</label>
-                        <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={newModule.active} onChange={e => setNewModule({ ...newModule, active: e.target.checked })} /> Actif</label>
+            {/* Actualités */}
+            <div className="bg-white/40 p-6 rounded-[30px] shadow-soft border border-white/50 backdrop-blur-sm">
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-brand-text"><Bell className="text-brand-coral" size={24} /> Texte d'Actualités (Navigation)</h3>
+                <div className="space-y-4">
+                    <textarea
+                        className="w-full bg-white/60 border border-white rounded-[20px] p-4 text-brand-text focus:ring-2 focus:ring-brand-teal focus:bg-white shadow-inner outline-none transition-all resize-none min-h-[100px] font-medium"
+                        placeholder="Message d'actualité visible sur l'accueil... (laissez vide pour masquer la bulle)"
+                        value={homeNews}
+                        onChange={e => setHomeNews(e.target.value)}
+                    />
+                    <div className="flex justify-end">
+                        <button onClick={handleSaveNews} disabled={savingNews} className="px-6 py-3 bg-brand-teal hover:bg-brand-teal/90 hover:scale-105 active:scale-95 text-white font-bold rounded-full shadow-soft transition-all flex items-center gap-2 disabled:opacity-50">
+                            <Save size={18} /> {savingNews ? "Enregistrement..." : "Enregistrer"}
+                        </button>
                     </div>
                 </div>
-                <button onClick={handleAdd} className="mt-4 w-full bg-emerald-600 py-2 rounded font-bold hover:bg-emerald-500 text-white">Ajouter</button>
             </div>
 
             <div className="space-y-4">
-                {modules.length === 0 && (
-                    <div className="bg-blue-900/20 border border-blue-900/50 p-6 rounded-xl text-center">
-                        <p className="text-blue-200 mb-4">Aucun module en base de données. L'accueil affiche actuellement les modules par défaut.</p>
-                        <button onClick={importDefaults} className="bg-blue-600 px-6 py-3 rounded-lg hover:bg-blue-500 font-bold text-white flex items-center gap-2 mx-auto">
-                            <LayoutDashboard size={20} /> Importer les modules par défaut
-                        </button>
-                        <p className="text-xs text-slate-500 mt-2">Cela copiera les modules par défaut dans la base de données pour que vous puissiez les modifier ou les supprimer.</p>
-                    </div>
-                )}
+
 
                 {modules.map(m => (
-                    <div key={m.id} className="bg-slate-900 p-4 rounded-xl border border-slate-800 flex justify-between items-center">
+                    <div key={m.id} className="bg-white/60 p-5 rounded-[24px] shadow-sm border border-white flex justify-between items-center transition-all hover:shadow-soft hover:bg-white">
                         <div className="flex items-center gap-4">
-                            <div className={`p-2 rounded bg-slate-950 ${m.iconColor}`}>{React.createElement(ICON_OPTIONS[m.icon] || Gamepad2)}</div>
+                            <div className={`p-3 rounded-[16px] bg-white shadow-inner ${m.iconColor}`}>{React.createElement(ICON_OPTIONS[m.icon] || Gamepad2)}</div>
                             <div>
-                                <h3 className="font-bold">{m.name}</h3>
-                                <p className="text-sm text-slate-400">{m.desc}</p>
-                                <div className="flex gap-2 mt-1 text-xs"><span className="bg-slate-800 px-2 rounded">{m.tag}</span>{m.requiresSchoolAuth && <span className="bg-red-900/50 text-red-400 px-2 rounded flex items-center gap-1"><Lock size={10} /> École</span>}</div>
+                                <h3 className="font-bold text-brand-text text-lg">{m.name}</h3>
+                                <p className="text-sm text-brand-text/60">{m.desc}</p>
+                                <div className="flex gap-2 mt-2 text-xs font-bold">
+                                    <span className="bg-brand-text/5 px-3 py-1 rounded-full text-brand-text/60 border border-white/50 shadow-inner">{m.tag}</span>
+                                    {m.requiresSchoolAuth && <span className="bg-brand-coral/10 text-brand-coral px-3 py-1 rounded-full flex items-center gap-1 border border-brand-coral/20 shadow-inner"><Lock size={10} /> École</span>}
+                                    {!m.active && <span className="bg-black/10 text-brand-text/50 px-3 py-1 rounded-full shadow-inner border border-white/50">Inactif</span>}
+                                </div>
                             </div>
                         </div>
-                        <button onClick={() => handleDelete(m.id)} className="text-red-500 hover:bg-red-500/10 p-2 rounded transition-colors" title="Supprimer"><Trash2 /></button>
+                        <button onClick={() => handleDelete(m.id)} className="text-brand-text/40 hover:text-brand-coral hover:bg-brand-coral/10 p-3 rounded-full transition-all" title="Supprimer ce module"><Trash2 /></button>
                     </div>
                 ))}
             </div>
@@ -175,10 +132,7 @@ const GamesAdmin = () => {
                     const q = query(collection(db, game.collection), orderBy("score", "desc"), limit(10));
                     const snapshot = await getDocs(q);
                     results[game.collection] = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                } catch (e) {
-                    console.error(`Error fetching ${game.collection}`, e);
-                    results[game.collection] = [];
-                }
+                } catch (e) { results[game.collection] = []; }
             }
             setLeaderboards(results);
             setLoading(false);
@@ -189,32 +143,27 @@ const GamesAdmin = () => {
     const deleteScore = async (collectionName, scoreId) => {
         if (window.confirm("Supprimer ce score ?")) {
             await deleteDoc(doc(db, collectionName, scoreId));
-            setLeaderboards(prev => ({
-                ...prev,
-                [collectionName]: prev[collectionName].filter(s => s.id !== scoreId)
-            }));
+            setLeaderboards(prev => ({ ...prev, [collectionName]: prev[collectionName].filter(s => s.id !== scoreId) }));
         }
     };
 
-    if (loading) return <div className="flex items-center justify-center h-full text-slate-500">Chargement des scores...</div>;
+    if (loading) return <div className="flex items-center justify-center h-full text-brand-text/50 font-bold animate-pulse">Chargement des scores...</div>;
 
     return (
         <div className="max-w-7xl mx-auto pb-20">
-            <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-bold flex items-center gap-2"><Gamepad2 className="text-cyan-400" /> Leaderboards Edoxia-Games</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <h2 className="text-3xl font-black flex items-center gap-3 mb-8 text-brand-text"><Gamepad2 className="text-brand-teal" size={32} /> Leaderboards Edoxia-Games</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                 {GAMES_LEADERBOARDS.map(game => (
-                    <div key={game.collection} className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col h-96">
-                        <div className="p-4 border-b border-slate-800 bg-slate-950/50 font-bold text-cyan-400 flex justify-between items-center">
+                    <div key={game.collection} className="bg-white/40 border border-white/60 rounded-[30px] shadow-soft overflow-hidden flex flex-col h-96 backdrop-blur-sm">
+                        <div className="p-5 border-b border-white/60 bg-white/50 font-black text-brand-teal flex justify-between items-center text-lg">
                             <span>{game.title}</span>
-                            <span className="text-xs bg-slate-800 text-slate-400 px-2 py-1 rounded">{leaderboards[game.collection]?.length || 0}</span>
+                            <span className="text-sm bg-white text-brand-text/60 px-3 py-1 rounded-full shadow-inner">{leaderboards[game.collection]?.length || 0}</span>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-0 custom-scrollbar">
+                        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
                             {leaderboards[game.collection]?.length > 0 ? (
                                 <table className="w-full text-sm text-left border-collapse">
-                                    <thead className="sticky top-0 bg-slate-900 shadow-sm">
-                                        <tr className="text-slate-500 border-b border-slate-800 text-xs uppercase tracking-wider">
+                                    <thead className="sticky top-0 bg-brand-bg/90 backdrop-blur z-10 rounded-[10px]">
+                                        <tr className="text-brand-text/50 text-[10px] font-bold uppercase tracking-widest border-b border-white">
                                             <th className="p-3 w-10 text-center">#</th>
                                             <th className="p-3">Pseudo</th>
                                             <th className="p-3 text-right">Score</th>
@@ -223,26 +172,23 @@ const GamesAdmin = () => {
                                     </thead>
                                     <tbody>
                                         {leaderboards[game.collection].map((score, index) => (
-                                            <tr key={score.id} className="border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 group transition-colors">
-                                                <td className="p-3 text-center font-mono text-slate-600">{index + 1}</td>
-                                                <td className="p-3 font-medium text-slate-300 truncate max-w-[180px]" title={score.pseudo}>
-                                                    {score.pseudo}
-                                                    {score.classLabel && <span className="text-xs text-slate-500 ml-2">({score.classLabel})</span>}
+                                            <tr key={score.id} className="border-b border-white/50 last:border-0 hover:bg-white/60 group transition-all rounded-[10px] my-1">
+                                                <td className="p-3 text-center font-black text-brand-text/40">{index + 1}</td>
+                                                <td className="p-3 font-bold text-brand-text truncate max-w-[150px]" title={score.pseudo}>
+                                                    {score.pseudo} {score.classLabel && <span className="text-[10px] text-brand-text/40 ml-1 bg-white px-2 py-0.5 rounded-full shadow-sm">({score.classLabel})</span>}
                                                 </td>
-                                                <td className="p-3 text-right font-bold text-white">{score.score}</td>
+                                                <td className="p-3 text-right font-black text-brand-teal">{score.score}</td>
                                                 <td className="p-3 text-center">
-                                                    <button onClick={() => deleteScore(game.collection, score.id)} className="text-slate-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <Trash2 size={14} />
-                                                    </button>
+                                                    <button onClick={() => deleteScore(game.collection, score.id)} className="text-brand-text/30 hover:text-brand-coral p-1.5 rounded-full hover:bg-brand-coral/10 outline-none transition-all opacity-0 group-hover:opacity-100"><Trash2 size={16} /></button>
                                                 </td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                             ) : (
-                                <div className="h-full flex flex-col items-center justify-center text-slate-600 italic text-sm p-4">
-                                    <Trophy size={32} className="mb-2 opacity-20" />
-                                    Aucun score enregistré
+                                <div className="h-full flex flex-col items-center justify-center text-brand-text/40 font-bold text-sm">
+                                    <Trophy size={48} className="mb-4 opacity-20 text-brand-teal" />
+                                    Aucun score
                                 </div>
                             )}
                         </div>
@@ -253,63 +199,53 @@ const GamesAdmin = () => {
     );
 };
 
-const EventsAdmin = () => (
-    <div className="flex flex-col items-center justify-center h-full text-slate-500">
-        <Calendar size={64} className="mb-4 opacity-20" />
-        <h2 className="text-xl font-bold text-slate-400">Administration Edoxia-Event</h2>
-        <p>Fonctionnalité à venir.</p>
-    </div>
-);
-
 const BugsAdmin = () => {
     const [reports, setReports] = useState([]);
 
     useEffect(() => {
         const q = query(collection(db, "feedback"), orderBy("date", "desc"));
-        const unsub = onSnapshot(q, (snap) => {
-            setReports(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-        });
+        const unsub = onSnapshot(q, (snap) => setReports(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
         return () => unsub();
     }, []);
 
     const deleteReport = async (id) => {
-        if (window.confirm("Supprimer ce signalement ?")) {
-            await deleteDoc(doc(db, "feedback", id));
-        }
+        if (window.confirm("Supprimer ce signalement ?")) await deleteDoc(doc(db, "feedback", id));
     };
 
     return (
-        <div className="max-w-3xl mx-auto pb-20">
-            <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-bold flex items-center gap-2"><Bug className="text-red-500" /> Signalements & Avis</h2>
-            </div>
-            <div className="space-y-4">
-                {reports.length === 0 && <div className="text-center text-slate-500 py-10 italic">Aucun signalement pour le moment.</div>}
+        <div className="max-w-4xl mx-auto pb-20">
+            <h2 className="text-3xl font-black flex items-center gap-3 mb-8 text-brand-text"><Bug className="text-brand-coral" size={32} /> Signalements & Avis</h2>
+            <div className="space-y-6">
+                {reports.length === 0 && <div className="text-center text-brand-text/50 font-bold py-10 bg-white/40 rounded-[30px] border border-white/60 shadow-inner">Tout est propre ! Aucun signalement.</div>}
                 {reports.map(report => (
-                    <div key={report.id} className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex gap-4">
-                        <div className={`p-3 rounded-full h-fit shrink-0 ${report.type === 'bug' ? 'bg-red-500/10 text-red-500' : 'bg-blue-500/10 text-blue-500'}`}>
-                            {report.type === 'bug' ? <Bug size={24} /> : <MessageSquare size={24} />}
+                    <div key={report.id} className="bg-white/40 backdrop-blur-sm border border-white/60 p-6 rounded-[30px] shadow-soft flex gap-5 transition-all hover:bg-white/60 hover:shadow-lg">
+                        <div className={`p-4 rounded-[20px] shadow-inner shrink-0 ${report.type === 'bug' ? 'bg-brand-coral/10 text-brand-coral border border-brand-coral/20' : 'bg-brand-teal/10 text-brand-teal border border-brand-teal/20'}`}>
+                            {report.type === 'bug' ? <Bug size={28} /> : <MessageSquare size={28} />}
                         </div>
                         <div className="flex-1">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <span className={`text-xs font-bold uppercase px-2 py-1 rounded ${report.type === 'bug' ? 'bg-red-900/30 text-red-400' : 'bg-blue-900/30 text-blue-400'}`}>
+                            <div className="flex justify-between items-start mb-2">
+                                <div className="flex items-center gap-3">
+                                    <span className={`text-[10px] font-black uppercase px-3 py-1 rounded-full shadow-inner ${report.type === 'bug' ? 'bg-brand-coral text-white' : 'bg-brand-teal text-white'}`}>
                                         {report.type}
                                     </span>
-                                    <span className="text-slate-500 text-xs ml-2">
+                                    <span className="text-brand-text/50 text-xs font-bold">
                                         {new Date(report.date).toLocaleString()}
                                     </span>
                                 </div>
-                                <button onClick={() => deleteReport(report.id)} className="text-slate-500 hover:text-red-500 transition-colors p-1">
+                                <button onClick={() => deleteReport(report.id)} className="text-brand-text/30 hover:text-brand-coral hover:bg-brand-coral/10 p-2 rounded-full transition-all shadow-sm bg-white/50 border border-white/40">
                                     <Trash2 size={18} />
                                 </button>
                             </div>
-                            <p className="mt-2 text-slate-300 whitespace-pre-wrap text-sm">{report.message}</p>
-                            {report.name && <p className="text-xs text-slate-400 mt-2 font-bold">De: {report.name}</p>}
-                            {report.email && <p className="text-xs text-slate-500 mt-2">Contact: {report.email}</p>}
-                            <div className="mt-2 text-[10px] text-slate-600 font-mono truncate">
-                                {report.url}
+                            <p className="text-brand-text font-medium whitespace-pre-wrap leading-relaxed bg-white/50 p-4 rounded-[16px] shadow-inner mb-3 border border-white/40">{report.message}</p>
+                            <div className="flex flex-wrap gap-4 text-xs">
+                                {report.name && <p className="text-brand-text/70 bg-white/60 px-3 py-1.5 rounded-full shadow-sm font-bold border border-white">De: {report.name}</p>}
+                                {report.email && <p className="text-brand-text/70 bg-white/60 px-3 py-1.5 rounded-full shadow-sm font-bold border border-white">Email: {report.email}</p>}
                             </div>
+                            {report.url && (
+                                <div className="mt-3 text-[10px] text-brand-text/40 font-mono truncate bg-white/40 px-3 py-1 rounded-full border border-white/50 inline-block w-full" title={report.url}>
+                                    🌐 URL: {report.url}
+                                </div>
+                            )}
                         </div>
                     </div>
                 ))}
@@ -323,8 +259,7 @@ const UsersAdmin = () => {
 
     useEffect(() => {
         const fetchUsers = async () => {
-            const q = query(collection(db, "users"));
-            const snapshot = await getDocs(q);
+            const snapshot = await getDocs(query(collection(db, "users")));
             setUsers(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
         };
         fetchUsers();
@@ -336,33 +271,33 @@ const UsersAdmin = () => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto">
-            <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-bold flex items-center gap-2"><UserCog className="text-orange-400" /> Gestion des Utilisateurs</h2>
-            </div>
-            <div className="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
+        <div className="max-w-6xl mx-auto pb-20">
+            <h2 className="text-3xl font-black flex items-center gap-3 mb-8 text-brand-text"><UserCog className="text-orange-400" size={32} /> Gestion des Utilisateurs</h2>
+            <div className="bg-white/40 backdrop-blur-sm rounded-[30px] shadow-soft border border-white/60 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="text-slate-400 text-sm border-b border-slate-800">
-                                <th className="p-4">Identité</th>
-                                <th className="p-4">Pseudo</th>
-                                <th className="p-4">Email</th>
-                                <th className="p-4">Dernière Connexion</th>
-                                <th className="p-4">Rôle</th>
-                                <th className="p-4">Action</th>
+                        <thead className="bg-white/50 border-b border-white">
+                            <tr className="text-brand-text/40 text-[10px] font-bold uppercase tracking-widest">
+                                <th className="p-5">Identité</th>
+                                <th className="p-5">Pseudo</th>
+                                <th className="p-5">Email</th>
+                                <th className="p-5">Dernière Connexion</th>
+                                <th className="p-5">Rôle</th>
+                                <th className="p-5 text-right">Action</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="font-medium text-sm">
                             {users.map(u => (
-                                <tr key={u.id} className="border-b border-slate-800 hover:bg-slate-800/50">
-                                    <td className="p-4"><div className="font-bold text-white">{u.nom || '-'} {u.prenom || ''}</div></td>
-                                    <td className="p-4 text-slate-300">{u.pseudo || '-'}</td>
-                                    <td className="p-4 text-slate-400 text-sm">{u.email}</td>
-                                    <td className="p-4 text-sm text-slate-400">{u.lastLogin ? (u.lastLogin.seconds ? new Date(u.lastLogin.seconds * 1000).toLocaleString() : new Date(u.lastLogin).toLocaleString()) : '-'}</td>
-                                    <td className="p-4"><span className={`px-2 py-1 rounded text-xs font-bold uppercase ${u.role === 'admin' ? 'bg-red-500/20 text-red-400' : u.role === 'enseignant' ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-700 text-slate-400'}`}>{u.role || 'élève'}</span></td>
-                                    <td className="p-4">
-                                        <select value={u.role || 'élève'} onChange={(e) => updateUserRole(u.id, e.target.value)} className="bg-slate-950 border border-slate-700 rounded p-2 text-sm outline-none focus:border-cyan-500 text-white">
+                                <tr key={u.id} className="border-b border-white/50 hover:bg-white/50 transition-colors">
+                                    <td className="p-5 font-black text-brand-text">{u.nom || '-'} {u.prenom || ''}</td>
+                                    <td className="p-5 text-brand-text/70">{u.pseudo || '-'}</td>
+                                    <td className="p-5 text-brand-text/60">{u.email}</td>
+                                    <td className="p-5 text-brand-text/50">{u.lastLogin ? (u.lastLogin.seconds ? new Date(u.lastLogin.seconds * 1000).toLocaleString() : new Date(u.lastLogin).toLocaleString()) : '-'}</td>
+                                    <td className="p-5">
+                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase shadow-inner border ${u.role === 'admin' ? 'bg-brand-coral/10 text-brand-coral border-brand-coral/20' : u.role === 'enseignant' ? 'bg-brand-teal/10 text-brand-teal border-brand-teal/20' : 'bg-black/5 text-brand-text/50 border-white/50'}`}>{u.role || 'élève'}</span>
+                                    </td>
+                                    <td className="p-5 text-right">
+                                        <select value={u.role || 'élève'} onChange={(e) => updateUserRole(u.id, e.target.value)} className="bg-white border border-white/60 rounded-[12px] p-2 text-brand-text font-bold shadow-soft outline-none focus:border-brand-teal focus:ring-1 focus:ring-brand-teal cursor-pointer">
                                             {['élève', 'parent', 'enseignant', 'admin', 'directeur'].map(r => <option key={r} value={r}>{r}</option>)}
                                         </select>
                                     </td>
@@ -377,43 +312,41 @@ const UsersAdmin = () => {
 };
 
 export default function GlobalAdmin({ defaultModules }) {
-    const [activeTab, setActiveTab] = useState('users');
+    const [activeTab, setActiveTab] = useState('home');
     const navigate = useNavigate();
 
     return (
-        <div className="flex h-screen bg-slate-950 text-white overflow-hidden">
+        <div className="flex h-screen bg-brand-bg text-brand-text overflow-hidden font-outfit">
             {/* Sidebar */}
-            <aside className="w-64 bg-slate-900/50 border-r border-slate-800 flex flex-col shrink-0">
-                <div className="p-6">
-                    <button onClick={() => navigate('/')} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-6">
-                        <ArrowLeft size={18} /> Retour Site
+            <aside className="w-72 bg-white/40 backdrop-blur-xl border-r border-white/50 flex flex-col shrink-0 shadow-lg z-20">
+                <div className="p-8">
+                    <button onClick={() => navigate('/')} className="flex items-center gap-2 text-brand-text/40 hover:text-brand-text font-bold transition-all mb-8 bg-white/50 px-4 py-2 rounded-full border border-white hover:bg-white shadow-sm active:scale-95">
+                        <ArrowLeft size={16} /> Retour Site
                     </button>
-                    <h1 className="text-2xl font-bold flex items-center gap-2 text-white">
-                        <Settings className="text-cyan-400" /> Admin
+                    <h1 className="text-3xl font-black flex items-center gap-3 text-brand-text">
+                        <Settings className="text-brand-coral" size={28} /> Admin
                     </h1>
-                    <p className="text-xs text-slate-500 mt-1">Panel d'administration global</p>
+                    <p className="text-xs font-bold text-brand-text/40 mt-2 uppercase tracking-widest pl-10">Interface Globale</p>
                 </div>
 
-                <nav className="flex-1 px-4 space-y-2 overflow-y-auto">
+                <nav className="flex-1 px-6 space-y-3 overflow-y-auto mb-6 custom-scrollbar">
+                    <SidebarItem icon={LayoutDashboard} label="Accueil" active={activeTab === 'home'} onClick={() => setActiveTab('home')} />
                     <SidebarItem icon={UserCog} label="Utilisateurs" active={activeTab === 'users'} onClick={() => setActiveTab('users')} />
                     <SidebarItem icon={Gamepad2} label="Edoxia-Games" active={activeTab === 'games'} onClick={() => setActiveTab('games')} />
+                    <SidebarItem icon={BookOpen} label="Edoxia-Quiz" active={activeTab === 'quiz'} onClick={() => setActiveTab('quiz')} />
                     <SidebarItem icon={Calendar} label="Calendrier" active={activeTab === 'events'} onClick={() => setActiveTab('events')} />
                     <SidebarItem icon={Bug} label="Signalements" active={activeTab === 'bugs'} onClick={() => setActiveTab('bugs')} />
                 </nav>
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-y-auto bg-slate-950 relative">
-                <div className="p-8 min-h-full">
+            <main className="flex-1 overflow-y-auto bg-transparent relative custom-scrollbar">
+                <div className="p-8 md:p-12 min-h-full">
                     {activeTab === 'home' && <HomeAdmin defaultModules={defaultModules} />}
-                    {activeTab === 'games' && <GamesAdmin />}
-                    {activeTab === 'quiz' && (
-                        <div className="h-full">
-                            <AdminDashboard isGlobalAdmin={true} />
-                        </div>
-                    )}
-                    {activeTab === 'events' && <AdminCalendar isEmbedded={true} />}
                     {activeTab === 'users' && <UsersAdmin />}
+                    {activeTab === 'games' && <GamesAdmin />}
+                    {activeTab === 'quiz' && <div className="h-full bg-white/40 p-8 rounded-[40px] shadow-soft border border-white/60"><AdminDashboard isGlobalAdmin={true} /></div>}
+                    {activeTab === 'events' && <AdminCalendar isEmbedded={true} />}
                     {activeTab === 'bugs' && <BugsAdmin />}
                 </div>
             </main>
