@@ -1,9 +1,11 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Map, Users, Search, Trophy, GraduationCap, Settings, ArrowLeft } from 'lucide-react';
 
-export default function HubPage({ loading }) {
+export default function HubPage() {
   const navigate = useNavigate();
+  const context = useOutletContext();
+  const loading = context?.loading;
 
   return (
     <div className="min-h-screen font-sans bg-brand-bg text-brand-text transition-colors duration-300">

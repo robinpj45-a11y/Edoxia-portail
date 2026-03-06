@@ -1,42 +1,19 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ArrowLeft, Search, Lock, FileText, Flag } from 'lucide-react';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { ThemeContext } from '../../ThemeContext';
 
-export default function Teams({ students: propStudents, teams: propTeams }) {
+export default function Teams() {
     const navigate = useNavigate();
+    const context = useOutletContext();
+    const students = context?.students || [];
+    const teams = context?.teams || [];
+    const loading = context?.loading;
+
     const [searchTerm, setSearchTerm] = useState("");
     const [openTeams, setOpenTeams] = useState({});
-
-    const [students, setStudents] = useState(propStudents || []);
-    const [teams, setTeams] = useState(propTeams || []);
-    const [loading, setLoading] = useState(!propStudents || !propTeams);
-
-    useEffect(() => {
-        if (propStudents && propTeams) {
-            setStudents(propStudents);
-            setTeams(propTeams);
-            setLoading(false);
-            return;
-        }
-
-        const unsubStudents = onSnapshot(collection(db, "students"), (snap) => {
-            setStudents(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-        });
-
-        const qTeams = query(collection(db, "teams"), orderBy("numId"));
-        const unsubTeams = onSnapshot(qTeams, (snap) => {
-            setTeams(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-            setLoading(false);
-        });
-
-        return () => {
-            unsubStudents();
-            unsubTeams();
-        };
-    }, [propStudents, propTeams]);
 
     const toggleTeam = (teamId) => { setOpenTeams(prev => ({ ...prev, [teamId]: !prev[teamId] })); };
     const getFilteredStudents = (teamId) => {
@@ -75,7 +52,7 @@ export default function Teams({ students: propStudents, teams: propTeams }) {
                             </button>
                             {isOpen && (<div className="border-t p-3 border-white/40 bg-black/5 shadow-inner">{filteredStudents.length === 0 ? (<div className="text-center text-brand-text/40 py-4 font-bold text-sm tracking-wide">Aucun élève trouvé</div>) : (<div className="grid grid-cols-1 gap-2">{filteredStudents.map(student => {
                                 const displayName = student.name && student.name.trim() ? student.name : `${student.lastName || ''} ${student.firstName || ''}`;
-                                return (<div key={student.id} className={`p-3 rounded-[16px] border flex justify-between items-center shadow-sm bg-white/70 border-white/80 backdrop-blur-sm ${student.isAdult ? 'border-2 border-brand-coral' : ''}`}><div><div className="font-bold text-brand-text">{searchTerm ? (<span>{displayName.split(new RegExp(`(${searchTerm})`, 'gi')).map((part, i) => part.toLowerCase() === searchTerm.toLowerCase() ? <span key={i} className="bg-brand-peach/40 text-brand-text px-1 rounded">{part}</span> : part)}</span>) : displayName}</div><div className="text-xs text-brand-text/60 font-medium mt-0.5">{student.isAdult ? <span className="text-brand-coral font-bold">{student.role}</span> : student.classLabel}</div></div><div className="flex gap-1">{!student.isAdult && student.pai && <div className="bg-brand-teal/20 text-brand-teal p-1.5 rounded-full shadow-inner"><FileText size={16} /></div>}{!student.isAdult && student.disruptive && <div className="bg-brand-coral/20 text-brand-coral p-1.5 rounded-full shadow-inner"><Flag size={16} /></div>}</div></div>);
+                                return (<div key={student.id} className={`p-3 rounded-[16px] border flex justify-between items-center shadow-sm bg-white/70 border-white/80 backdrop-blur-sm ${student.isAdult ? 'border-2 border-brand-coral' : ''}`}><div><div className="font-bold text-brand-text">{searchTerm ? (<span>{displayName.split(new RegExp(`(${searchTerm})`, 'gi')).map((part, i) => part.toLowerCase() === searchTerm.toLowerCase() ? <span key={i} className="bg-brand-peach/40 text-brand-text px-1 rounded">{part}</span> : part)}</span>) : displayName}</div><div className="text-xs text-brand-text/60 font-medium mt-0.5">{student.isAdult ? <span className="text-brand-coral font-bold">{student.role} • {student.importedClassLabel || student.classLabel}</span> : (student.importedClassLabel || student.classLabel)}</div></div><div className="flex gap-1">{!student.isAdult && student.pai && <div className="bg-brand-teal/20 text-brand-teal p-1.5 rounded-full shadow-inner"><FileText size={16} /></div>}{!student.isAdult && student.disruptive && <div className="bg-brand-coral/20 text-brand-coral p-1.5 rounded-full shadow-inner"><Flag size={16} /></div>}</div></div>);
                             })}</div>)}</div>)}
                         </div>
                     );

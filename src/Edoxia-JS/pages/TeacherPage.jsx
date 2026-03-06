@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { GraduationCap, ArrowLeft, Printer, Plus, Search, Lock, Eye, FileText, Flag, User, Trash2 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { addDoc, updateDoc, deleteDoc, doc, collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { addDoc, updateDoc, deleteDoc, doc, collection } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { CLASSES } from '../utils/constants';
 
@@ -36,42 +36,19 @@ const generateClassPDF = (classLabel, students, teams) => {
   doc.save(`${classLabel}_PDF.pdf`);
 };
 
-export default function TeacherPage({ students: propStudents, teams: propTeams, loading: propLoading }) {
+export default function TeacherPage() {
   const navigate = useNavigate();
+  const context = useOutletContext();
+  const students = context?.students || [];
+  const teams = context?.teams || [];
+  const loading = context?.loading;
+
   const [currentClass, setCurrentClass] = useState(CLASSES[0]);
   const [teamsVisibility, setTeamsVisibility] = useState({});
   const [newAdultName, setNewAdultName] = useState("");
   const [newAdultRole, setNewAdultRole] = useState("Parent");
   const [searchTerm, setSearchTerm] = useState("");
   const [comment, setComment] = useState("");
-
-  const [students, setStudents] = useState(propStudents || []);
-  const [teams, setTeams] = useState(propTeams || []);
-  const [loading, setLoading] = useState(propLoading !== undefined ? propLoading : (!propStudents || !propTeams));
-
-  useEffect(() => {
-    if (propStudents && propTeams) {
-      setStudents(propStudents);
-      setTeams(propTeams);
-      setLoading(false);
-      return;
-    }
-
-    const unsubStudents = onSnapshot(collection(db, "students"), (snap) => {
-      setStudents(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    });
-
-    const qTeams = query(collection(db, "teams"), orderBy("numId"));
-    const unsubTeams = onSnapshot(qTeams, (snap) => {
-      setTeams(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-      setLoading(false);
-    });
-
-    return () => {
-      unsubStudents();
-      unsubTeams();
-    };
-  }, [propStudents, propTeams]);
 
   useEffect(() => { setSearchTerm(""); }, [currentClass]);
 
@@ -89,7 +66,7 @@ export default function TeacherPage({ students: propStudents, teams: propTeams, 
     } catch (error) { console.error(error); }
   };
 
-  const toggleAttribute = async (id, attribute) => {
+  const toggleAttribute = useCallback(async (id, attribute) => {
     const student = students.find(s => s.id === id);
     if (!student) return;
     if (student.team) {
@@ -97,19 +74,20 @@ export default function TeacherPage({ students: propStudents, teams: propTeams, 
       if (team && team.locked) { alert("Impossible de modifier un élève dans une équipe verrouillée."); return; }
     }
     await updateDoc(doc(db, "students", id), { [attribute]: !student[attribute] });
-  };
+  }, [students, teams]);
 
-  const handleDeleteStudent = async (id) => {
+  const handleDeleteStudent = useCallback(async (id) => {
     const student = students.find(s => s.id === id);
     if (student.team) {
       const team = teams.find(t => t.numId === student.team);
       if (team && team.locked) { alert("Impossible de supprimer un élève d'une équipe verrouillée."); return; }
     }
     if (confirm("Attention : cela supprimera définitivement l'élève de la classe (et non seulement de l'équipe). Continuer ?")) await deleteDoc(doc(db, "students", id));
-  };
+  }, [students, teams]);
 
-  const handleDragStart = (e, studentId) => e.dataTransfer.setData("studentId", studentId);
-  const handleDrop = async (e, teamId) => {
+  const handleDragStart = useCallback((e, studentId) => e.dataTransfer.setData("studentId", studentId), []);
+  
+  const handleDrop = useCallback(async (e, teamId) => {
     e.preventDefault();
     const studentId = e.dataTransfer.getData("studentId");
     if (teamId !== null) {
@@ -122,16 +100,18 @@ export default function TeacherPage({ students: propStudents, teams: propTeams, 
       if (sourceTeam && sourceTeam.locked) { alert(`L'équipe d'origine "${sourceTeam.name}" est verrouillée 🔒.`); return; }
     }
     await updateDoc(doc(db, "students", studentId), { team: teamId });
-  };
+  }, [students, teams]);
 
-  const toggleVisibility = (teamId) => { setTeamsVisibility(prev => ({ ...prev, [teamId]: !prev[teamId] })); };
+  const toggleVisibility = useCallback((teamId) => { setTeamsVisibility(prev => ({ ...prev, [teamId]: !prev[teamId] })); }, []);
 
-  const poolStudents = students
-    .filter(s => {
-      const displayName = s.name && s.name.trim() ? s.name : `${s.lastName || ''} ${s.firstName || ''}`;
-      return s.classLabel === currentClass && s.team === null && displayName.toLowerCase().includes(searchTerm.toLowerCase());
-    })
-    .sort((a, b) => (a.lastName || a.name).localeCompare(b.lastName || b.name));
+  const poolStudents = useMemo(() => {
+    return students
+      .filter(s => {
+        const displayName = s.name && s.name.trim() ? s.name : `${s.lastName || ''} ${s.firstName || ''}`;
+        return s.classLabel === currentClass && s.team === null && displayName.toLowerCase().includes(searchTerm.toLowerCase());
+      })
+      .sort((a, b) => (a.lastName || a.name).localeCompare(b.lastName || b.name));
+  }, [students, currentClass, searchTerm]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-brand-text/50 font-bold tracking-wide">Chargement...</div>;
 
@@ -166,7 +146,7 @@ export default function TeacherPage({ students: propStudents, teams: propTeams, 
           <div className="h-[430px] overflow-y-auto space-y-3 p-3 shadow-inner rounded-[20px] bg-black/5 border border-white/40 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-brand-teal/30 hover:scrollbar-thumb-brand-teal/50 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-brand-teal/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-brand-teal/50" onDragOver={(e) => e.preventDefault()} onDrop={(e) => handleDrop(e, null)}>{poolStudents.map(student => (<PersonCard key={student.id} student={student} onDragStart={handleDragStart} onToggle={toggleAttribute} onDelete={handleDeleteStudent} />))}{poolStudents.length === 0 && <div className="text-center text-brand-text/40 font-bold uppercase tracking-wide text-[10px] py-10 opacity-70">{searchTerm ? "Aucun résultat" : "Aucun élève à placer"}</div>}</div>
           <div className="mt-4 rounded-[20px] p-4 shadow-inner shrink-0 bg-brand-teal/10 border border-brand-teal/20"><h3 className="text-brand-teal font-black tracking-tight text-sm mb-2 uppercase">Commentaires</h3><textarea className="w-full h-16 rounded-[16px] p-3 text-sm focus:outline-none resize-none bg-white/80 text-brand-text border border-white shadow-inner focus:ring-2 focus:ring-brand-teal transition-all font-medium placeholder-brand-text/30" placeholder="Notes..." value={comment} onChange={(e) => setComment(e.target.value)} /></div>
         </div>
-        <div className="w-2/3">
+        <div className="w-2/3 h-[75vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-brand-teal/30 hover:scrollbar-thumb-brand-teal/50 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-brand-teal/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-brand-teal/50">
           <div className="grid grid-cols-2 gap-6 pb-10">
             {teams.map(team => {
               const teamId = team.numId; const teamName = team.name; const teamColor = team.color || '#0077b6'; const isLocked = team.locked;
@@ -197,7 +177,7 @@ export default function TeacherPage({ students: propStudents, teams: propTeams, 
                     <div className={`flex-1 p-4 space-y-3 ${isLocked ? 'cursor-not-allowed bg-black/5' : 'bg-transparent'}`} onDragOver={(e) => { if (isLocked) { e.dataTransfer.dropEffect = "none"; } e.preventDefault(); }} onDrop={(e) => handleDrop(e, teamId)}>
                       {isVisible && otherStudents.map(s => {
                         const displayName = s.name && s.name.trim() ? s.name : `${s.lastName || ''} ${s.firstName || ''}`;
-                        return (<div key={s.id} className={`border border-dashed rounded-[16px] p-2 text-sm flex items-center gap-2 select-none bg-black/5 text-brand-text/50 border-brand-text/20 shadow-inner ${s.isAdult ? 'border-brand-coral/40 bg-brand-coral/5 text-brand-coral/70' : ''}`}><User size={14} className={s.isAdult ? "text-brand-coral/70" : ""} /> <span className="truncate"><span className={`font-bold ${s.isAdult ? 'text-brand-coral' : ''}`}>{displayName}</span> <span className="text-[10px] uppercase tracking-wide">({s.isAdult ? <span className="font-bold">{s.role} - {s.classLabel}</span> : s.classLabel})</span></span></div>);
+                        return (<div key={s.id} className={`border border-dashed rounded-[16px] p-2 text-sm flex items-center gap-2 select-none bg-black/5 text-brand-text/50 border-brand-text/20 shadow-inner ${s.isAdult ? 'border-brand-coral/40 bg-brand-coral/5 text-brand-coral/70' : ''}`}><User size={14} className={s.isAdult ? "text-brand-coral/70" : ""} /> <span className="truncate"><span className={`font-bold ${s.isAdult ? 'text-brand-coral' : ''}`}>{displayName}</span> <span className="text-[10px] uppercase tracking-wide">({s.isAdult ? <span className="font-bold">{s.role} • {s.importedClassLabel || s.classLabel}</span> : (s.importedClassLabel || s.classLabel)})</span></span></div>);
                       })}
                       {myStudents.map(s => <PersonCard key={s.id} student={s} onDragStart={handleDragStart} onToggle={toggleAttribute} onDelete={handleDeleteStudent} />)}
                       {myStudents.length === 0 && (!isVisible || otherStudents.length === 0) && <div className="h-full flex items-center justify-center text-brand-text/30 text-[10px] font-bold uppercase tracking-widest py-6">{isLocked ? "Équipe fermée" : "Glisser un élève ici"}</div>}
@@ -213,10 +193,10 @@ export default function TeacherPage({ students: propStudents, teams: propTeams, 
   );
 }
 
-function PersonCard({ student, onDragStart, onToggle, onDelete }) {
+const PersonCard = memo(function PersonCard({ student, onDragStart, onToggle, onDelete }) {
   const isAdult = student.isAdult;
   const displayName = student.name && student.name.trim() ? student.name : `${student.lastName || ''} ${student.firstName || ''}`;
   const handleLocalDragStart = (e) => { onDragStart(e, student.id); requestAnimationFrame(() => { requestAnimationFrame(() => { if (e.target) { e.target.classList.add('opacity-40', 'grayscale', 'border-dashed'); } }); }); };
   const handleDragEnd = (e) => { if (e.target) { e.target.classList.remove('opacity-40', 'grayscale', 'border-dashed'); } };
-  return (<div draggable onDragStart={handleLocalDragStart} onDragEnd={handleDragEnd} className={`border border-white/50 rounded-[20px] p-3 shadow-sm cursor-grab active:cursor-grabbing relative hover:shadow-md transition-all group flex justify-between items-start select-none bg-white text-brand-text ${isAdult ? 'border-brand-coral bg-brand-coral/5' : ''}`}><div className="pr-2 overflow-hidden"><div className="font-bold text-sm truncate tracking-tight">{displayName}</div><div className="text-[10px] uppercase text-brand-text/50 mt-0.5 font-bold truncate tracking-wide">{isAdult ? <span className="text-brand-coral">{student.role}</span> : student.classLabel}{student.team && <span className="text-brand-teal"> • Équipe {student.team}</span>}</div></div><div className="flex gap-1 shrink-0">{!isAdult && (<><button onClick={() => onToggle(student.id, 'pai')} className={`p-1.5 rounded-full shadow-inner hover:scale-110 active:scale-95 transition-all ${student.pai ? 'text-brand-teal bg-brand-teal/20' : 'text-brand-text/20 bg-black/5 hover:text-brand-teal/80 hover:bg-white'}`}><FileText size={16} fill={student.pai ? "currentColor" : "none"} /></button><button onClick={() => onToggle(student.id, 'disruptive')} className={`p-1.5 rounded-full shadow-inner hover:scale-110 active:scale-95 transition-all ${student.disruptive ? 'text-brand-coral bg-brand-coral/20' : 'text-brand-text/20 bg-black/5 hover:text-brand-coral/80 hover:bg-white'}`}><Flag size={16} fill={student.disruptive ? "currentColor" : "none"} /></button></>)}<button onClick={() => onDelete(student.id)} className="text-brand-text/30 hover:text-brand-coral opacity-0 group-hover:opacity-100 transition-opacity p-1.5 bg-white shadow-soft rounded-full absolute -top-2 -right-2"><Trash2 size={12} /></button></div></div>);
-}
+  return (<div draggable onDragStart={handleLocalDragStart} onDragEnd={handleDragEnd} className={`border border-white/50 rounded-[20px] p-3 shadow-sm cursor-grab active:cursor-grabbing relative hover:shadow-md transition-all group flex justify-between items-start select-none bg-white text-brand-text ${isAdult ? 'border-brand-coral bg-brand-coral/5' : ''}`}><div className="pr-2 overflow-hidden"><div className="font-bold text-sm truncate tracking-tight">{displayName}</div><div className="text-[10px] uppercase text-brand-text/50 mt-0.5 font-bold truncate tracking-wide">{isAdult ? <span className="text-brand-coral">{student.role} • {student.importedClassLabel || student.classLabel}</span> : (student.importedClassLabel || student.classLabel)}{student.team && <span className="text-brand-teal"> • Équipe {student.team}</span>}</div></div><div className="flex gap-1 shrink-0">{!isAdult && (<><button onClick={() => onToggle(student.id, 'pai')} className={`p-1.5 rounded-full shadow-inner hover:scale-110 active:scale-95 transition-all ${student.pai ? 'text-brand-teal bg-brand-teal/20' : 'text-brand-text/20 bg-black/5 hover:text-brand-teal/80 hover:bg-white'}`}><FileText size={16} fill={student.pai ? "currentColor" : "none"} /></button><button onClick={() => onToggle(student.id, 'disruptive')} className={`p-1.5 rounded-full shadow-inner hover:scale-110 active:scale-95 transition-all ${student.disruptive ? 'text-brand-coral bg-brand-coral/20' : 'text-brand-text/20 bg-black/5 hover:text-brand-coral/80 hover:bg-white'}`}><Flag size={16} fill={student.disruptive ? "currentColor" : "none"} /></button></>)}<button onClick={() => onDelete(student.id)} className="text-brand-text/30 hover:text-brand-coral opacity-0 group-hover:opacity-100 transition-opacity p-1.5 bg-white shadow-soft rounded-full absolute -top-2 -right-2"><Trash2 size={12} /></button></div></div>);
+});

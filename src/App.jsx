@@ -50,6 +50,7 @@ import HubPage from './Edoxia-JS/pages/HubPage';
 import MobileTeamsPage from './Edoxia-JS/pages/MobileTeamsPage';
 import TeacherPage from './Edoxia-JS/pages/TeacherPage';
 import AdminPage from './Edoxia-JS/pages/AdminPage';
+import EdoxiaJSWrapper from './Edoxia-JS/pages/EdoxiaJSWrapper';
 import ReportBug from './modules/ReportBug';
 import CompteurUser from './modules/CompteurUser';
 import GVGDC from './Edoxia-QVGDC/pages/GVGDC';
@@ -597,10 +598,12 @@ const AppLayout = () => {
               <AdminCalendar />
             </ProtectedRoute>
           } />
-          <Route path="/JS2026" element={<HubPage />} />
-          <Route path="/JS2026/teams" element={<MobileTeamsPage />} />
-          <Route path="/JS2026/teacher" element={<TeacherPage />} />
-          <Route path="/JS2026/admin" element={<AdminPage />} />
+          <Route path="/JS2026" element={<EdoxiaJSWrapper />}>
+            <Route index element={<HubPage />} />
+            <Route path="teams" element={<MobileTeamsPage />} />
+            <Route path="teacher" element={<TeacherPage />} />
+            <Route path="admin" element={<AdminPage />} />
+          </Route>
           <Route path="/GVGDC" element={<GVGDC />} />
           <Route path="/DashboardQVGDC" element={<DashboardQVGDC />} />
         </Routes>

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Settings, LogIn, LayoutDashboard, Download, Upload, Bug, Database, ArrowLeft, GraduationCap, Printer, Users, CheckSquare, Square, Save, X, Edit3, Lock, Unlock, Trash2, FileText, Flag, Plus } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { updateDoc, deleteDoc, addDoc, doc, collection, writeBatch, getDocs, query, onSnapshot, orderBy } from 'firebase/firestore';
+import { updateDoc, deleteDoc, addDoc, doc, collection, writeBatch, getDocs, query } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { CLASSES } from '../utils/constants';
 
@@ -60,7 +60,7 @@ const generateTeamsPDF = (selectedTeamIds, teams, students) => {
         const tableData = teamMembers.map(s => {
             let lastName = s.lastName ? s.lastName.toUpperCase() : s.name.split(' ')[0].toUpperCase();
             let firstName = s.firstName ? s.firstName : s.name.split(' ').slice(1).join(' ');
-            return [lastName, firstName, s.isAdult ? (s.role || "Adulte") : s.classLabel];
+            return [lastName, firstName, s.isAdult ? `${s.role || "Adulte"} • ${s.importedClassLabel || s.classLabel}` : (s.importedClassLabel || s.classLabel)];
         });
 
         autoTable(doc, {
@@ -80,28 +80,15 @@ const generateTeamsPDF = (selectedTeamIds, teams, students) => {
     doc.save(`Equipes_Selection.pdf`);
 };
 
-export default function AdminPage({ students: propStudents, teams: propTeams }) {
+export default function AdminPage() {
     const navigate = useNavigate();
+    const context = useOutletContext();
+    const students = context?.students || [];
+    const teams = context?.teams || [];
+
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [password, setPassword] = useState("");
     const [activeTab, setActiveTab] = useState('overview');
-
-    // Chargement des données si non fournies par les props
-    const [students, setStudents] = useState(propStudents || []);
-    const [teams, setTeams] = useState(propTeams || []);
-
-    useEffect(() => {
-        if (propStudents && propTeams) return;
-
-        const unsubStudents = onSnapshot(collection(db, "students"), (snap) => {
-            setStudents(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-        });
-        const qTeams = query(collection(db, "teams"), orderBy("numId"));
-        const unsubTeams = onSnapshot(qTeams, (snap) => {
-            setTeams(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-        });
-        return () => { unsubStudents(); unsubTeams(); };
-    }, [propStudents, propTeams]);
 
     if (!isAuthenticated) {
         return (
@@ -233,7 +220,7 @@ function AdminOverview({ students, teams }) {
                     <div className="px-5 py-2.5 border-b border-white/50 flex justify-end gap-4 text-xs font-bold bg-black/5 shadow-inner"><span className="text-blue-600">G: {boys}</span><span className="text-pink-600">F: {girls}</span><div className="w-px bg-brand-text/20 h-3 my-auto"></div><span className={`flex items-center gap-1 ${paiCount > 0 ? 'text-brand-teal' : 'text-brand-text/30'}`}><FileText size={12} strokeWidth={3} /> {paiCount}</span><span className={`flex items-center gap-1 ${disruptiveCount > 0 ? 'text-brand-coral' : 'text-brand-text/30'}`}><Flag size={12} strokeWidth={3} /> {disruptiveCount}</span></div>
                     <div className="p-4 space-y-2 max-h-[300px] overflow-y-auto">{teamStudents.map(s => {
                         const displayName = s.name && s.name.trim() ? s.name : `${s.lastName || ''} ${s.firstName || ''}`;
-                        return (<div key={s.id} className={`text-sm flex justify-between items-center p-3 rounded-[16px] border border-white/50 shadow-sm bg-white/70 ${s.isAdult ? 'border-brand-coral/40 bg-brand-coral/5 text-brand-coral' : ''}`}><div className="flex items-center gap-2"><span className={`font-bold text-brand-text ${s.isAdult ? 'text-brand-coral' : ''}`}>{displayName}</span>{!s.isAdult && s.pai && <div className="bg-brand-teal/20 text-brand-teal p-1 rounded-full"><FileText size={12} /></div>}{!s.isAdult && s.disruptive && <div className="bg-brand-coral/20 text-brand-coral p-1 rounded-full"><Flag size={12} /></div>}</div><span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full text-brand-text/50 bg-black/5">{s.isAdult ? s.role : s.classLabel}</span></div>)
+                        return (<div key={s.id} className={`text-sm flex justify-between items-center p-3 rounded-[16px] border border-white/50 shadow-sm bg-white/70 ${s.isAdult ? 'border-brand-coral/40 bg-brand-coral/5 text-brand-coral' : ''}`}><div className="flex items-center gap-2"><span className={`font-bold text-brand-text ${s.isAdult ? 'text-brand-coral' : ''}`}>{displayName}</span>{!s.isAdult && s.pai && <div className="bg-brand-teal/20 text-brand-teal p-1 rounded-full"><FileText size={12} /></div>}{!s.isAdult && s.disruptive && <div className="bg-brand-coral/20 text-brand-coral p-1 rounded-full"><Flag size={12} /></div>}</div><span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full text-brand-text/50 bg-black/5">{s.isAdult ? `${s.role} • ${s.importedClassLabel || s.classLabel}` : (s.importedClassLabel || s.classLabel)}</span></div>)
                     })}</div></div>
             )
         })}</div><div className="flex justify-center"><button onClick={addTeam} className="px-6 py-3 rounded-full font-black tracking-wide flex items-center gap-2 shadow-soft hover:shadow-md transition-all bg-brand-teal hover:bg-brand-teal/90 text-white hover:scale-105 active:scale-95"><Plus size={20} /> Ajouter une équipe</button></div></div>
@@ -241,8 +228,18 @@ function AdminOverview({ students, teams }) {
 }
 
 function AdminImport() {
+    const classMapping = {
+        "MS - ANIELLA A.": "MS/GS - Aniella A.",
+        "GS - ANIELLA A.": "MS/GS - Aniella A.",
+        "PS - SYLVIE B.": "PS/GS - Sylvie B.",
+        "GS - SYLVIE B.": "PS/GS - Sylvie B.",
+        "PS - AUDE D.": "PS/MS - Aude D.",
+        "MS - AUDE D.": "PS/MS - Aude D.",
+        "PS - INGRID F.": "PS/MS - Ingrid F.",
+        "MS - INGRID F.": "PS/MS - Ingrid F."
+    };
     const [status, setStatus] = useState(null);
-    const handleFileUpload = async (e) => { const file = e.target.files[0]; if (!file) return; setStatus({ type: 'loading', msg: 'Traitement...' }); const reader = new FileReader(); reader.onload = async (evt) => { try { const wb = XLSX.read(evt.target.result, { type: 'binary' }); const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]); const batch = writeBatch(db); let count = 0; data.forEach((row) => { const nom = row['Nom'] || row['nom'] || ''; const prenom = row['Prenom'] || row['prenom'] || ''; const classeExcel = row['Classe'] || row['classe'] || ''; const rawGenre = row['Genre'] || row['genre'] || row['Sexe'] || row['sexe'] || ''; const gender = rawGenre.toString().trim().toUpperCase(); const matchedClass = CLASSES.find(c => c.trim().toLowerCase() === classeExcel.trim().toLowerCase()); if ((nom || prenom) && matchedClass) { const docRef = doc(collection(db, "students")); batch.set(docRef, { name: `${nom} ${prenom}`.trim(), lastName: nom.toString().toUpperCase(), firstName: prenom.toString(), classLabel: matchedClass, team: null, pai: false, disruptive: false, gender: gender, createdAt: new Date() }); count++; } }); await batch.commit(); setStatus({ type: 'success', msg: ` ${count} élèves importés !` }); } catch (error) { setStatus({ type: 'error', msg: 'Erreur fichier.' }); } }; reader.readAsBinaryString(file); };
+    const handleFileUpload = async (e) => { const file = e.target.files[0]; if (!file) return; setStatus({ type: 'loading', msg: 'Traitement...' }); const reader = new FileReader(); reader.onload = async (evt) => { try { const wb = XLSX.read(evt.target.result, { type: 'binary' }); const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]); const batch = writeBatch(db); let count = 0; data.forEach((row) => { const nom = row['Nom'] || row['nom'] || ''; const prenom = row['Prenom'] || row['prenom'] || ''; const classeExcel = row['Classe'] || row['classe'] || ''; const rawGenre = row['Genre'] || row['genre'] || row['Sexe'] || row['sexe'] || ''; const gender = rawGenre.toString().trim().toUpperCase(); let targetClass = classeExcel.trim(); const targetUpper = targetClass.toUpperCase(); if (classMapping[targetUpper]) { targetClass = classMapping[targetUpper]; } const matchedClass = CLASSES.find(c => c.trim().toLowerCase() === targetClass.toLowerCase()); if ((nom || prenom) && matchedClass) { const docRef = doc(collection(db, "students")); batch.set(docRef, { name: `${nom} ${prenom}`.trim(), lastName: nom.toString().toUpperCase(), firstName: prenom.toString(), classLabel: matchedClass, importedClassLabel: classeExcel.trim(), team: null, pai: false, disruptive: false, gender: gender, createdAt: new Date() }); count++; } }); await batch.commit(); setStatus({ type: 'success', msg: ` ${count} élèves importés !` }); } catch (error) { setStatus({ type: 'error', msg: 'Erreur fichier.' }); } }; reader.readAsBinaryString(file); };
     return (<div className="max-w-xl mx-auto mt-10 text-center"><div className="p-10 rounded-[30px] border-2 border-dashed relative group border-white hover:border-brand-teal transition-colors bg-white/40 backdrop-blur-md shadow-inner"><input type="file" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" /><Upload size={48} className="mx-auto mb-4 text-brand-text/30 group-hover:text-brand-teal transition-colors" /><h3 className="font-black text-brand-text text-xl tracking-tight">Glisser fichier Excel</h3><p className="text-xs uppercase font-bold tracking-widest text-brand-text/50 mt-2">Colonnes : nom, prenom, classe, genre</p></div>{status && <div className={`mt-6 p-4 rounded-[20px] font-bold shadow-sm ${status.type === 'success' ? 'bg-brand-teal/20 text-brand-teal' : 'bg-brand-coral/20 text-brand-coral'}`}>{status.msg}</div>}</div>)
 }
 
