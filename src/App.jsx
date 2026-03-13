@@ -57,6 +57,16 @@ import GVGDC from './Edoxia-QVGDC/pages/GVGDC';
 import DashboardQVGDC from './Edoxia-QVGDC/pages/DashboardQVGDC';
 import PublicCalendar from './Edoxia-Calendar/pages/PublicCalendar';
 import AdminCalendar from './Edoxia-Calendar/pages/AdminCalendar';
+import QOLHubPage from './Edoxia-QOL/pages/QOLHubPage';
+import EdoxiaCDWrapper from './Edoxia-CD/pages/EdoxiaCDWrapper';
+import CDHubPage from './Edoxia-CD/pages/CDHubPage';
+import RoomAllocatorPage from './Edoxia-CD/pages/RoomAllocatorPage';
+import SuccessHubPage from './Edoxia-Success/pages/SuccessHubPage';
+import SuccessSpacePage from './Edoxia-Success/pages/SuccessSpacePage';
+import SuccessEvaluationDetail from './Edoxia-Success/pages/SuccessEvaluationDetail';
+import SuccessReportsPage from './Edoxia-Success/pages/SuccessReportsPage';
+
+
 
 // --- UTILITAIRE DE SÉCURITÉ (Obfuscation) ---
 // Permet de cacher les liens dans le code source (Inspect Element)
@@ -75,19 +85,7 @@ const ICON_MAP = {
   BookOpen, GraduationCap, Calculator, Languages, FlaskConical
 };
 
-// --- CONFIGURATION DES MODULES PUBLICS (Élèves) ---
 const DEFAULT_MODULES = [
-  {
-    id: 'events',
-    name: 'Evénements',
-    path: '/events',
-    desc: 'Calendrier et organisation.',
-    icon: <Calendar className="w-6 h-6 text-yellow-400" />,
-    tag: 'Vie scolaire',
-    active: true,
-    isProtected: false,
-    requiresSchoolAuth: true
-  },
   {
     id: 'sport_stpbb',
     name: 'Journée sportive STPBB',
@@ -112,15 +110,26 @@ const DEFAULT_MODULES = [
     requiresSchoolAuth: false
   },
   {
-    id: 'calendar',
-    name: 'Calendrier',
-    path: '/calendar',
-    desc: 'Agenda partagé interactif.',
-    icon: <Calendar className="w-6 h-6 text-purple-400" />,
+    id: 'qol',
+    name: 'QoL',
+    path: '/qol',
+    desc: 'Qualité de vie',
+    icon: <Sun className="w-6 h-6 text-brand-teal" />,
     tag: 'Vie scolaire',
     active: true,
     isProtected: false,
-    requiresSchoolAuth: true
+    requiresSchoolAuth: true,
+    restrictedToRoles: ['enseignant', 'admin']
+  },
+  {
+    id: 'success',
+    name: 'Réussite scolaire',
+    path: '/success',
+    desc: 'Suivi pédagogique',
+    icon: <Calculator className="w-6 h-6 text-brand-teal" />,
+    active: true,
+    isProtected: false,
+    requiresSchoolAuth: false
   }
 ];
 
@@ -455,7 +464,7 @@ const AppLayout = () => {
       </div>
 
       {/* Nouvelle Navbar Globale */}
-      {!location.pathname.startsWith('/JS2026') && !location.pathname.startsWith('/GVGDC') && !location.pathname.startsWith('/DashboardQVGDC') && (
+      {!location.pathname.startsWith('/JS2026') && !location.pathname.startsWith('/GVGDC') && !location.pathname.startsWith('/DashboardQVGDC') && !location.pathname.startsWith('/cd') && !location.pathname.startsWith('/success') && (
         <nav className="hidden md:flex justify-between items-center px-8 py-4 shrink-0 z-50 relative bg-brand-teal text-white shadow-soft">
           {/* Gauche : Logo */}
           <div className="flex items-center gap-6">
@@ -501,7 +510,7 @@ const AppLayout = () => {
       )}
 
       {/* Navbar Mobile (Bottom) */}
-      {!location.pathname.startsWith('/games') && !location.pathname.startsWith('/JS2026') && !location.pathname.startsWith('/GVGDC') && !location.pathname.startsWith('/DashboardQVGDC') && !location.pathname.startsWith('/events') && !location.pathname.startsWith('/calendar') && (
+      {!location.pathname.startsWith('/games') && !location.pathname.startsWith('/JS2026') && !location.pathname.startsWith('/GVGDC') && !location.pathname.startsWith('/DashboardQVGDC') && !location.pathname.startsWith('/events') && !location.pathname.startsWith('/calendar') && !location.pathname.startsWith('/cd') && !location.pathname.startsWith('/success') && (
         <nav className="md:hidden fixed bottom-6 left-6 right-6 z-[100] bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-brand-text/5 flex justify-around items-center px-2 py-3 backdrop-blur-xl">
           <button onClick={() => navigate('/')} className={`flex flex-col items-center gap-1 p-2 transition-colors ${location.pathname === '/' ? 'text-brand-text' : 'text-brand-text/40 hover:text-brand-coral'}`}>
             <HomeIcon className="w-6 h-6" />
@@ -606,6 +615,22 @@ const AppLayout = () => {
           </Route>
           <Route path="/GVGDC" element={<GVGDC />} />
           <Route path="/DashboardQVGDC" element={<DashboardQVGDC />} />
+          <Route path="/qol" element={
+            <ProtectedRoute isAllowed={isAuthorized}>
+              <QOLHubPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/cd" element={<EdoxiaCDWrapper />}>
+            <Route index element={<CDHubPage />} />
+            <Route path="rooms" element={<RoomAllocatorPage />} />
+          </Route>
+          <Route path="/success">
+            <Route index element={<SuccessHubPage />} />
+            <Route path=":spaceId" element={<SuccessSpacePage />} />
+            <Route path=":spaceId/eval/:evalId" element={<SuccessEvaluationDetail />} />
+            <Route path=":spaceId/reports" element={<SuccessReportsPage />} />
+          </Route>
+
         </Routes>
       </div>
 
