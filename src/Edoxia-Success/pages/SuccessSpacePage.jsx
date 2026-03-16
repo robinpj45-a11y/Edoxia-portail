@@ -4,6 +4,7 @@ import { collection, onSnapshot, query, where, addDoc, serverTimestamp, orderBy,
 import { db } from '../../firebase';
 import { ArrowLeft, Lock, Plus, GraduationCap, ChevronRight, FileText, Calendar, BookOpen, Calculator, BarChart3, Upload, Trash2, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import SuccessMobileNav from '../components/SuccessMobileNav';
 import * as XLSX from 'xlsx';
 
 const SUBJECT_ICONS = {
@@ -87,57 +88,6 @@ export default function SuccessSpacePage() {
     }
   };
 
-  const addExercise = () => {
-    setNewEval(prev => ({
-      ...prev,
-      exercises: [...prev.exercises, { name: '', competence: '', points: 10 }]
-    }));
-  };
-
-  const removeExercise = (index) => {
-    if (newEval.exercises.length > 1) {
-      setNewEval(prev => ({
-        ...prev,
-        exercises: prev.exercises.filter((_, i) => i !== index)
-      }));
-    }
-  };
-
-  const handleCreateEval = async (e) => {
-    e.preventDefault();
-    try {
-      const studentsSnap = await getDocs(query(
-        collection(db, 'success_students'), 
-        where('classId', '==', newEval.selectedClassId)
-      ));
-      
-      let students = studentsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      
-      if (students.length === 0) {
-        students = [
-          { id: 'a', name: 'Élève A' },
-          { id: 'b', name: 'Élève B' },
-          { id: 'c', name: 'Élève C' },
-          { id: 'd', name: 'Élève D' }
-        ];
-      } else {
-        students = students.map(s => ({ id: s.id, name: `${s.lastName} ${s.firstName}` }));
-      }
-
-      const docRef = await addDoc(collection(db, 'success_evaluations'), {
-        ...newEval,
-        spaceId,
-        createdAt: serverTimestamp(),
-        students
-      });
-      setShowCreateModal(false);
-      navigate(`/success/${spaceId}/eval/${docRef.id}`);
-    } catch (error) {
-      console.error("Error creating evaluation:", error);
-      alert("Erreur lors de la création.");
-    }
-  };
-
   const handleImportExcel = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -211,11 +161,17 @@ export default function SuccessSpacePage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-brand-bg relative overflow-hidden text-brand-text">
+    <div className="flex flex-col h-screen bg-brand-bg relative overflow-hidden text-brand-text pb-24 md:pb-0">
        <div className="absolute top-1/4 -right-20 w-80 h-80 bg-brand-teal/10 rounded-full blur-3xl pointer-events-none z-0"></div>
        <div className="absolute bottom-0 -left-20 w-80 h-80 bg-brand-coral/10 rounded-full blur-3xl pointer-events-none z-0"></div>
+       
+       <SuccessMobileNav 
+         mode="hub"
+         onOpenCreate={() => navigate(`/success/${spaceId}/create`)} 
+         onOpenImport={() => setShowImportModal(true)} 
+       />
 
-      <header className="shrink-0 sticky top-0 z-[60] border-b border-white/50 p-4 px-8 flex justify-between items-center shadow-soft bg-white/40 backdrop-blur-md">
+      <header className="shrink-0 sticky top-0 z-[60] border-b border-white/50 p-4 px-8 hidden md:flex justify-between items-center shadow-soft bg-white/40 backdrop-blur-md">
         <button onClick={() => navigate('/success')} className="flex items-center gap-2 transition-colors font-bold text-brand-text/50 hover:text-brand-text">
           <ArrowLeft size={20} /> Espace {spaceId}
         </button>
@@ -233,7 +189,7 @@ export default function SuccessSpacePage() {
              <BarChart3 size={18} /> Voir les résultats
            </button>
            <button 
-             onClick={() => setShowCreateModal(true)}
+             onClick={() => navigate(`/success/${spaceId}/create`)}
              className="bg-brand-coral text-white px-5 py-2.5 rounded-2xl font-black shadow-lg flex items-center gap-2 hover:brightness-110 active:scale-95 transition-all text-sm uppercase tracking-wider"
            >
              <Plus size={18} /> Nouvelle évaluation
@@ -289,136 +245,6 @@ export default function SuccessSpacePage() {
       {/* Modals */}
       <AnimatePresence>
         {/* Modal Création Évaluation */}
-        {showCreateModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
-            <motion.div 
-               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-               onClick={() => setShowCreateModal(false)}
-               className="absolute inset-0 bg-black/40"
-            />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white border border-white p-8 rounded-[40px] shadow-2xl w-full max-w-2xl relative z-10 max-h-[90vh] overflow-y-auto"
-            >
-              <h2 className="text-3xl font-black mb-8 text-brand-text uppercase tracking-tighter">Nouvelle Évaluation</h2>
-              
-              <form onSubmit={handleCreateEval} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-xs font-black uppercase tracking-widest text-brand-text/40 mb-2 ml-2">Nom de l'évaluation</label>
-                    <input 
-                      type="text" required
-                      className="w-full bg-brand-bg border border-white/50 rounded-2xl p-4 text-brand-text focus:ring-2 ring-brand-coral/20 outline-none font-bold"
-                      value={newEval.name}
-                      onChange={e => setNewEval({...newEval, name: e.target.value})}
-                      placeholder="Sommatif Période 3"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-black uppercase tracking-widest text-brand-text/40 mb-2 ml-2">Matière</label>
-                    <select 
-                      className="w-full bg-brand-bg border border-white/50 rounded-2xl p-4 text-brand-text focus:ring-2 ring-brand-coral/20 outline-none font-bold"
-                      value={newEval.subject}
-                      onChange={e => setNewEval({...newEval, subject: e.target.value})}
-                    >
-                      <option>Français</option>
-                      <option>Mathématiques</option>
-                    </select>
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-xs font-black uppercase tracking-widest text-brand-text/40 mb-2 ml-2">Classe concernée</label>
-                    <select 
-                      className="w-full bg-brand-bg border border-white/50 rounded-2xl p-4 text-brand-text focus:ring-2 ring-brand-teal/20 outline-none font-bold"
-                      value={newEval.selectedClassId}
-                      onChange={e => setNewEval({...newEval, selectedClassId: e.target.value})}
-                    >
-                      {classes.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex justify-between items-center mb-4 px-2">
-                    <label className="block text-xs font-black uppercase tracking-widest text-brand-text/40">Structure des exercices</label>
-                    <button type="button" onClick={addExercise} className="text-[10px] font-black text-brand-teal uppercase border border-brand-teal/20 px-3 py-1 rounded-full hover:bg-brand-teal/5">
-                      + Ajouter un exercice
-                    </button>
-                  </div>
-                  <div className="space-y-4">
-                    {newEval.exercises.map((ex, idx) => (
-                      <div key={idx} className="space-y-2 group">
-                         <div className="flex gap-3 items-start">
-                            <div className="w-8 h-8 shrink-0 rounded-full bg-brand-text/5 flex items-center justify-center text-[10px] font-black text-brand-text/30 border border-brand-text/5 mt-2">{idx + 1}</div>
-                            <div className="flex-1 space-y-4">
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="md:col-span-2 space-y-2">
-                                  <label className="text-[10px] font-black uppercase tracking-widest text-brand-text/40 ml-2">Nom de l'exercice</label>
-                                  <input
-                                    type="text"
-                                    placeholder="Ex: Dictée, Calcul mental..."
-                                    value={ex.name}
-                                    onChange={(e) => {
-                                      const newExs = [...newEval.exercises];
-                                      newExs[idx].name = e.target.value;
-                                      setNewEval({ ...newEval, exercises: newExs });
-                                    }}
-                                    className="w-full bg-brand-bg border border-brand-text/5 px-5 py-3 rounded-2xl font-bold text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal/20"
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <label className="text-[10px] font-black uppercase tracking-widest text-brand-text/40 ml-2">Barème (Points)</label>
-                                  <input
-                                    type="number"
-                                    min="1"
-                                    value={ex.points}
-                                    onChange={(e) => {
-                                      const newExs = [...newEval.exercises];
-                                      newExs[idx].points = parseInt(e.target.value) || 0;
-                                      setNewEval({ ...newEval, exercises: newExs });
-                                    }}
-                                    className="w-full bg-brand-bg border border-brand-text/5 px-5 py-3 rounded-2xl font-bold text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal/20 text-center"
-                                  />
-                                </div>
-                              </div>
-                              <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-brand-text/40 ml-2">Compétence associée</label>
-                                <textarea
-                                  placeholder="Décrivez la compétence évaluée..."
-                                  value={ex.competence}
-                                  onChange={(e) => {
-                                    const newExs = [...newEval.exercises];
-                                    newExs[idx].competence = e.target.value;
-                                    setNewEval({ ...newEval, exercises: newExs });
-                                  }}
-                                  className="w-full bg-brand-bg border border-brand-text/5 px-5 py-3 rounded-2xl font-bold text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal/20 h-20 resize-none"
-                                />
-                              </div>
-                            </div>
-                           {newEval.exercises.length > 1 && (
-                             <button type="button" onClick={() => removeExercise(idx)} className="p-2 text-brand-coral/20 hover:text-brand-coral transition-colors mt-2">
-                               <Plus size={20} className="rotate-45" />
-                             </button>
-                           )}
-                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="pt-6 flex gap-4">
-                  <button type="button" onClick={() => setShowCreateModal(false)} className="flex-1 bg-brand-text/5 text-brand-text/40 font-black py-4 rounded-2xl hover:bg-brand-text/10 transition-all uppercase tracking-widest">
-                    Annuler
-                  </button>
-                  <button type="submit" className="flex-1 bg-brand-coral text-white font-black py-4 rounded-2xl shadow-lg hover:brightness-110 active:scale-95 transition-all uppercase tracking-widest">
-                    Créer l'évaluation
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
 
         {/* Modal Import Excel */}
         {showImportModal && (

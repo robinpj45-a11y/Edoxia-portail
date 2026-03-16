@@ -683,18 +683,18 @@ function FrenchGames() {
                 <div className="flex items-center gap-3">
                   {selectedGame === 'conjugaison_present_1' ? (
                     <div className="flex items-center gap-2">
-                       <span className="font-medium">{current.sentence}</span>
-                       <span className="text-brand-coral font-black border-b-4 border-brand-coral/20 min-w-[2.5rem]">?</span>
-                       <span className="font-medium">{current.rest}</span>
+                      <span className="font-medium">{current.sentence}</span>
+                      <span className="text-brand-coral font-black border-b-4 border-brand-coral/20 min-w-[2.5rem]">?</span>
+                      <span className="font-medium">{current.rest}</span>
                     </div>
                   ) : (
                     <>
                       <span className="text-brand-coral font-black drop-shadow-sm">{current.gn}</span> {current.rest}
                     </>
                   )}
-                  <button 
-                    onClick={() => speak(selectedGame === 'conjugaison_present_1' ? current.full : `${current.gn} ... ${current.rest}`)} 
-                    className="p-3 rounded-full hover:bg-white/60 bg-white/40 transition-all text-brand-teal shadow-sm border border-white/50" 
+                  <button
+                    onClick={() => speak(selectedGame === 'conjugaison_present_1' ? current.full : `${current.gn} ... ${current.rest}`)}
+                    className="p-3 rounded-full hover:bg-white/60 bg-white/40 transition-all text-brand-teal shadow-sm border border-white/50"
                     title="Répéter"
                   >
                     <Volume2 size={24} />

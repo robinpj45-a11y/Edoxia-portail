@@ -1,6 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bed, Users, User, Search, Home, CheckCircle2, AlertCircle, Heart, Info, ChevronRight, Calculator, MessageSquare, Handshake, Map, ArrowRight, ArrowLeft, X } from 'lucide-react';
+import { Bed, Users, User, Search, Home, CheckCircle2, AlertCircle, Heart, Info, ChevronRight, Calculator, MessageSquare, Handshake, Map, ArrowRight, ArrowLeft, X, FileDown, Printer } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 const CHOICES = {
     "Siloé": ["Anaïs", "Adèle M."], "Jeanne": ["Siahn", "Ambre"], "Ambre": ["Siahn", "Jeanne"],
@@ -50,6 +52,9 @@ const CDRoomPlanner = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('all');
     const [selectedStudent, setSelectedStudent] = useState(null);
+    const [isExporting, setIsExporting] = useState(false);
+    const [exportType, setExportType] = useState(null); // 'full' or 'blank'
+    const gridRef = useRef(null);
 
     const allRooms = useMemo(() => {
         let rooms = [];
@@ -72,6 +77,60 @@ const CDRoomPlanner = () => {
         });
     };
 
+    const handleExportPDF = async (type) => {
+        if (!gridRef.current) return;
+        setExportType(type);
+        setIsExporting(true);
+        setSelectedStudent(null); // Close popup before export
+
+        // Give React a moment to re-render if we were to toggle styles
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        try {
+            const canvas = await html2canvas(gridRef.current, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#f8fafc', // slate-50
+                onclone: (clonedDoc) => {
+                    // Force some styles on the clone to ensure no cropping
+                    const style = clonedDoc.createElement('style');
+                    style.innerHTML = `
+                        .student-btn { height: 48px !important; line-height: 1 !important; padding-top: 0 !important; padding-bottom: 0 !important; overflow: visible !important; }
+                        .student-name { white-space: nowrap !important; overflow: visible !important; text-overflow: clip !important; }
+                    `;
+                    clonedDoc.head.appendChild(style);
+                }
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: 'a3'
+            });
+
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+            const imgWidth = canvas.width;
+            const imgHeight = canvas.height;
+            const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+
+            const finalWidth = imgWidth * ratio;
+            const finalHeight = imgHeight * ratio;
+            const offsetX = (pdfWidth - finalWidth) / 2;
+            const offsetY = (pdfHeight - finalHeight) / 2;
+
+            pdf.addImage(imgData, 'PNG', offsetX, offsetY, finalWidth, finalHeight);
+            pdf.save(`Plan_Chambres_Edoxia_${type === 'blank' ? 'Vierge_' : ''}${new Date().toLocaleDateString()}.pdf`);
+        } catch (error) {
+            console.error('Export failed:', error);
+        } finally {
+            setIsExporting(false);
+            setExportType(null);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
             {/* Top Navigation - Fixed at the very top */}
@@ -90,10 +149,26 @@ const CDRoomPlanner = () => {
                                 <span className="font-black text-lg text-slate-800 uppercase tracking-tight">Gestion des Chambres</span>
                             </div>
                         </div>
-                        <div className="hidden md:flex items-center gap-4">
-                            <div className="px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-xl">
-                                <span className="text-sm font-bold text-indigo-600 flex items-center gap-2">
-                                    <Calculator className="w-4 h-4" /> Plan des chambres (46/50)
+                        <div className="hidden md:flex items-center gap-2">
+                            <button
+                                onClick={() => handleExportPDF('blank')}
+                                disabled={isExporting}
+                                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-xs font-black shadow-sm transition-all disabled:opacity-50"
+                            >
+                                {isExporting && exportType === 'blank' ? <span className="w-3 h-3 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" /> : <FileDown className="w-3.5 h-3.5" />}
+                                Plan vierge
+                            </button>
+                            <button
+                                onClick={() => handleExportPDF('full')}
+                                disabled={isExporting}
+                                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black shadow-md shadow-indigo-200 transition-all disabled:opacity-50"
+                            >
+                                {isExporting && exportType === 'full' ? <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Printer className="w-3.5 h-3.5" />}
+                                Export complet
+                            </button>
+                            <div className="px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-xl ml-2">
+                                <span className="text-xs font-black text-indigo-600 flex items-center gap-2 uppercase tracking-tight">
+                                    <Calculator className="w-3.5 h-3.5" /> Plan des chambres (46/50)
                                 </span>
                             </div>
                         </div>
@@ -129,7 +204,7 @@ const CDRoomPlanner = () => {
                     </div>
 
                     {/* Room Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-24">
+                    <div ref={gridRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-24 p-2">
                         {allRooms.map((room) => (
                             <div key={`${room.type}-${room.id}`} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col">
                                 <div className={`px-5 py-3 flex justify-between items-center ${room.type === 'Fille' ? 'bg-pink-50 text-pink-700' : 'bg-blue-50 text-blue-700'}`}>
@@ -144,32 +219,41 @@ const CDRoomPlanner = () => {
                                     </div>
                                 </div>
                                 <div className="p-4 space-y-2 flex-1">
-                                    {room.students.map((student, idx) => {
-                                        const satisfied = isSatisfied(student, room.students);
-                                        const isSelected = selectedStudent?.name === student;
+                                    {(exportType === 'blank' ? Array(room.capacity).fill(null) : room.students).map((student, idx) => {
+                                        const satisfied = student ? isSatisfied(student, room.students) : false;
+                                        const isSelected = selectedStudent?.name === student && student !== null;
                                         return (
                                             <button
                                                 key={idx}
-                                                onClick={() => handleStudentClick(student, room)}
-                                                className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all text-left group ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg scale-[1.02]' :
-                                                    satisfied ? 'bg-slate-50 border-slate-100 hover:border-indigo-200 hover:bg-slate-100' : 'bg-red-50 border-red-100 hover:border-red-200 hover:bg-red-100/50'
+                                                onClick={() => student && handleStudentClick(student, room)}
+                                                className={`student-btn w-full flex items-center justify-between p-3 rounded-xl border transition-all text-left group ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' :
+                                                    student ? (satisfied ? 'bg-slate-50 border-slate-100 hover:border-indigo-200 hover:bg-slate-100' : 'bg-red-50 border-red-100 hover:border-red-200 hover:bg-red-100/50')
+                                                        : 'bg-white border-slate-100 border-dashed min-h-[48px]'
                                                     }`}
                                             >
-                                                <div className="flex items-center gap-3 overflow-hidden">
-                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-xs ${isSelected ? 'bg-white/20 text-white' : satisfied ? 'bg-slate-200 text-slate-500' : 'bg-red-200 text-red-600'}`}>
-                                                        {student.charAt(0)}
+                                                {student ? (
+                                                    <>
+                                                        <div className="flex items-center gap-3 overflow-hidden">
+                                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-[10px] ${isSelected ? 'bg-white/20 text-white' : satisfied ? 'bg-slate-200 text-slate-500' : 'bg-red-200 text-red-600'}`}>
+                                                                {student.charAt(0)}
+                                                            </div>
+                                                            <span className={`student-name text-sm font-bold truncate ${isSelected ? 'text-white' : 'text-slate-700'}`}>
+                                                                {student}
+                                                            </span>
+                                                        </div>
+                                                        <div className="shrink-0 flex items-center">
+                                                            {satisfied ? (
+                                                                <CheckCircle2 className={`w-4 h-4 ${isSelected ? 'text-indigo-200' : 'text-emerald-500'}`} />
+                                                            ) : (
+                                                                <AlertCircle className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-red-500'}`} />
+                                                            )}
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <div className="h-full w-full flex items-center justify-center">
+                                                        <div className="w-4 h-4 rounded-full border border-slate-200" />
                                                     </div>
-                                                    <span className={`text-sm font-bold truncate ${isSelected ? 'text-white' : 'text-slate-700'}`}>
-                                                        {student}
-                                                    </span>
-                                                </div>
-                                                <div className="shrink-0 flex items-center">
-                                                    {satisfied ? (
-                                                        <CheckCircle2 className={`w-4 h-4 ${isSelected ? 'text-indigo-200' : 'text-emerald-500'}`} />
-                                                    ) : (
-                                                        <AlertCircle className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-red-500'}`} />
-                                                    )}
-                                                </div>
+                                                )}
                                             </button>
                                         );
                                     })}

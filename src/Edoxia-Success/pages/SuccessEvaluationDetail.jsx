@@ -2,8 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, onSnapshot, updateDoc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { ArrowLeft, Save, Trash2, Plus } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Plus, Edit } from 'lucide-react';
 import { motion } from 'framer-motion';
+import SuccessMobileNav from '../components/SuccessMobileNav';
 
 // SUCCESS THRESHOLD: 75%
 const SUCCESS_THRESHOLD = 0.75;
@@ -86,7 +87,7 @@ export default function SuccessEvaluationDetail() {
     const exercises = evaluation.exercises || [];
     
     const studentScores = students.map(st => {
-      let successes = 0;
+      let totalPercentage = 0;
       let evaluatedCount = 0;
       
       exercises.forEach((ex, idx) => {
@@ -94,9 +95,7 @@ export default function SuccessEvaluationDetail() {
         if (val !== undefined && val !== null && val !== '') {
           const scoreNum = parseFloat(val) || 0;
           const maxPoints = ex.points || 10;
-          if ((scoreNum / maxPoints) >= SUCCESS_THRESHOLD) {
-            successes++;
-          }
+          totalPercentage += (scoreNum / maxPoints);
           evaluatedCount++;
         }
       });
@@ -104,7 +103,7 @@ export default function SuccessEvaluationDetail() {
       return {
         id: st.id,
         name: st.name,
-        score: evaluatedCount > 0 ? (successes / evaluatedCount) * 100 : null
+        score: evaluatedCount > 0 ? (totalPercentage / evaluatedCount) * 100 : null
       };
     });
 
@@ -122,11 +121,12 @@ export default function SuccessEvaluationDetail() {
   if (loading) return <div className="h-screen flex items-center justify-center font-black text-brand-text/20 uppercase tracking-widest">Chargement...</div>;
 
   return (
-    <div className="flex flex-col h-screen bg-brand-bg relative overflow-hidden text-brand-text">
+    <div className="flex flex-col min-h-screen bg-brand-bg relative overflow-hidden text-brand-text pb-32 md:pb-0">
+      <SuccessMobileNav mode="edit" />
        <div className="absolute top-1/4 -right-20 w-80 h-80 bg-brand-teal/5 rounded-full blur-3xl pointer-events-none z-0"></div>
        <div className="absolute bottom-0 -left-20 w-80 h-80 bg-brand-coral/5 rounded-full blur-3xl pointer-events-none z-0"></div>
 
-      <header className="shrink-0 sticky top-0 z-[60] border-b border-white/50 p-4 px-8 flex justify-between items-center shadow-soft bg-white/40 backdrop-blur-md">
+      <header className="shrink-0 sticky top-0 z-[60] border-b border-white/50 p-4 px-8 hidden md:flex justify-between items-center shadow-soft bg-white/40 backdrop-blur-md">
         <button onClick={() => navigate(`/success/${spaceId}`)} className="flex items-center gap-2 transition-colors font-bold text-brand-text/50 hover:text-brand-text">
           <ArrowLeft size={20} /> Retour
         </button>
@@ -135,6 +135,13 @@ export default function SuccessEvaluationDetail() {
            <p className="text-[10px] font-bold text-brand-text/40">{evaluation.subject}</p>
         </div>
         <div className="flex items-center gap-2">
+          <button 
+            onClick={() => navigate(`/success/${spaceId}/create?edit=${evalId}`)}
+            className="p-2.5 text-brand-teal hover:bg-brand-teal/10 rounded-2xl transition-all"
+            title="Modifier la structure"
+          >
+            <Edit size={20} />
+          </button>
           <button 
             onClick={handleDelete}
             className="p-2.5 text-brand-coral hover:bg-brand-coral/10 rounded-2xl transition-all"
@@ -158,12 +165,16 @@ export default function SuccessEvaluationDetail() {
         {/* Légende */}
          <div className="flex flex-wrap gap-8 justify-center">
             <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-brand-text/40">
-              <div className="w-4 h-4 rounded-md bg-brand-teal/10 border border-brand-teal/20"></div>
-              Réussi (≥ 75%)
+              <div className="w-4 h-4 rounded-md bg-brand-teal text-white flex items-center justify-center text-[8px]">✓</div>
+              Acquis (≥ 75%)
             </div>
             <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-brand-text/40">
-              <div className="w-4 h-4 rounded-md bg-white border border-brand-text/10"></div>
-              Échec/Non évalué
+              <div className="w-4 h-4 rounded-md bg-amber-400 text-white flex items-center justify-center text-[8px]">~</div>
+              En cours (31-74%)
+            </div>
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-brand-text/40">
+              <div className="w-4 h-4 rounded-md bg-brand-coral text-white flex items-center justify-center text-[8px]">✕</div>
+              Non acquis (≤ 30%)
             </div>
          </div>
 
@@ -194,14 +205,27 @@ export default function SuccessEvaluationDetail() {
                       {evaluation.exercises.map((ex, idx) => {
                         const val = results[st.id]?.[idx];
                         const isNotEvaluated = val === undefined || val === null || val === '';
-                        const isSuccess = !isNotEvaluated && (parseFloat(val) / (ex.points || 10)) >= SUCCESS_THRESHOLD;
+                        const pct = !isNotEvaluated ? (parseFloat(val) / (ex.points || 10)) * 100 : 0;
+                        
+                        let cellClass = "bg-brand-bg/50 border-brand-text/5";
+                        let textClass = "text-brand-text/20";
+                        
+                        if (!isNotEvaluated) {
+                          if (pct >= 75) {
+                            cellClass = "bg-brand-teal/10 border-brand-teal/30";
+                            textClass = "text-brand-teal";
+                          } else if (pct >= 31) {
+                            cellClass = "bg-amber-50 border-amber-200";
+                            textClass = "text-amber-600";
+                          } else {
+                            cellClass = "bg-brand-coral/10 border-brand-coral/30";
+                            textClass = "text-brand-coral";
+                          }
+                        }
                         
                         return (
                           <td key={idx} className="p-2 text-center border-l border-brand-text/5 relative group/cell">
-                            <div className={`relative flex items-center h-12 rounded-2xl border-2 transition-all ${
-                              isSuccess ? 'bg-brand-teal/5 border-brand-teal/20' : 
-                              isNotEvaluated ? 'bg-brand-bg/50 border-brand-text/5' : 'bg-white border-brand-text/10'
-                            }`}>
+                            <div className={`relative flex items-center h-12 rounded-2xl border-2 transition-all ${cellClass}`}>
                               <input 
                                 type="number"
                                 step="0.5"
@@ -210,9 +234,7 @@ export default function SuccessEvaluationDetail() {
                                 placeholder="-"
                                 value={val ?? ''}
                                 onChange={(e) => setScore(st.id, idx, e.target.value)}
-                                className={`w-full bg-transparent text-center font-black text-sm focus:outline-none ${
-                                  isSuccess ? 'text-brand-teal' : 'text-brand-text'
-                                }`}
+                                className={`w-full bg-transparent text-center font-black text-sm focus:outline-none ${textClass}`}
                               />
                               <button 
                                 onClick={() => setScore(st.id, idx, ex.points || 10)}
@@ -229,9 +251,11 @@ export default function SuccessEvaluationDetail() {
                         );
                       })}
                       <td className="p-6 text-center border-l-2 border-brand-teal/10 bg-brand-teal/5">
-                        <div className="text-xl font-black text-brand-teal">{score !== null ? `${Math.round(score)}%` : '-'}</div>
-                        <div className="w-full h-1.5 bg-brand-teal/10 rounded-full mt-2 overflow-hidden">
-                           <div className="h-full bg-brand-teal rounded-full" style={{ width: `${score || 0}%` }}></div>
+                        <div className={`text-xl font-black ${score !== null ? (score >= 75 ? 'text-brand-teal' : score >= 31 ? 'text-amber-500' : 'text-brand-coral') : 'text-brand-text/20'}`}>
+                          {score !== null ? `${Math.round(score)}%` : '-'}
+                        </div>
+                        <div className="w-full h-1.5 bg-brand-text/5 rounded-full mt-2 overflow-hidden">
+                           <div className={`h-full rounded-full transition-all duration-500 ${score >= 75 ? 'bg-brand-teal' : score >= 31 ? 'bg-amber-400' : 'bg-brand-coral'}`} style={{ width: `${score || 0}%` }}></div>
                         </div>
                       </td>
                     </tr>

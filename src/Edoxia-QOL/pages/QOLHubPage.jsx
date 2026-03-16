@@ -59,7 +59,7 @@ const QOLHubPage = () => {
             </div>
             <div className="overflow-hidden">
               <div className="text-[12px] font-bold uppercase tracking-wider text-white/60 truncate">Suivi pédagogique</div>
-              <div className="text-xl font-semibold text-white truncate">Réussite</div>
+              <div className="text-xl font-semibold text-white truncate">Calc. de Réussite</div>
             </div>
           </div>
         </div>

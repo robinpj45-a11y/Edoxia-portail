@@ -65,6 +65,7 @@ import SuccessHubPage from './Edoxia-Success/pages/SuccessHubPage';
 import SuccessSpacePage from './Edoxia-Success/pages/SuccessSpacePage';
 import SuccessEvaluationDetail from './Edoxia-Success/pages/SuccessEvaluationDetail';
 import SuccessReportsPage from './Edoxia-Success/pages/SuccessReportsPage';
+import SuccessEvaluationCreator from './Edoxia-Success/pages/SuccessEvaluationCreator';
 
 
 
@@ -627,6 +628,7 @@ const AppLayout = () => {
           <Route path="/success">
             <Route index element={<SuccessHubPage />} />
             <Route path=":spaceId" element={<SuccessSpacePage />} />
+            <Route path=":spaceId/create" element={<SuccessEvaluationCreator />} />
             <Route path=":spaceId/eval/:evalId" element={<SuccessEvaluationDetail />} />
             <Route path=":spaceId/reports" element={<SuccessReportsPage />} />
           </Route>
