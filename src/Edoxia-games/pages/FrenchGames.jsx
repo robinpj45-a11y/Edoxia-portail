@@ -200,8 +200,128 @@ const questionsBank = [
   { gn: "Tes parents et toi", rest: "habitez ici.", answer: "Vous" },
 ];
 
+// --- BANQUE DE CONJUGAISON (Présent - 1er Groupe) ---
+const conjugaisonPresent1Bank = [
+  { sentence: "Le petit chat mang...", rest: " sur son tapis.", answer: "e", full: "Le petit chat mange sur son tapis." },
+  { sentence: "Tu aim...", rest: " beaucoup les cerises.", answer: "es", full: "Tu aimes beaucoup les cerises." },
+  { sentence: "Nous regard...", rest: " les nuages passer.", answer: "ons", full: "Nous regardons les nuages passer." },
+  { sentence: "Vous dessin...", rest: " un beau paysage.", answer: "ez", full: "Vous dessinez un beau paysage." },
+  { sentence: "Les oiseaux chant...", rest: " dès l'aube.", answer: "ent", full: "Les oiseaux chantent dès l'aube." },
+  { sentence: "Je port...", rest: " mon nouveau cartable.", answer: "e", full: "Je porte mon nouveau cartable." },
+  { sentence: "Paul et moi jou...", rest: " ensemble.", answer: "ons", full: "Paul et moi jouons ensemble." },
+  { sentence: "Maman prépar...", rest: " une tarte aux pommes.", answer: "e", full: "Maman prépare une tarte aux pommes." },
+  { sentence: "Toi et ton ami écout...", rest: " la musique.", answer: "ez", full: "Toi et ton ami écoutez la musique." },
+  { sentence: "Le vent souffl...", rest: " très fort.", answer: "e", full: "Le vent souffle très fort." },
+  { sentence: "Les enfants saut...", rest: " dans les flaques.", answer: "ent", full: "Les enfants sautent dans les flaques." },
+  { sentence: "Tu color...", rest: " proprement ton dessin.", answer: "es", full: "Tu colories proprement ton dessin." },
+  { sentence: "Mon frère et moi lav...", rest: " le vélo.", answer: "ons", full: "Mon frère et moi lavons le vélo." },
+  { sentence: "Les étoiles brill...", rest: " dans le ciel.", answer: "ent", full: "Les étoiles brillent dans le ciel." },
+  { sentence: "Vous mang...", rest: " trop vite votre goûter.", answer: "ez", full: "Vous mangez trop vite votre goûter." },
+  { sentence: "Je march...", rest: " doucement dans la forêt.", answer: "e", full: "Je marche doucement dans la forêt." },
+  { sentence: "Les voitures roul...", rest: " sur l'autoroute.", answer: "ent", full: "Les voitures roulent sur l'autoroute." },
+  { sentence: "Tu cherch...", rest: " tes clés partout.", answer: "es", full: "Tu cherches tes clés partout." },
+  { sentence: "Nous rang...", rest: " nos affaires.", answer: "ons", full: "Nous rangeons nos affaires." },
+  { sentence: "Ma sœur dans...", rest: " magnifiquement.", answer: "e", full: "Ma sœur danse magnifiquement." },
+  { sentence: "Papa travaill...", rest: " beaucoup aujourd'hui.", answer: "e", full: "Papa travaille beaucoup aujourd'hui." },
+  { sentence: "Vous parl...", rest: " trop fort dans la classe.", answer: "ez", full: "Vous parlez trop fort dans la classe." },
+  { sentence: "Les avions travers...", rest: " l'océan.", answer: "ent", full: "Les avions traversent l'océan." },
+  { sentence: "Je découp...", rest: " des formes en papier.", answer: "e", full: "Je découpe des formes en papier." },
+  { sentence: "Tu racont...", rest: " une histoire drôle.", answer: "es", full: "Tu racontes une histoire drôle." },
+  { sentence: "Les lions chass...", rest: " dans la savane.", answer: "ent", full: "Les lions chassent dans la savane." },
+  { sentence: "Nous saut...", rest: " à la corde à sauter.", answer: "ons", full: "Nous sautons à la corde à sauter." },
+  { sentence: "Les élèves écout...", rest: " la maîtresse.", answer: "ent", full: "Les élèves écoutent la maîtresse." },
+  { sentence: "Vous march...", rest: " sur le trottoir.", answer: "ez", full: "Vous marchez sur le trottoir." },
+  { sentence: "Elle pleur...", rest: " car elle a perdu son doudou.", answer: "e", full: "Elle pleure car elle a perdu son doudou." },
+  { sentence: "Tu nag...", rest: " comme un petit poisson.", answer: "es", full: "Tu nages comme un petit poisson." },
+  { sentence: "Mes parents habit...", rest: " une grande maison.", answer: "ent", full: "Mes parents habitent une grande maison." },
+  { sentence: "Nous visit...", rest: " le zoo de la ville.", answer: "ons", full: "Nous visitons le zoo de la ville." },
+  { sentence: "Je ferm...", rest: " la porte à clé.", answer: "e", full: "Je ferme la porte à clé." },
+  { sentence: "Vous pens...", rest: " déjà aux vacances.", answer: "ez", full: "Vous pensez déjà aux vacances." },
+  { sentence: "Les fourmis rapport...", rest: " de la nourriture.", answer: "ent", full: "Les fourmis rapportent de la nourriture." },
+  { sentence: "Tu cri...", rest: " trop fort dans le jardin.", answer: "es", full: "Tu cries trop fort dans le jardin." },
+  { sentence: "Mon ami et moi partag...", rest: " nos billes.", answer: "ons", full: "Mon ami et moi partageons nos billes." },
+  { sentence: "Le soleil chauff...", rest: " le sable.", answer: "e", full: "Le soleil chauffe le sable." },
+  { sentence: "Les arbres pouss...", rest: " vers le ciel.", answer: "ent", full: "Les arbres poussent vers le ciel." },
+  { sentence: "Vous entr...", rest: " sans faire de bruit.", answer: "ez", full: "Vous entrez sans faire de bruit." },
+  { sentence: "Je gout...", rest: " au bon chocolat.", answer: "e", full: "Je goute au bon chocolat." },
+  { sentence: "Tu port...", rest: " des lunettes roses.", answer: "es", full: "Tu portes des lunettes roses." },
+  { sentence: "Nous lanc...", rest: " le ballon très loin.", answer: "ons", full: "Nous lançons le ballon très loin." },
+  { sentence: "Les poissons bull...", rest: " dans l'aquarium.", answer: "ent", full: "Les poissons bullent dans l'aquarium." },
+  { sentence: "Elle cherch...", rest: " son chemin dans le parc.", answer: "e", full: "Elle cherche son chemin dans le parc." },
+  { sentence: "Vous arriv...", rest: " juste à temps.", answer: "ez", full: "Vous arrivez juste à temps." },
+  { sentence: "Je rest...", rest: " calme malgré le bruit.", answer: "e", full: "Je reste calme malgré le bruit." },
+  { sentence: "Tu oubli...", rest: " toujours ton parapluie.", answer: "es", full: "Tu oublies toujours ton parapluie." },
+  { sentence: "Les éléphants march...", rest: " lentement.", answer: "ent", full: "Les éléphants marchent lentement." },
+  { sentence: "Moi et mon frère nettoy...", rest: " la cour.", answer: "ons", full: "Moi et mon frère nettoyons la cour." },
+  { sentence: "Vous trouv...", rest: " la réponse facilement.", answer: "ez", full: "Vous trouvez la réponse facilement." },
+  { sentence: "Le chien gard...", rest: " la maison fidèlement.", answer: "e", full: "Le chien garde la maison fidèlement." },
+  { sentence: "Les vaches brout...", rest: " l'herbe tendre.", answer: "ent", full: "Les vaches broutent l'herbe tendre." },
+  { sentence: "Tu donn...", rest: " à manger aux poules.", answer: "es", full: "Tu donnes à manger aux poules." },
+  { sentence: "Nous chant...", rest: " une chanson joyeuse.", answer: "ons", full: "Nous chantons une chanson joyeuse." },
+  { sentence: "La pluie mouill...", rest: " les passants.", answer: "e", full: "La pluie mouille les passants." },
+  { sentence: "Vous admir...", rest: " le coucher de soleil.", answer: "ez", full: "Vous admirez le coucher de soleil." },
+  { sentence: "Je montr...", rest: " ma collection de timbres.", answer: "e", full: "Je montre ma collection de timbres." },
+  { sentence: "Tu détest...", rest: " les épinards cuits.", answer: "es", full: "Tu détestes les épinards cuits." },
+  { sentence: "Les pommes tomb...", rest: " de l'arbre.", answer: "ent", full: "Les pommes tombent de l'arbre." },
+  { sentence: "Nous grimp...", rest: " tout en haut du mur.", answer: "ons", full: "Nous grimpons tout en haut du mur." },
+  { sentence: "Elle réveil...", rest: " son petit frère.", answer: "e", full: "Elle réveille son petit frère." },
+  { sentence: "Vous bross...", rest: " vos dents le soir.", answer: "ez", full: "Vous brossez vos dents le soir." },
+  { sentence: "Je vérifi...", rest: " l'orthographe du mot.", answer: "e", full: "Je vérifie l'orthographe du mot." },
+  { sentence: "Tu dessin...", rest: " un monstre rigolo.", answer: "es", full: "Tu dessines un monstre rigolo." },
+  { sentence: "Les loups hurl...", rest: " sous la lune.", answer: "ent", full: "Les loups hurlent sous la lune." },
+  { sentence: "Mon oncle et moi cuisin...", rest: " un gâteau.", answer: "ons", full: "Mon oncle et moi cuisinons un gâteau." },
+  { sentence: "Le facteur pass...", rest: " tous les matins.", answer: "e", full: "Le facteur passe tous les matins." },
+  { sentence: "Vous aid...", rest: " beaucoup vos parents.", answer: "ez", full: "Vous aidez beaucoup vos parents." },
+  { sentence: "Je pens...", rest: " très fort à toi.", answer: "e", full: "Je pense très fort à toi." },
+  { sentence: "Tu lach...", rest: " le fil du cerf-volant.", answer: "es", full: "Tu laches le fil du cerf-volant." },
+  { sentence: "Les abeilles butin...", rest: " les fleurs.", answer: "ent", full: "Les abeilles butinent les fleurs." },
+  { sentence: "Nous pli...", rest: " les vêtements propres.", answer: "ons", full: "Nous plions les vêtements propres." },
+  { sentence: "La maîtresse racont...", rest: " un conte.", answer: "e", full: "La maîtresse raconte un conte." },
+  { sentence: "Vous apport...", rest: " le dessert ce soir.", answer: "ez", full: "Vous apportez le dessert ce soir." },
+  { sentence: "Je lav...", rest: " mes mains avant le repas.", answer: "e", full: "Je lave mes mains avant le repas." },
+  { sentence: "Tu rigol...", rest: " de mes bêtises.", answer: "es", full: "Tu rigoles de mes bêtises." },
+  { sentence: "Les voitures klaxonn...", rest: " bruyamment.", answer: "ent", full: "Les voitures klaxonnent bruyamment." },
+  { sentence: "Nous espér...", rest: " gagner le match.", answer: "ons", full: "Nous espérons gagner le match." },
+  { sentence: "Il éternu...", rest: " à cause du rhume.", answer: "e", full: "Il éternue à cause du rhume." },
+  { sentence: "Vous travers...", rest: " dans les clous.", answer: "ez", full: "Vous traversez dans les clous." },
+  { sentence: "Je prépar...", rest: " mon sac pour demain.", answer: "e", full: "Je prépare mon sac pour demain." },
+  { sentence: "Tu téléphon...", rest: " à ta mamie.", answer: "es", full: "Tu téléphones à ta mamie." },
+  { sentence: "Les vagues frapp...", rest: " le rocher.", answer: "ent", full: "Les vagues frappent le rocher." },
+  { sentence: "Mon papa et moi jou...", rest: " au foot.", answer: "ons", full: "Mon papa et moi jouons au foot." },
+  { sentence: "Vous mont...", rest: " l'escalier quatre par quatre.", answer: "ez", full: "Vous montez l'escalier quatre par quatre." },
+  { sentence: "L'ordinateur chauff...", rest: " un petit peu.", answer: "e", full: "L'ordinateur chauffe un petit peu." },
+  { sentence: "Les hirondelles quitt...", rest: " le pays.", answer: "ent", full: "Les hirondelles quittent le pays." },
+  { sentence: "Tu frapp...", rest: " à la porte.", answer: "es", full: "Tu frappes à la porte." },
+  { sentence: "Nous goût...", rest: " de nouveaux fruits.", answer: "ons", full: "Nous goûtons de nouveaux fruits." },
+  { sentence: "Vous gard...", rest: " le secret pour vous.", answer: "ez", full: "Vous gardez le secret pour vous." },
+  { sentence: "Je découp...", rest: " dans un vieux magazine.", answer: "e", full: "Je découpe dans un vieux magazine." },
+  { sentence: "Tu rest...", rest: " là sans bouger.", answer: "es", full: "Tu restes là sans bouger." },
+  { sentence: "Les lampes éclair...", rest: " toute la rue.", answer: "ent", full: "Les lampes éclairent toute la rue." },
+  { sentence: "Nous ramass...", rest: " des coquillages.", answer: "ons", full: "Nous ramassons des coquillages." },
+  { sentence: "Elle révis...", rest: " sa leçon de piano.", answer: "e", full: "Elle révise sa leçon de piano." },
+  { sentence: "Vous saut...", rest: " très haut.", answer: "ez", full: "Vous sautez très haut." },
+  { sentence: "Je pens...", rest: " faire un tour au parc.", answer: "e", full: "Je pense faire un tour au parc." },
+  { sentence: "Tu manges...", rest: " une grosse pomme rouge.", answer: "es", full: "Tu manges une grosse pomme rouge." },
+  { sentence: "Les bébés pleur...", rest: " quand ils ont faim.", answer: "ent", full: "Les bébés pleurent quand ils ont faim." },
+  { sentence: "Mon cousin et moi regard...", rest: " la télé.", answer: "ons", full: "Mon cousin et moi regardons la télé." },
+  { sentence: "Vous donn...", rest: " votre avis.", answer: "ez", full: "Vous donnez votre avis." },
+  { sentence: "L'avion décoll...", rest: " vers le soleil.", answer: "e", full: "L'avion décolle vers le soleil." },
+  { sentence: "Les joueurs entr...", rest: " sur le terrain.", answer: "ent", full: "Les joueurs entrent sur le terrain." },
+  { sentence: "Tu arriv...", rest: " le premier !", answer: "es", full: "Tu arrives le premier !" },
+  { sentence: "Nous nag...", rest: " dans la grande piscine.", answer: "ons", full: "Nous nageons dans la grande piscine." },
+  { sentence: "Vous rang...", rest: " votre cartable.", answer: "ez", full: "Vous rangez votre cartable." },
+  { sentence: "Je port...", rest: " des bottes en caoutchouc.", answer: "e", full: "Je porte des bottes en caoutchouc." },
+  { sentence: "Elle téléphon...", rest: " à sa meilleure amie.", answer: "e", full: "Elle téléphone à sa meilleure amie." },
+  { sentence: "Tu cherch...", rest: " ton chat dans le grenier.", answer: "es", full: "Tu cherches ton chat dans le grenier." },
+  { sentence: "Les fleurs fân...", rest: " sans eau.", answer: "ent", full: "Les fleurs fânent sans eau." },
+  { sentence: "Mes parents aim...", rest: " voyager l'été.", answer: "ent", full: "Mes parents aiment voyager l'été." },
+  { sentence: "Nous pli...", rest: " les draps doucement.", answer: "ons", full: "Nous plions les draps doucement." },
+  { sentence: "Vous détest...", rest: " les jours de pluie.", answer: "ez", full: "Vous détestez les jours de pluie." }
+];
+
 // Liste des pronoms affichés sur les boutons (SANS JE/TU)
 const pronounsList = ["Il", "Elle", "Nous", "Vous", "Ils", "Elles"];
+const endingsList = ["e", "es", "ons", "ez", "ent"];
 
 const CLASSES = ["CP A", "CP B", "CE1 A", "CE1 B", "CE2 A", "CE2 B", "CM1 A", "CM1 B", "CM2 A", "CM2 B"];
 
@@ -228,23 +348,33 @@ function FrenchGames() {
   const [savingScore, setSavingScore] = useState(false);
   const [scoreSaved, setScoreSaved] = useState(false);
 
+  const getCollectionName = useCallback(() => {
+    if (selectedGame === 'conjugaison_present_1') return "leaderboard_conjugaison_p1";
+    return "leaderboard_pronoms";
+  }, [selectedGame]);
+
   // --- LOGIQUE FIREBASE ---
   const loadTopScores = useCallback(async () => {
     try {
-      const q = query(collection(db, "leaderboard_pronoms"), orderBy("score", "desc"), limit(15));
+      const colName = getCollectionName();
+      const q = query(collection(db, colName), orderBy("score", "desc"), limit(15));
       const snapshot = await getDocs(q);
       const scores = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setTopScores(scores);
     } catch (error) {
       console.error("Erreur leaderboard:", error);
     }
-  }, []);
+  }, [getCollectionName]);
 
   // --- LOGIQUE DU JEU ---
   const getNextQuestion = useCallback(() => {
+    if (selectedGame === 'conjugaison_present_1') {
+      const randomIndex = Math.floor(Math.random() * conjugaisonPresent1Bank.length);
+      return conjugaisonPresent1Bank[randomIndex];
+    }
     const randomIndex = Math.floor(Math.random() * questionsBank.length);
     return questionsBank[randomIndex];
-  }, []);
+  }, [selectedGame]);
 
   const startGame = () => {
     setCurrent(getNextQuestion());
@@ -271,17 +401,18 @@ function FrenchGames() {
     if (!playerName) return;
     setSavingScore(true);
     try {
+      const colName = getCollectionName();
       const cleanPseudo = playerName.slice(0, 12);
-      const q = query(collection(db, "leaderboard_pronoms"), where("pseudo", "==", cleanPseudo));
+      const q = query(collection(db, colName), where("pseudo", "==", cleanPseudo));
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
         const existingDoc = querySnapshot.docs[0];
         if (score > existingDoc.data().score) {
-          await updateDoc(doc(db, "leaderboard_pronoms", existingDoc.id), { score: score, date: new Date().toISOString(), classLabel: playerClass });
+          await updateDoc(doc(db, colName, existingDoc.id), { score: score, date: new Date().toISOString(), classLabel: playerClass });
         }
       } else {
-        await addDoc(collection(db, "leaderboard_pronoms"), {
+        await addDoc(collection(db, colName), {
           pseudo: cleanPseudo,
           score: score,
           date: new Date().toISOString(),
@@ -308,7 +439,11 @@ function FrenchGames() {
 
   useEffect(() => {
     if (running && !gameOver && isAudioMode) {
-      speak(`${current.gn} ... ${current.rest}`);
+      if (selectedGame === 'conjugaison_present_1') {
+        speak(current.full);
+      } else {
+        speak(`${current.gn} ... ${current.rest}`);
+      }
     }
   }, [current, running, gameOver, isAudioMode, speak]);
 
@@ -375,10 +510,13 @@ function FrenchGames() {
               <p className="text-brand-text/60 text-sm font-medium">Remplace le groupe nominal</p>
             </div>
 
-            <div className="group relative flex flex-col items-center p-6 rounded-[24px] border border-white/30 bg-white/20 opacity-60 cursor-not-allowed">
-              <span className="text-4xl mb-4 grayscale opacity-70">⏳</span>
-              <h3 className="text-lg font-bold text-brand-text/70">Conjugaison</h3>
-              <p className="text-brand-text/50 text-sm font-medium">Bientôt...</p>
+            <div
+              className="group relative flex flex-col items-center p-6 rounded-[24px] border border-white/50 bg-white/40 hover:bg-white/80 transition-all cursor-pointer backdrop-blur-xl shadow-soft"
+              onClick={() => setSelectedGame('conjugaison_present_1')}
+            >
+              <span className="text-4xl mb-4 group-hover:scale-110 transition-transform duration-300 drop-shadow-sm">⏳</span>
+              <h3 className="text-lg font-bold group-hover:text-brand-coral text-brand-text transition-colors">Conjugaison</h3>
+              <p className="text-brand-text/60 text-sm font-medium">Présent - Verbes du 1er groupe</p>
             </div>
           </div>
         </div>
@@ -391,7 +529,9 @@ function FrenchGames() {
             >
               ⬅ Menu Français
             </button>
-            <h1 className="text-2xl font-bold flex items-center gap-2 text-brand-text">Grammaire : Pronoms 👤</h1>
+            <h1 className="text-2xl font-bold flex items-center gap-2 text-brand-text">
+              {selectedGame === 'conjugaison_present_1' ? 'Conjugaison : Présent (1er gr)' : 'Grammaire : Pronoms'} 📚
+            </h1>
           </div>
 
           <div className="p-6 rounded-[24px] mb-8 border border-white/40 bg-white/60 shadow-inner">
@@ -541,20 +681,38 @@ function FrenchGames() {
             <div className="flex flex-col items-center max-w-sm mx-auto w-full">
               <div className="text-center mb-8 text-2xl flex flex-col items-center gap-2 text-brand-text">
                 <div className="flex items-center gap-3">
-                  <span className="text-brand-coral font-black drop-shadow-sm">{current.gn}</span> {current.rest}
-                  <button onClick={() => speak(`${current.gn} ... ${current.rest}`)} className="p-3 rounded-full hover:bg-white/60 bg-white/40 transition-all text-brand-teal shadow-sm border border-white/50" title="Répéter"><Volume2 size={24} /></button>
+                  {selectedGame === 'conjugaison_present_1' ? (
+                    <div className="flex items-center gap-2">
+                       <span className="font-medium">{current.sentence}</span>
+                       <span className="text-brand-coral font-black border-b-4 border-brand-coral/20 min-w-[2.5rem]">?</span>
+                       <span className="font-medium">{current.rest}</span>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="text-brand-coral font-black drop-shadow-sm">{current.gn}</span> {current.rest}
+                    </>
+                  )}
+                  <button 
+                    onClick={() => speak(selectedGame === 'conjugaison_present_1' ? current.full : `${current.gn} ... ${current.rest}`)} 
+                    className="p-3 rounded-full hover:bg-white/60 bg-white/40 transition-all text-brand-teal shadow-sm border border-white/50" 
+                    title="Répéter"
+                  >
+                    <Volume2 size={24} />
+                  </button>
                 </div>
               </div>
-              <p className="text-brand-text/60 text-sm font-bold tracking-wide uppercase text-center mb-6">Par quel pronom peux-tu remplacer ce qui est en couleur ?</p>
+              <p className="text-brand-text/60 text-sm font-bold tracking-wide uppercase text-center mb-6">
+                {selectedGame === 'conjugaison_present_1' ? 'Trouve la bonne terminaison' : 'Par quel pronom peux-tu remplacer ce qui est en couleur ?'}
+              </p>
 
-              <div className="grid grid-cols-2 gap-4 w-full">
-                {pronounsList.map((pronom) => (
+              <div className={`grid ${selectedGame === 'conjugaison_present_1' ? 'grid-cols-3' : 'grid-cols-2'} gap-4 w-full`}>
+                {(selectedGame === 'conjugaison_present_1' ? endingsList : pronounsList).map((choice) => (
                   <button
-                    key={pronom}
-                    className="py-6 px-2 border border-white/60 rounded-[20px] font-black text-xl transition-all active:scale-95 bg-white/60 hover:bg-brand-coral text-brand-text hover:text-white shadow-soft"
-                    onClick={() => handleAnswer(pronom)}
+                    key={choice}
+                    className={`py-6 px-2 border border-white/60 rounded-[20px] font-black text-xl transition-all active:scale-95 bg-white/60 hover:bg-brand-coral text-brand-text hover:text-white shadow-soft ${selectedGame === 'conjugaison_present_1' ? 'text-lg' : 'text-xl'}`}
+                    onClick={() => handleAnswer(choice)}
                   >
-                    {pronom}
+                    {choice}
                   </button>
                 ))}
               </div>

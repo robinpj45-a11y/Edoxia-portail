@@ -60,7 +60,7 @@ import AdminCalendar from './Edoxia-Calendar/pages/AdminCalendar';
 import QOLHubPage from './Edoxia-QOL/pages/QOLHubPage';
 import EdoxiaCDWrapper from './Edoxia-CD/pages/EdoxiaCDWrapper';
 import CDHubPage from './Edoxia-CD/pages/CDHubPage';
-import RoomAllocatorPage from './Edoxia-CD/pages/RoomAllocatorPage';
+import CDRoomPlanner from './Edoxia-CD/pages/CDRoomPlanner';
 import SuccessHubPage from './Edoxia-Success/pages/SuccessHubPage';
 import SuccessSpacePage from './Edoxia-Success/pages/SuccessSpacePage';
 import SuccessEvaluationDetail from './Edoxia-Success/pages/SuccessEvaluationDetail';
@@ -622,7 +622,7 @@ const AppLayout = () => {
           } />
           <Route path="/cd" element={<EdoxiaCDWrapper />}>
             <Route index element={<CDHubPage />} />
-            <Route path="rooms" element={<RoomAllocatorPage />} />
+            <Route path="rooms" element={<CDRoomPlanner />} />
           </Route>
           <Route path="/success">
             <Route index element={<SuccessHubPage />} />

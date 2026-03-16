@@ -5,12 +5,8 @@ import { db } from '../../firebase';
 import { ArrowLeft, Save, Trash2, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const COLOR_MAP = {
-  'blue': { label: 'Non évalué', bg: 'bg-blue-500/10', text: 'text-blue-600', border: 'border-blue-200', value: null },
-  'white': { label: 'Non acquis', bg: 'bg-white', text: 'text-brand-text/30', border: 'border-brand-text/10', value: 0 },
-  'orange': { label: 'En cours', bg: 'bg-brand-coral/20', text: 'text-brand-coral', border: 'border-brand-coral/30', value: 50 },
-  'green': { label: 'Acquis', bg: 'bg-brand-teal/20', text: 'text-brand-teal', border: 'border-brand-teal/30', value: 100 }
-};
+// SUCCESS THRESHOLD: 75%
+const SUCCESS_THRESHOLD = 0.75;
 
 export default function SuccessEvaluationDetail() {
   const { spaceId, evalId } = useParams();
@@ -43,16 +39,12 @@ export default function SuccessEvaluationDetail() {
     };
   }, [evalId, spaceId, navigate]);
 
-  const handleCellClick = (studentId, exerciceIdx) => {
-    const current = results[studentId]?.[exerciceIdx] || 'blue';
-    const states = ['blue', 'white', 'orange', 'green'];
-    const next = states[(states.indexOf(current) + 1) % states.length];
-    
+  const setScore = (studentId, exerciseIdx, score) => {
     setResults(prev => ({
       ...prev,
       [studentId]: {
         ...(prev[studentId] || {}),
-        [exerciceIdx]: next
+        [exerciseIdx]: score
       }
     }));
   };
@@ -94,20 +86,25 @@ export default function SuccessEvaluationDetail() {
     const exercises = evaluation.exercises || [];
     
     const studentScores = students.map(st => {
-      let total = 0;
+      let successes = 0;
       let evaluatedCount = 0;
-      exercises.forEach((_, idx) => {
-        const color = results[st.id]?.[idx] || 'blue';
-        const val = COLOR_MAP[color].value;
-        if (val !== null) {
-          total += val;
+      
+      exercises.forEach((ex, idx) => {
+        const val = results[st.id]?.[idx];
+        if (val !== undefined && val !== null && val !== '') {
+          const scoreNum = parseFloat(val) || 0;
+          const maxPoints = ex.points || 10;
+          if ((scoreNum / maxPoints) >= SUCCESS_THRESHOLD) {
+            successes++;
+          }
           evaluatedCount++;
         }
       });
+      
       return {
         id: st.id,
         name: st.name,
-        score: evaluatedCount > 0 ? total / evaluatedCount : null
+        score: evaluatedCount > 0 ? (successes / evaluatedCount) * 100 : null
       };
     });
 
@@ -159,14 +156,16 @@ export default function SuccessEvaluationDetail() {
       <main className="flex-1 overflow-y-auto p-6 md:p-10 relative z-10 w-full max-w-7xl mx-auto flex flex-col gap-10">
         
         {/* Légende */}
-        <div className="flex flex-wrap gap-4 justify-center">
-           {Object.entries(COLOR_MAP).map(([key, cfg]) => (
-             <div key={key} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-brand-text/40">
-               <div className={`w-4 h-4 rounded-md ${cfg.bg} border ${cfg.border}`}></div>
-               {cfg.label}
-             </div>
-           ))}
-        </div>
+         <div className="flex flex-wrap gap-8 justify-center">
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-brand-text/40">
+              <div className="w-4 h-4 rounded-md bg-brand-teal/10 border border-brand-teal/20"></div>
+              Réussi (≥ 75%)
+            </div>
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-brand-text/40">
+              <div className="w-4 h-4 rounded-md bg-white border border-brand-text/10"></div>
+              Échec/Non évalué
+            </div>
+         </div>
 
         {/* Matrice de Résultats */}
         <div className="flex-shrink-0 bg-white/60 border border-white backdrop-blur-md rounded-[40px] shadow-soft overflow-visible">
@@ -192,21 +191,40 @@ export default function SuccessEvaluationDetail() {
                   return (
                     <tr key={st.id} className="border-b border-brand-text/5 hover:bg-white/30 transition-colors">
                       <td className="p-6 font-black text-brand-text">{st.name}</td>
-                      {evaluation.exercises.map((_, idx) => {
-                        const color = results[st.id]?.[idx] || 'blue';
-                        const cfg = COLOR_MAP[color];
+                      {evaluation.exercises.map((ex, idx) => {
+                        const val = results[st.id]?.[idx];
+                        const isNotEvaluated = val === undefined || val === null || val === '';
+                        const isSuccess = !isNotEvaluated && (parseFloat(val) / (ex.points || 10)) >= SUCCESS_THRESHOLD;
+                        
                         return (
-                          <td key={idx} className="p-2 text-center border-l border-brand-text/5">
-                            <motion.div 
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => handleCellClick(st.id, idx)}
-                              className={`w-full aspect-square md:aspect-auto md:h-12 rounded-2xl cursor-pointer ${cfg.bg} border-2 ${cfg.border} flex items-center justify-center transition-all shadow-sm group`}
-                            >
-                               <span className={`text-[10px] font-black uppercase tracking-tighter opacity-0 group-hover:opacity-100 transition-opacity ${cfg.text}`}>
-                                 {cfg.label}
-                               </span>
-                            </motion.div>
+                          <td key={idx} className="p-2 text-center border-l border-brand-text/5 relative group/cell">
+                            <div className={`relative flex items-center h-12 rounded-2xl border-2 transition-all ${
+                              isSuccess ? 'bg-brand-teal/5 border-brand-teal/20' : 
+                              isNotEvaluated ? 'bg-brand-bg/50 border-brand-text/5' : 'bg-white border-brand-text/10'
+                            }`}>
+                              <input 
+                                type="number"
+                                step="0.5"
+                                min="0"
+                                max={ex.points}
+                                placeholder="-"
+                                value={val ?? ''}
+                                onChange={(e) => setScore(st.id, idx, e.target.value)}
+                                className={`w-full bg-transparent text-center font-black text-sm focus:outline-none ${
+                                  isSuccess ? 'text-brand-teal' : 'text-brand-text'
+                                }`}
+                              />
+                              <button 
+                                onClick={() => setScore(st.id, idx, ex.points || 10)}
+                                className="absolute right-2 opacity-0 group-hover/cell:opacity-100 p-1.5 bg-brand-teal text-white rounded-lg transition-all scale-75 hover:scale-100"
+                                title="Mettre le maximum"
+                              >
+                                <Plus size={14} />
+                              </button>
+                              <div className="absolute -top-1 right-2 text-[8px] font-black text-brand-text/10 group-hover/cell:text-brand-text/20">
+                                /{ex.points || 10}
+                              </div>
+                            </div>
                           </td>
                         );
                       })}

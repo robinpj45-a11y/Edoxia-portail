@@ -29,12 +29,7 @@ export default function SuccessSpacePage() {
   const [importing, setImporting] = useState(false);
 
   // Form states for new evaluation
-  const [newEval, setNewEval] = useState({
-    name: '',
-    subject: 'Français',
-    selectedClassId: '',
-    exercises: [{ name: 'Exercice 1', competence: '' }]
-  });
+  const [newEval, setNewEval] = useState({ name: '', subject: 'Français', selectedClassId: '', exercises: [{ name: '', competence: '', points: 10 }] });
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -95,7 +90,7 @@ export default function SuccessSpacePage() {
   const addExercise = () => {
     setNewEval(prev => ({
       ...prev,
-      exercises: [...prev.exercises, { name: `Exercice ${prev.exercises.length + 1}`, competence: '' }]
+      exercises: [...prev.exercises, { name: '', competence: '', points: 10 }]
     }));
   };
 
@@ -354,36 +349,59 @@ export default function SuccessSpacePage() {
                   <div className="space-y-4">
                     {newEval.exercises.map((ex, idx) => (
                       <div key={idx} className="space-y-2 group">
-                         <div className="flex gap-3 items-center">
-                            <div className="w-8 h-8 rounded-full bg-brand-text/5 flex items-center justify-center text-[10px] font-black text-brand-text/30 border border-brand-text/5">{idx + 1}</div>
-                            <input 
-                             type="text" required
-                             className="flex-1 bg-brand-bg border border-white/50 rounded-xl p-3 text-sm text-brand-text focus:ring-2 ring-brand-coral/10 outline-none font-bold"
-                             value={ex.name}
-                             onChange={e => {
-                               const updated = [...newEval.exercises];
-                               updated[idx].name = e.target.value;
-                               setNewEval({...newEval, exercises: updated});
-                             }}
-                             placeholder="Nom de l'exercice"
-                           />
+                         <div className="flex gap-3 items-start">
+                            <div className="w-8 h-8 shrink-0 rounded-full bg-brand-text/5 flex items-center justify-center text-[10px] font-black text-brand-text/30 border border-brand-text/5 mt-2">{idx + 1}</div>
+                            <div className="flex-1 space-y-4">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="md:col-span-2 space-y-2">
+                                  <label className="text-[10px] font-black uppercase tracking-widest text-brand-text/40 ml-2">Nom de l'exercice</label>
+                                  <input
+                                    type="text"
+                                    placeholder="Ex: Dictée, Calcul mental..."
+                                    value={ex.name}
+                                    onChange={(e) => {
+                                      const newExs = [...newEval.exercises];
+                                      newExs[idx].name = e.target.value;
+                                      setNewEval({ ...newEval, exercises: newExs });
+                                    }}
+                                    className="w-full bg-brand-bg border border-brand-text/5 px-5 py-3 rounded-2xl font-bold text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal/20"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-[10px] font-black uppercase tracking-widest text-brand-text/40 ml-2">Barème (Points)</label>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    value={ex.points}
+                                    onChange={(e) => {
+                                      const newExs = [...newEval.exercises];
+                                      newExs[idx].points = parseInt(e.target.value) || 0;
+                                      setNewEval({ ...newEval, exercises: newExs });
+                                    }}
+                                    className="w-full bg-brand-bg border border-brand-text/5 px-5 py-3 rounded-2xl font-bold text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal/20 text-center"
+                                  />
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-brand-text/40 ml-2">Compétence associée</label>
+                                <textarea
+                                  placeholder="Décrivez la compétence évaluée..."
+                                  value={ex.competence}
+                                  onChange={(e) => {
+                                    const newExs = [...newEval.exercises];
+                                    newExs[idx].competence = e.target.value;
+                                    setNewEval({ ...newEval, exercises: newExs });
+                                  }}
+                                  className="w-full bg-brand-bg border border-brand-text/5 px-5 py-3 rounded-2xl font-bold text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal/20 h-20 resize-none"
+                                />
+                              </div>
+                            </div>
                            {newEval.exercises.length > 1 && (
-                             <button type="button" onClick={() => removeExercise(idx)} className="p-2 text-brand-coral/20 hover:text-brand-coral transition-colors">
+                             <button type="button" onClick={() => removeExercise(idx)} className="p-2 text-brand-coral/20 hover:text-brand-coral transition-colors mt-2">
                                <Plus size={20} className="rotate-45" />
                              </button>
                            )}
                          </div>
-                         <input 
-                           type="text" required
-                           className="w-full bg-brand-bg/50 border border-white/30 rounded-xl p-3 text-[11px] text-brand-text/60 focus:ring-2 ring-brand-teal/10 outline-none font-medium italic ml-11 w-[calc(100%-44px)]"
-                           value={ex.competence}
-                           onChange={e => {
-                             const updated = [...newEval.exercises];
-                             updated[idx].competence = e.target.value;
-                             setNewEval({...newEval, exercises: updated});
-                           }}
-                           placeholder="Compétence (ex: Savoir conjuguer...)"
-                         />
                       </div>
                     ))}
                   </div>

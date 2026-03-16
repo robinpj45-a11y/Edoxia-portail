@@ -72,6 +72,13 @@ export default function SuccessReportsPage() {
     };
   }, [spaceId]);
 
+  // Auto-select first class when loaded
+  useEffect(() => {
+    if (selectedClassId === 'all' && classes.length > 0) {
+      setSelectedClassId(classes[0].id);
+    }
+  }, [classes, selectedClassId]);
+
   const stats = useMemo(() => {
     // Filter evaluations by class if a class is selected
     const filteredEvals = selectedClassId === 'all'
@@ -80,14 +87,20 @@ export default function SuccessReportsPage() {
 
     if (filteredEvals.length === 0) return null;
 
-    if (selectedEvalId === 'global' || selectedEvalId === 'subject_Français' || selectedEvalId === 'subject_Mathématiques') {
-      const isSubjectView = selectedEvalId.startsWith('subject_');
+    const isSubjectView = selectedEvalId.startsWith('subject_');
+    const isGlobalView = selectedEvalId === 'global';
+
+    if (isGlobalView || isSubjectView) {
       const targetSubject = isSubjectView ? selectedEvalId.replace('subject_', '') : null;
       
       const evalsToAggregate = targetSubject 
         ? filteredEvals.filter(ev => ev.subject === targetSubject)
         : filteredEvals;
 
+      if (evalsToAggregate.length === 0 && !isGlobalView) {
+        // Return an empty state for subject view to avoid UI mismatch
+        return { type: 'subject', subject: targetSubject, globalAvg: 0, students: [], struggling: [], exercises: [] };
+      }
       if (evalsToAggregate.length === 0) return null;
 
       const studentStats = {};
@@ -103,16 +116,28 @@ export default function SuccessReportsPage() {
             let evalScore = 0;
             let evaluatedCount = 0;
             ev.exercises.forEach((ex, idx) => {
-              const val = COLOR_MAP[res[idx] || 'blue'];
-              if (val !== null) {
-                evalScore += val;
+              const resVal = res[idx];
+              if (resVal !== undefined && resVal !== null && resVal !== '') {
+                // Handle points (number) or legacy colors (string)
+                let isSuccess;
+                if (COLOR_MAP.hasOwnProperty(resVal)) {
+                  const mapped = COLOR_MAP[resVal];
+                  if (mapped === null) return; // 'blue' / Non évalué
+                  isSuccess = mapped >= 75 ? 1 : 0;
+                } else {
+                  const pointsAwarded = parseFloat(resVal) || 0;
+                  const maxPoints = ex.points || 10;
+                  isSuccess = (pointsAwarded / maxPoints) >= 0.75 ? 1 : 0;
+                }
+
+                evalScore += (isSuccess * 100);
                 evaluatedCount++;
-                
+
                 // Aggregate competences for subject view
                 if (isSubjectView && ex.competence) {
                   const compName = ex.competence.trim();
                   if (!competenceAgg[compName]) competenceAgg[compName] = { totalScore: 0, count: 0 };
-                  competenceAgg[compName].totalScore += val;
+                  competenceAgg[compName].totalScore += (isSuccess * 100);
                   competenceAgg[compName].count += 1;
                 }
               }
@@ -159,23 +184,43 @@ export default function SuccessReportsPage() {
       const studentScores = ev.students.map(st => {
         let total = 0;
         let evaluatedCount = 0;
-        ev.exercises.forEach((_, idx) => {
-          const val = COLOR_MAP[results[st.id]?.[idx] || 'blue'];
-          if (val !== null) {
-            total += val;
+        ev.exercises.forEach((ex, idx) => {
+          const resVal = results[st.id]?.[idx];
+          if (resVal !== undefined && resVal !== null && resVal !== '') {
+            let isSuccess;
+            if (COLOR_MAP.hasOwnProperty(resVal)) {
+              const mapped = COLOR_MAP[resVal];
+              if (mapped === null) return;
+              isSuccess = mapped >= 75 ? 1 : 0;
+            } else {
+              const pointsAwarded = parseFloat(resVal) || 0;
+              const maxPoints = ex.points || 10;
+              isSuccess = (pointsAwarded / maxPoints) >= 0.75 ? 1 : 0;
+            }
+            total += isSuccess * 100;
             evaluatedCount++;
           }
         });
-        return { name: st.name, avg: evaluatedCount > 0 ? total / evaluatedCount : null };
+        return { id: st.id, name: st.name, avg: evaluatedCount > 0 ? total / evaluatedCount : null };
       }).sort((a, b) => (b.avg ?? 0) - (a.avg ?? 0));
 
       const exerciseScores = ev.exercises.map((ex, idx) => {
         let total = 0;
         let evaluatedCount = 0;
         ev.students.forEach(st => {
-          const val = COLOR_MAP[results[st.id]?.[idx] || 'blue'];
-          if (val !== null) {
-            total += val;
+          const resVal = results[st.id]?.[idx];
+          if (resVal !== undefined && resVal !== null && resVal !== '') {
+            let isSuccess;
+            if (COLOR_MAP.hasOwnProperty(resVal)) {
+              const mapped = COLOR_MAP[resVal];
+              if (mapped === null) return;
+              isSuccess = mapped >= 75 ? 1 : 0;
+            } else {
+              const pointsAwarded = parseFloat(resVal) || 0;
+              const maxPoints = ex.points || 10;
+              isSuccess = (pointsAwarded / maxPoints) >= 0.75 ? 1 : 0;
+            }
+            total += isSuccess * 100;
             evaluatedCount++;
           }
         });
@@ -200,8 +245,21 @@ export default function SuccessReportsPage() {
 
   const studentDetails = useMemo(() => {
     if (!selectedStudentId || !stats) return null;
+
+    let studentInfo = stats.students.find(s => s.id === selectedStudentId);
     
-    const studentInfo = stats.students.find(s => s.id === selectedStudentId);
+    // Fallback if student not in current stats list (e.g. not evaluated)
+    if (!studentInfo) {
+      // Find them in any evaluation student list
+      for (const ev of evaluations) {
+        const found = ev.students?.find(s => s.id === selectedStudentId);
+        if (found) {
+          studentInfo = { id: found.id, name: found.name, avg: null };
+          break;
+        }
+      }
+    }
+
     if (!studentInfo) return null;
 
     const comps = [];
@@ -212,14 +270,24 @@ export default function SuccessReportsPage() {
 
       const results = allResults[ev.id]?.[selectedStudentId] || {};
       ev.exercises.forEach((ex, idx) => {
-        const scoreKey = results[idx] || 'blue';
+        const resVal = results[idx];
+        let score = null;
+        if (resVal !== undefined && resVal !== null && resVal !== '') {
+          if (COLOR_MAP.hasOwnProperty(resVal)) {
+            const mapped = COLOR_MAP[resVal];
+            score = (mapped === null) ? null : (mapped >= 75 ? 100 : 0);
+          } else {
+            score = (parseFloat(resVal) / (ex.points || 10)) >= 0.75 ? 100 : 0;
+          }
+        }
+
         comps.push({
           id: `${ev.id}_${idx}`,
           evalName: ev.name,
           subject: ev.subject,
           exerciseName: ex.name,
           competence: ex.competence,
-          score: COLOR_MAP[scoreKey],
+          score: score,
           date: ev.createdAt
         });
       });
@@ -290,9 +358,11 @@ export default function SuccessReportsPage() {
               <TrendingUp className="text-brand-teal" />
             </div>
             <div className="text-4xl font-black tracking-tighter mb-1">
-              {stats?.globalAvg.toFixed(1)}%
+              {stats?.globalAvg?.toFixed(1) || '0.0'}%
             </div>
-            <div className="text-[10px] font-black uppercase tracking-widest text-brand-text/40">Moyenne {stats?.type === 'global' ? 'Générale' : 'de l\'éval'}</div>
+            <div className="text-[10px] font-black uppercase tracking-widest text-brand-text/40">
+              Pourcentage de réussite {stats?.type === 'global' ? '' : stats?.type === 'subject' ? 'de la matière' : 'de l\'évaluation'}
+            </div>
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="p-8 bg-white/60 backdrop-blur-md border border-white rounded-[40px] shadow-soft text-center group">
@@ -316,7 +386,7 @@ export default function SuccessReportsPage() {
           </motion.div>
         </div>
 
-        { (stats?.type === 'evaluation' || stats?.type === 'subject') && (
+        {(stats?.type === 'evaluation' || stats?.type === 'subject') && (
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
             <h2 className="text-xl font-black flex items-center gap-3 uppercase tracking-tight">
               <BarChart3 className="text-brand-teal" /> Résultats par compétence
@@ -354,8 +424,8 @@ export default function SuccessReportsPage() {
             </h2>
             <div className="space-y-4">
               {stats?.students.map((s, idx) => (
-                <div 
-                  key={s.id} 
+                <div
+                  key={s.id}
                   onClick={() => setSelectedStudentId(s.id)}
                   className="p-5 bg-white/40 border border-white/60 rounded-3xl flex items-center justify-between group hover:bg-white hover:shadow-soft transition-all cursor-pointer"
                 >
@@ -409,15 +479,15 @@ export default function SuccessReportsPage() {
       <AnimatePresence>
         {selectedStudentId && studentDetails && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedStudentId(null)}
               className="absolute inset-0 bg-brand-bg/60 backdrop-blur-md"
             ></motion.div>
-            
-            <motion.div 
+
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -426,9 +496,11 @@ export default function SuccessReportsPage() {
               <header className="p-8 border-b border-brand-text/5 flex justify-between items-center shrink-0">
                 <div>
                   <h2 className="text-2xl font-black uppercase tracking-tight">{studentDetails.name}</h2>
-                  <p className="text-xs font-bold text-brand-text/40 uppercase tracking-widest">Détail des compétences • Moyenne {studentDetails.avg.toFixed(1)}%</p>
+                  <p className="text-xs font-bold text-brand-text/40 uppercase tracking-widest">
+                    Détail des compétences • Moyenne {studentDetails.avg !== null ? `${studentDetails.avg.toFixed(1)}%` : '-'}
+                  </p>
                 </div>
-                <button 
+                <button
                   onClick={() => setSelectedStudentId(null)}
                   className="p-3 hover:bg-brand-bg rounded-2xl transition-colors text-brand-text/20 hover:text-brand-coral"
                 >
@@ -443,20 +515,18 @@ export default function SuccessReportsPage() {
                       <div key={c.id} className="p-5 bg-brand-bg/30 rounded-3xl border border-white flex flex-col md:flex-row md:items-center justify-between gap-4 group hover:bg-white hover:shadow-soft transition-all">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                             <span className="text-[10px] font-black text-brand-teal bg-brand-teal/10 px-2 py-0.5 rounded-md uppercase tracking-widest">{c.subject}</span>
-                             <span className="text-[10px] font-bold text-brand-text/30 uppercase tracking-widest">via {c.evalName}</span>
+                            <span className="text-[10px] font-black text-brand-teal bg-brand-teal/10 px-2 py-0.5 rounded-md uppercase tracking-widest">{c.subject}</span>
+                            <span className="text-[10px] font-bold text-brand-text/30 uppercase tracking-widest">via {c.evalName}</span>
                           </div>
                           <h3 className="font-black text-sm uppercase leading-tight">{c.competence || c.exerciseName}</h3>
                           {c.competence && <p className="text-[10px] font-bold text-brand-text/30 italic">{c.exerciseName}</p>}
                         </div>
                         <div className="flex items-center gap-3 shrink-0">
-                          <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 ${
-                            c.score === 100 ? 'bg-brand-teal/20 border-brand-teal/30 text-brand-teal' :
-                            c.score === 50 ? 'bg-brand-coral/20 border-brand-coral/30 text-brand-coral' :
-                            c.score === 0 ? 'bg-white border-brand-text/10 text-brand-text/30' :
-                            'bg-blue-500/10 border-blue-200 text-blue-600'
-                          }`}>
-                            {c.score === 100 ? 'Acquis' : c.score === 50 ? 'En cours' : c.score === 0 ? 'Non acquis' : 'Non évalué'}
+                          <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 ${c.score >= 75 ? 'bg-brand-teal/20 border-brand-teal/30 text-brand-teal' :
+                            c.score === null ? 'bg-blue-500/10 border-blue-200 text-blue-600' :
+                              'bg-white border-brand-text/10 text-brand-text/30'
+                            }`}>
+                            {c.score >= 75 ? 'Acquis' : c.score === null ? 'Non évalué' : 'Non acquis'}
                           </div>
                           <div className="text-sm font-black w-8 text-right text-brand-text/40">
                             {c.score !== null ? `${c.score}%` : '-'}
