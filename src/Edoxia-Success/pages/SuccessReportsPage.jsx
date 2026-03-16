@@ -165,7 +165,7 @@ export default function SuccessReportsPage() {
       const students = Object.values(studentStats).map(s => ({
         ...s,
         avg: s.count > 0 ? s.totalScore / s.count : null
-      })).sort((a, b) => (b.avg ?? 0) - (a.avg ?? 0));
+      })).sort((a, b) => a.name.localeCompare(b.name));
 
       const evaluatedStudents = students.filter(s => s.avg !== null);
       const globalAvg = evaluatedStudents.length > 0
@@ -213,7 +213,7 @@ export default function SuccessReportsPage() {
           }
         });
         return { id: st.id, name: st.name, avg: evaluatedCount > 0 ? total / evaluatedCount : null };
-      }).sort((a, b) => (b.avg ?? 0) - (a.avg ?? 0));
+      }).sort((a, b) => a.name.localeCompare(b.name));
 
       const exerciseScores = ev.exercises.map((ex, idx) => {
         let total = 0;
