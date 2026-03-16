@@ -4,7 +4,8 @@ import { ArrowLeft, GraduationCap, LayoutGrid } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const SPACES = [
-  { id: 'celia', name: 'Célia', color: 'bg-brand-teal', icon: <GraduationCap className="w-12 h-12 text-white" /> }
+  { id: 'celia', name: 'Célia', color: 'bg-brand-teal', icon: <GraduationCap className="w-12 h-12 text-white" /> },
+  { id: 'demo', name: 'Démo', color: 'bg-brand-coral', icon: <LayoutGrid className="w-12 h-12 text-white" /> }
 ];
 
 export default function SuccessHubPage() {

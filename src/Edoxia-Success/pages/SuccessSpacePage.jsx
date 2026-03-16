@@ -52,12 +52,39 @@ export default function SuccessSpacePage() {
         const cls = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         if (cls.length === 0) {
           try {
+            const defaultName = spaceId === 'demo' ? 'Classe de Démo' : (spaceId === 'celia' ? 'CM2 - Célia NGUEMA' : `Classe de ${spaceId}`);
             const defaultCls = await addDoc(collection(db, 'success_classes'), {
-              name: "CM2 - Célia NGUEMA",
+              name: defaultName,
               spaceId,
               createdAt: serverTimestamp()
             });
-            const createdCls = { id: defaultCls.id, name: "CM2 - Célia NGUEMA" };
+
+            // If demo space, pre-populate 10 fictional students
+            if (spaceId === 'demo') {
+              const demoStudents = [
+                { firstName: 'Jean', lastName: 'Dupont' },
+                { firstName: 'Marie', lastName: 'Curie' },
+                { firstName: 'Lucas', lastName: 'Martin' },
+                { firstName: 'Emma', lastName: 'Bernard' },
+                { firstName: 'Thomas', lastName: 'Petit' },
+                { firstName: 'Chloé', lastName: 'Robert' },
+                { firstName: 'Hugo', lastName: 'Richard' },
+                { firstName: 'Léa', lastName: 'Durand' },
+                { firstName: 'Nathan', lastName: 'Lefebvre' },
+                { firstName: 'Zoé', lastName: 'Moreau' }
+              ];
+              for (const s of demoStudents) {
+                await addDoc(collection(db, 'success_students'), {
+                  ...s,
+                  classId: defaultCls.id,
+                  spaceId,
+                  birthDate: '',
+                  createdAt: serverTimestamp()
+                });
+              }
+            }
+
+            const createdCls = { id: defaultCls.id, name: defaultName };
             setClasses([createdCls]);
             setNewEval(prev => ({ ...prev, selectedClassId: defaultCls.id }));
             setImportTargetClassId(defaultCls.id);
@@ -80,11 +107,12 @@ export default function SuccessSpacePage() {
 
   const handlePasswordSubmit = (e) => {
     e.preventDefault();
-    if (password.toLowerCase() === spaceId.toLowerCase()) {
+    const normalize = (str) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (normalize(password) === normalize(spaceId)) {
       sessionStorage.setItem(`success_auth_${spaceId}`, 'true');
       setIsAuthenticated(true);
     } else {
-      alert("Mot de passe incorrect. Astuce: le mot de passe est le nom de l'espace (ex: Celia).");
+      alert(`Mot de passe incorrect. Astuce: le mot de passe est le nom de l'espace (ex: ${spaceId}).`);
     }
   };
 
