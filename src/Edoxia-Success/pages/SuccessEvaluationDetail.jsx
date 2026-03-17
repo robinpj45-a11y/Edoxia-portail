@@ -287,12 +287,12 @@ export default function SuccessEvaluationDetail() {
                        className={`relative bg-gradient-to-br ${colorClass} border-2 ${ringClass} rounded-[40px] shadow-soft p-8 overflow-hidden group hover:shadow-xl transition-all`}
                     >
                        <div className="flex flex-col items-center text-center gap-8 relative z-10">
-                          <div className="space-y-3">
+                          <div className="space-y-1">
                              <div className="flex items-center justify-center gap-3">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-brand-text/20">Exercice {idx + 1}</span>
+                                <span className="text-3xl font-black uppercase tracking-tighter leading-none italic">Exercice {idx + 1}</span>
                                 {pct >= 75 && !isNotEvaluated && <CheckCircle2 size={16} className="text-brand-teal" />}
                              </div>
-                             <h2 className="text-3xl font-black uppercase tracking-tighter leading-none italic">{ex.name}</h2>
+                             <h2 className="text-[10px] font-black uppercase tracking-widest text-brand-text/40">{ex.name}</h2>
                              <p className="text-sm font-bold text-brand-text/40 leading-relaxed max-w-xl mx-auto">{ex.competence}</p>
                           </div>
 
