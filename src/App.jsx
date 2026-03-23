@@ -38,6 +38,9 @@ import logoPng from './assets/logo.png';
 import HomeGames from './Edoxia-Games/pages/HomeGames.jsx';
 import MathsGames from './Edoxia-Games/pages/MathsGames';
 import FrenchGames from './Edoxia-Games/pages/FrenchGames';
+import TypingHub from './Edoxia-Games/pages/Typing/TypingHub';
+import TypingHost from './Edoxia-Games/pages/Typing/TypingHost';
+import TypingPlayer from './Edoxia-Games/pages/Typing/TypingPlayer';
 import QuizHome from './Edoxia-Quiz/pages/Home';
 import AdminDashboard from './Edoxia-Quiz/pages/AdminDashboard';
 import HostGame from './Edoxia-Quiz/pages/HostGame';
@@ -589,6 +592,9 @@ const AppLayout = () => {
           <Route path="/games" element={<HomeGames />} />
           <Route path="/games/maths" element={<MathsGames />} />
           <Route path="/games/french" element={<FrenchGames />} />
+          <Route path="/games/typing" element={<TypingHub />} />
+          <Route path="/games/typing/host/:lobbyId" element={<TypingHost />} />
+          <Route path="/games/typing/play/:lobbyId" element={<TypingPlayer />} />
           <Route path="/quiz" element={<QuizHome />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/admin" element={<AdminDashboard isGlobalAdmin={isGlobalAdmin} />} />

@@ -5,18 +5,21 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
 const CHOICES = {
-    "Siloé": ["Anaïs", "Adèle M."], "Jeanne": ["Siahn", "Ambre"], "Ambre": ["Siahn", "Jeanne"],
-    "Ewen": ["Armand", "/"], "Noam": ["Rafaël", "Sacha"], "Izia": ["Amandine", "Siahn"],
-    "Anaïs": ["Adèle M.", "Siloé"], "Armand": ["Aaron", "Ewen"], "Olivia": ["Khya", "Lola"],
-    "Dïone": ["Fred-Hugo", "Pierre"], "Lola": ["Maïline", "Niki"], "Zana": ["Chloé", "Amandine"],
+    "Siloé": ["Anaïs", "Adèle M."], "Jeanne": ["Siahn", "Ambre", "Lola", "Olivia"], "Ambre": ["Siahn", "Jeanne"],
+    "Ewen": ["Armand", "/", "Noam"], "Noam": ["Rafaël", "Sacha"], "Izia": ["Amandine", "Siahn"],
+    "Anaïs": ["Adèle M.", "Siloé"], "Armand": ["Aaron", "Ewen"], 
+    "Olivia": ["Khya", "Lola"], 
+    "Lola": ["Olivia", "Khya", "Maïline", "Niki"], 
+    "Khya": ["Olivia", "Lola", "Ninon", "Ariel-Solène"], 
+    "Dïone": ["Fred-Hugo", "Pierre"], "Zana": ["Chloé", "Amandine"],
     "Ibrahim": ["Nicolas", "Paul"], "Soline": ["Ninon", "Rose"], "Amandine": ["Izia", "Siahn"],
     "Sacha": ["Malone", "Arthur"], "Rose": ["Eurydice", "Soline"], "Chloé": ["Zana", "Izia"],
     "Nicolas": ["Ibrahim", "Paul"], "Arthur": ["Sacha", "Ibrahim"], "Adèle M.": ["Siloé", "Anaïs"],
-    "Eurydice": ["Rose", "Soline"], "Khya": ["Ninon", "Ariel-Solène"], "Paul": ["Arthur", "Nicolas"],
+    "Eurydice": ["Rose", "Soline"], "Paul": ["Arthur", "Nicolas"],
     "Aaron": ["Armand", "?"], "Siahn": ["Izia", "Amandine"], "Maïline": ["Adèle D.", "Soline"],
-    "Loéline": ["Sidonie", "Zana"], "Sidonie": ["Loéline", "Zana"], "Mila": ["Maïline", "Lola"],
+    "Loéline": ["Sidonie", "Zana"], "Sidonie": ["Loéline", "Zana"], "Mila": ["Maïline", "Lola", "Laura"],
     "Ariel-Solène": ["Ninon", "Soline"], "Ninon": ["Soline", "Ariel-Solène"], "Rafaël": ["Sacha", "Malone"],
-    "Pierre": ["Dïone", "Fred-Hugo"], "Louis": ["Rafaël", "/"], "Fred-Hugo": ["George", "Dïone"],
+    "Pierre": ["Dïone", "Fred-Hugo", "Auguste", "George"], "Louis": ["Rafaël", "/"], "Fred-Hugo": ["George", "Dïone"],
     "Malone": ["Sacha", "Arthur"], "Maxence": ["Auguste", "/"], "George": ["Théo", "Fred-Hugo"],
     "Charles-Eliott": ["Rafaël", "Fred-Hugo"], "Théo": ["Louis", "George"], "Alix": ["Adèle B.", "/"],
     "Adèle B.": ["Alix", "/"], "Eliakim": ["Matéo", "Fred-Hugo"], "Auguste": ["Maxence", "/"],
@@ -26,19 +29,19 @@ const CHOICES = {
 
 const DATA = {
     girls: [
-        { id: 1, capacity: 6, students: ["Ariel-Solène", "Ninon", "Soline", "Rose", "Eurydice", "Khya"] },
-        { id: 2, capacity: 6, students: ["Izia", "Amandine", "Siahn", "Ambre", "Jeanne", "Zana"] },
-        { id: 3, capacity: 4, students: ["Marwa", "Niki", "Adèle D.", "Maïline"] },
-        { id: 4, capacity: 4, students: ["Anaïs", "Siloé", "Adèle M.", "Chloé"] },
-        { id: 5, capacity: 4, students: ["Alix", "Adèle B.", "Mila", "Laura"] },
-        { id: 6, capacity: 4, students: ["Sidonie", "Loéline", "Lola", "Olivia"] }
+        { id: 1, capacity: 6, students: ["Siloé", "Anaïs", "Adèle M.", "Marwa", "Niki", "Adèle D."], affinity: "Parfait : Cohabitation de deux trios inséparables." },
+        { id: 2, capacity: 6, students: ["Siahn", "Izia", "Amandine", "Ninon", "Ariel-Solène", "Ambre"], affinity: "Parfait : Ambre retrouve Siahn avec deux autres duos/trios." },
+        { id: 8, capacity: 4, students: ["Jeanne", "Lola", "Olivia", "Khya"], affinity: "Parfait : Le trio Khya/Olivia/Lola est réuni avec Jeanne !" },
+        { id: 9, capacity: 4, students: ["Soline", "Rose", "Eurydice", "Maïline"], affinity: "Parfait : La chaîne d'amitié Rose/Eurydice/Soline/Maïline." },
+        { id: 10, capacity: 4, students: ["Zana", "Loéline", "Sidonie", "Chloé"], affinity: "Parfait : Zana est bien avec Chloé." },
+        { id: 11, capacity: 4, students: ["Alix", "Adèle B.", "Laura", "Mila"], affinity: "Parfait : Mila est enfin avec Laura." }
     ],
     boys: [
-        { id: 1, capacity: 6, students: ["Fred-Hugo", "Dïone", "Pierre", "George", "Théo", "Charles-Eliott"] },
-        { id: 2, capacity: 4, students: ["Rafaël", "Sacha", "Malone", "Noam"] },
-        { id: 3, capacity: 4, students: ["Ibrahim", "Nicolas", "Paul", "Arthur"] },
-        { id: 4, capacity: 4, students: ["Auguste", "Maxence", "Matéo", "Eliakim"] },
-        { id: 5, capacity: 4, students: ["Ewen", "Armand", "Aaron", "Louis"] }
+        { id: 3, capacity: 6, students: ["Rafaël", "Sacha", "Malone", "Noam", "Louis", "Ewen"], affinity: "Parfait : Le grand groupe + Louis sauvé + Ewen (qui a Noam)." },
+        { id: 4, capacity: 4, students: ["George", "Théo", "Fred-Hugo", "Charles-Eliott"], affinity: "Parfait : Le noyau dur CM2A est intact." },
+        { id: 5, capacity: 4, students: ["Dïone", "Pierre", "Auguste", "Maxence"], affinity: "Parfait : Pierre a Auguste, Dïone a Pierre." },
+        { id: 6, capacity: 4, students: ["Ibrahim", "Nicolas", "Paul", "Arthur"], affinity: "Parfait : Arthur retrouve Ibrahim." },
+        { id: 7, capacity: 4, students: ["Aaron", "Armand", "Matéo", "Eliakim"], affinity: "Parfait : Les deux duos réunis." }
     ]
 };
 

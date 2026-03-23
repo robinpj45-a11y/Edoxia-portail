@@ -82,7 +82,7 @@ export default function CDGroupMakerPage() {
 
   return (
     <div className="flex flex-col h-screen bg-brand-bg text-brand-text overflow-hidden">
-      <header className="shrink-0 sticky top-0 z-[60] border-b border-white/50 p-4 px-8 flex justify-between items-center shadow-soft bg-white/40 backdrop-blur-md">
+      <header className="shrink-0 sticky top-0 z-[60] border-b border-white/50 p-4 px-4 md:px-8 flex justify-between items-center shadow-soft bg-white/40 backdrop-blur-md">
         <button onClick={() => navigate('/cd')} className="flex items-center gap-2 transition-colors font-bold text-brand-text/50 hover:text-brand-text">
           <ArrowLeft size={20} /> Retour CD
         </button>
@@ -91,14 +91,14 @@ export default function CDGroupMakerPage() {
         </h1>
       </header>
 
-      <main className="flex-1 flex overflow-hidden">
+      <main className="flex-1 flex flex-col-reverse md:flex-row overflow-hidden">
         {/* Liste des élèves (Disponible) */}
-        <div className="w-80 md:w-96 border-r border-white/50 bg-white/20 flex flex-col">
-          <div className="p-6 border-b border-white/50">
+        <div className="w-full md:w-96 h-[45%] md:h-full border-t md:border-t-0 md:border-r border-white/50 bg-white/20 flex flex-col">
+          <div className="hidden md:block p-6 border-b border-white/50">
             <h2 className="text-sm font-black uppercase tracking-widest text-brand-text/40 mb-2">Élèves disponibles ({availableStudents.length})</h2>
             <div className="text-[10px] font-bold text-brand-text/30 italic">Cliquez sur un élève pour l'ajouter au groupe actif</div>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+          <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-1 md:space-y-2">
             {availableStudents.map(s => (
               <motion.div
                 key={s.id}
@@ -106,7 +106,7 @@ export default function CDGroupMakerPage() {
                 animate={{ opacity: 1, x: 0 }}
                 whileHover={{ x: 5 }}
                 onClick={() => handleAddStudentToGroup(s.id)}
-                className="bg-white/60 border border-white p-3 rounded-2xl shadow-sm cursor-pointer hover:bg-white transition-all flex justify-between items-center group"
+                className="bg-white/60 border border-white p-2 md:p-3 rounded-2xl shadow-sm cursor-pointer hover:bg-white transition-all flex justify-between items-center group"
               >
                 <div>
                   <div className="font-bold text-sm">{s.firstName} {s.lastName}</div>
@@ -120,8 +120,8 @@ export default function CDGroupMakerPage() {
 
         {/* Espace de Groupes */}
         <div className="flex-1 flex flex-col bg-brand-bg/50 overflow-hidden">
-          <div className="p-6 border-b border-white/50 flex justify-between items-center bg-white/30 backdrop-blur-sm">
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none max-w-[70%]">
+          <div className="p-4 md:p-6 border-b border-white/50 flex justify-between items-center bg-white/30 backdrop-blur-sm">
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none max-w-full md:max-w-[70%]">
               {groups.map(g => (
                 <button
                   key={g.id}
@@ -156,7 +156,7 @@ export default function CDGroupMakerPage() {
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto p-8 relative">
+          <div className="flex-1 overflow-y-auto p-4 md:p-8 relative">
             <AnimatePresence mode="wait">
               {activeGroupId ? (
                 <motion.div

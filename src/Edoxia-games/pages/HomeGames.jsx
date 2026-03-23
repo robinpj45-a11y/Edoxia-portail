@@ -25,7 +25,7 @@ export default function HomeGames() {
           <p className="text-brand-text/70 text-lg">Choisis ta matière :</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-4xl">
           <Link to="/games/maths" className="group relative flex flex-col items-center p-8 rounded-[24px] border border-white/50 bg-white/40 hover:bg-white/80 transition-all cursor-pointer backdrop-blur-xl shadow-soft">
             <span className="text-6xl mb-4 group-hover:scale-110 transition-transform duration-300 drop-shadow-md">📐</span>
             <h3 className="text-2xl font-bold group-hover:text-brand-teal text-brand-text transition-colors">Mathématiques</h3>
@@ -36,6 +36,12 @@ export default function HomeGames() {
             <span className="text-6xl mb-4 group-hover:scale-110 transition-transform duration-300 drop-shadow-md">📚</span>
             <h3 className="text-2xl font-bold group-hover:text-brand-coral text-brand-text transition-colors">Français</h3>
             <p className="text-brand-text/60 font-medium mt-2">Grammaire, conjugaison...</p>
+          </Link>
+
+          <Link to="/games/typing" className="group relative flex flex-col items-center p-8 rounded-[24px] border border-white/50 bg-white/40 hover:bg-white/80 transition-all cursor-pointer backdrop-blur-xl shadow-soft">
+            <span className="text-6xl mb-4 group-hover:scale-110 transition-transform duration-300 drop-shadow-md">⌨️</span>
+            <h3 className="text-2xl font-bold group-hover:text-brand-teal text-brand-text transition-colors">Dactylographie</h3>
+            <p className="text-brand-text/60 font-medium mt-2">Vitesse au clavier, précision...</p>
           </Link>
         </div>
       </div>
