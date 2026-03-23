@@ -7,10 +7,10 @@ import { jsPDF } from 'jspdf';
 const CHOICES = {
     "Siloé": ["Anaïs", "Adèle M."], "Jeanne": ["Siahn", "Ambre", "Lola", "Olivia"], "Ambre": ["Siahn", "Jeanne"],
     "Ewen": ["Armand", "/", "Noam"], "Noam": ["Rafaël", "Sacha"], "Izia": ["Amandine", "Siahn"],
-    "Anaïs": ["Adèle M.", "Siloé"], "Armand": ["Aaron", "Ewen"], 
-    "Olivia": ["Khya", "Lola"], 
-    "Lola": ["Olivia", "Khya", "Maïline", "Niki"], 
-    "Khya": ["Olivia", "Lola", "Ninon", "Ariel-Solène"], 
+    "Anaïs": ["Adèle M.", "Siloé"], "Armand": ["Aaron", "Ewen"],
+    "Olivia": ["Khya", "Lola"],
+    "Lola": ["Olivia", "Khya", "Maïline", "Niki"],
+    "Khya": ["Olivia", "Lola", "Ninon", "Ariel-Solène"],
     "Dïone": ["Fred-Hugo", "Pierre"], "Zana": ["Chloé", "Amandine"],
     "Ibrahim": ["Nicolas", "Paul"], "Soline": ["Ninon", "Rose"], "Amandine": ["Izia", "Siahn"],
     "Sacha": ["Malone", "Arthur"], "Rose": ["Eurydice", "Soline"], "Chloé": ["Zana", "Izia"],
@@ -169,7 +169,7 @@ const CDRoomPlanner = () => {
                     </button>
                     <div className="px-4 py-2 bg-brand-teal/10 border border-brand-teal/20 rounded-2xl ml-2">
                         <span className="text-xs font-black text-brand-teal flex items-center gap-2 uppercase tracking-tight">
-                            <Calculator size={14} /> 46/50 ÉLÈVES
+                            <Calculator size={14} /> 50/50 ÉLÈVES
                         </span>
                     </div>
                 </div>
