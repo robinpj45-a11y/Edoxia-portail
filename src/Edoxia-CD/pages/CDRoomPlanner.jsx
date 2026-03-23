@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bed, Users, User, Search, Home, CheckCircle2, AlertCircle, Heart, Info, ChevronRight, Calculator, MessageSquare, Handshake, Map, ArrowRight, ArrowLeft, X, FileDown, Printer } from 'lucide-react';
+import { Bed, Users, User, Search, Home, CheckCircle2, AlertCircle, Heart, Info, ChevronRight, Calculator, MessageSquare, Handshake, Map, ArrowRight, ArrowLeft, X, FileDown, Printer, Edit2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
@@ -57,6 +57,9 @@ const CDRoomPlanner = () => {
     const [selectedStudent, setSelectedStudent] = useState(null);
     const [isExporting, setIsExporting] = useState(false);
     const [exportType, setExportType] = useState(null); // 'full' or 'blank'
+    const [customRoomNames, setCustomRoomNames] = useState({});
+    const [editingRoomId, setEditingRoomId] = useState(null);
+    const [editNameValue, setEditNameValue] = useState("");
     const gridRef = useRef(null);
 
     const allRooms = useMemo(() => {
@@ -215,7 +218,36 @@ const CDRoomPlanner = () => {
                                         <div className={`p-2 rounded-xl ${room.type === 'Fille' ? 'bg-brand-coral/20' : 'bg-brand-teal/20'}`}>
                                             <Bed size={16} />
                                         </div>
-                                        <span className="font-black text-sm uppercase tracking-[0.1em] italic">Chambre {room.id}</span>
+                                        {editingRoomId === `${room.type}-${room.id}` ? (
+                                            <input 
+                                                autoFocus
+                                                type="text"
+                                                value={editNameValue}
+                                                onChange={(e) => setEditNameValue(e.target.value)}
+                                                onBlur={() => {
+                                                    setCustomRoomNames(prev => ({...prev, [`${room.type}-${room.id}`]: editNameValue || `Chambre ${room.id}`}));
+                                                    setEditingRoomId(null);
+                                                }}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        setCustomRoomNames(prev => ({...prev, [`${room.type}-${room.id}`]: editNameValue || `Chambre ${room.id}`}));
+                                                        setEditingRoomId(null);
+                                                    }
+                                                }}
+                                                className="font-black text-sm uppercase tracking-[0.1em] italic bg-white/50 border border-brand-teal/30 rounded px-2 py-0.5 outline-none focus:ring-2 focus:ring-brand-teal w-32 text-brand-text truncate"
+                                            />
+                                        ) : (
+                                            <div 
+                                                className="font-black text-sm uppercase tracking-[0.1em] italic cursor-pointer hover:opacity-70 transition-opacity flex items-center gap-2 group/edit"
+                                                onClick={() => {
+                                                    setEditingRoomId(`${room.type}-${room.id}`);
+                                                    setEditNameValue(customRoomNames[`${room.type}-${room.id}`] || `Chambre ${room.id}`);
+                                                }}
+                                            >
+                                                <span className="truncate max-w-[120px] lg:max-w-[150px]">{customRoomNames[`${room.type}-${room.id}`] || `Chambre ${room.id}`}</span>
+                                                <Edit2 size={12} className="opacity-0 group-hover/edit:opacity-100 transition-opacity shrink-0" />
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-1.5 text-[10px] font-black bg-white/40 px-2.5 py-1 rounded-full border border-white/50">
                                         <Users size={12} /> {room.students.length}/{room.capacity}
@@ -277,7 +309,9 @@ const CDRoomPlanner = () => {
                             </div>
                             <div>
                                 <h3 className="font-black text-xl leading-tight tracking-tight italic uppercase">{selectedStudent.name}</h3>
-                                <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">Chambre {selectedStudent.room} • {selectedStudent.roomType}</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">
+                                    {customRoomNames[`${selectedStudent.roomType}-${selectedStudent.room}`] || `Chambre ${selectedStudent.room}`} • {selectedStudent.roomType}
+                                </p>
                             </div>
                         </div>
                         <button
@@ -307,8 +341,9 @@ const CDRoomPlanner = () => {
                                                 {inSameRoom && <CheckCircle2 size={16} className="text-brand-teal" />}
                                             </div>
                                             {roomInfo ? (
-                                                <div className={`text-[10px] px-3 py-1.5 rounded-xl font-black tracking-widest flex items-center gap-1.5 ${inSameRoom ? 'bg-brand-teal text-white shadow-sm' : 'bg-brand-text/5 text-brand-text/40 border border-brand-text/5'}`}>
-                                                    <Map size={10} /> CH{roomInfo.id}
+                                                <div className={`text-[10px] px-3 py-1.5 rounded-xl font-black tracking-widest flex items-center gap-1.5 ${inSameRoom ? 'bg-brand-teal text-white shadow-sm' : 'bg-brand-text/5 text-brand-text/40 border border-brand-text/5'}`} title={customRoomNames[`${roomInfo.type}-${roomInfo.id}`] || `Chambre ${roomInfo.id}`}>
+                                                    <Map size={10} /> 
+                                                    <span className="truncate max-w-[60px]">{customRoomNames[`${roomInfo.type}-${roomInfo.id}`] || `CH${roomInfo.id}`}</span>
                                                 </div>
                                             ) : (
                                                 <span className="text-[10px] text-brand-text/20 font-bold italic uppercase tracking-widest">N/A</span>
