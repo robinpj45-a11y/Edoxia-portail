@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { ArrowLeft, Search, Lock, FileText, Flag } from 'lucide-react';
+import { ArrowLeft, Lock, FileText, Flag, Users, Calendar, User } from 'lucide-react';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { ThemeContext } from '../../ThemeContext';
+import { CLASSES } from '../utils/constants';
 
 export default function Teams() {
     const navigate = useNavigate();
@@ -12,15 +13,17 @@ export default function Teams() {
     const teams = context?.teams || [];
     const loading = context?.loading;
 
-    const [searchTerm, setSearchTerm] = useState("");
-    const [openTeams, setOpenTeams] = useState({});
+    const [selectedTeamId, setSelectedTeamId] = useState(null);
+    const [tab, setTab] = useState('dashboard');
 
-    const toggleTeam = (teamId) => { setOpenTeams(prev => ({ ...prev, [teamId]: !prev[teamId] })); };
-    const getFilteredStudents = (teamId) => {
-        return students.filter(s => {
-            const displayName = s.name && s.name.trim() ? s.name : `${s.lastName || ''} ${s.firstName || ''}`;
-            return s.team === teamId && displayName.toLowerCase().includes(searchTerm.toLowerCase());
-        }).sort((a, b) => {
+    const getTeamStudents = (teamId) => {
+        return students.filter(s => s.team === teamId).sort((a, b) => {
+            const classIndexA = CLASSES.indexOf(a.importedClassLabel || a.classLabel);
+            const classIndexB = CLASSES.indexOf(b.importedClassLabel || b.classLabel);
+            const idxA = classIndexA === -1 ? 999 : classIndexA;
+            const idxB = classIndexB === -1 ? 999 : classIndexB;
+            if (idxA !== idxB) return idxA - idxB;
+
             const nameA = a.name && a.name.trim() ? a.name : `${a.lastName || ''} ${a.firstName || ''}`;
             const nameB = b.name && b.name.trim() ? b.name : `${b.lastName || ''} ${b.firstName || ''}`;
             return nameA.localeCompare(nameB);
@@ -29,32 +32,134 @@ export default function Teams() {
 
     if (loading) return <div className="min-h-screen flex items-center justify-center text-brand-text/50 font-bold tracking-wide">Chargement...</div>;
 
+    if (selectedTeamId) {
+        const team = teams.find(t => t.numId === selectedTeamId);
+        const teamStudents = getTeamStudents(team.numId);
+        const paiCount = teamStudents.filter(s => s.pai && !s.isAdult).length;
+        const disruptiveCount = teamStudents.filter(s => s.disruptive && !s.isAdult).length;
+        const boysCount = teamStudents.filter(s => s.gender && s.gender.toString().trim().toUpperCase() === 'M').length;
+        const girlsCount = teamStudents.filter(s => s.gender && s.gender.toString().trim().toUpperCase() === 'F').length;
+        const teamColor = team.color || '#0077b6';
+
+        return (
+            <div className="min-h-screen font-sans pb-28 transition-colors duration-300 bg-brand-bg text-brand-text">
+                <div className="p-4 sticky top-0 z-20 shadow-soft bg-white/80 backdrop-blur-md border-b border-white/50" style={{ borderBottom: `4px solid ${teamColor}` }}>
+                    <div className="flex items-center gap-3">
+                        <div className="w-5 h-5 rounded-full shadow-inner" style={{ backgroundColor: teamColor }}></div>
+                        <h1 className="text-2xl font-black tracking-tight drop-shadow-sm truncate">{team.name}</h1>
+                    </div>
+                </div>
+
+                {tab === 'dashboard' && (
+                    <div className="p-4 mt-2 flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        <div className="flex items-center gap-4">
+                            <div className="flex-1 h-px bg-white border-b border-brand-text/5"></div>
+                            <h2 className="text-[10px] font-black text-brand-text/40 text-center uppercase tracking-widest drop-shadow-sm">Vue d'ensemble</h2>
+                            <div className="flex-1 h-px bg-white border-b border-brand-text/5"></div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto w-full">
+                            <div className="bg-white py-4 px-2 rounded-[20px] shadow-soft border border-white/50 flex flex-col items-center justify-center">
+                                <span className="text-3xl font-black text-brand-teal drop-shadow-sm leading-none">{teamStudents.filter(s => !s.isAdult).length}</span>
+                                <span className="text-[9px] uppercase font-bold text-brand-text/40 mt-2 tracking-widest">Élèves</span>
+                            </div>
+                            <div className="bg-white py-4 px-2 rounded-[20px] shadow-soft border border-white/50 flex flex-col items-center justify-center gap-2">
+                                <div className="flex items-center gap-2 text-blue-500 font-black text-lg leading-none"><User size={18} strokeWidth={3} /> {boysCount}</div>
+                                <div className="w-10 h-[2px] bg-black/5 rounded-full"></div>
+                                <div className="flex items-center gap-2 text-pink-500 font-black text-lg leading-none"><User size={18} strokeWidth={3} /> {girlsCount}</div>
+                            </div>
+                            <div className="bg-white py-4 px-2 rounded-[20px] shadow-soft border border-white/50 flex flex-col items-center justify-center">
+                                <span className="text-3xl font-black text-brand-peach drop-shadow-sm leading-none">{paiCount}</span>
+                                <span className="text-[9px] uppercase font-bold text-brand-text/40 mt-2 tracking-widest text-center leading-tight">PAI déclarés</span>
+                            </div>
+                            <div className="bg-white py-4 px-2 rounded-[20px] shadow-soft border border-white/50 flex flex-col items-center justify-center">
+                                <span className="text-3xl font-black text-brand-coral drop-shadow-sm leading-none">{disruptiveCount}</span>
+                                <span className="text-[9px] uppercase font-bold text-brand-text/40 mt-2 tracking-widest text-center leading-tight">À surveiller</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {tab === 'team' && (
+                    <div className="p-4 space-y-2 mt-2 mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        {teamStudents.map(student => {
+                            const displayName = student.name && student.name.trim() ? student.name : `${student.lastName || ''} ${student.firstName || ''}`;
+                            return (
+                                <div key={student.id} className={`p-3 rounded-[16px] border flex justify-between items-center shadow-sm bg-white border-white/80 ${student.isAdult ? 'border-2 border-brand-coral/50 bg-brand-coral/5' : ''}`}>
+                                    <div className="flex-1 min-w-0 pr-2">
+                                        <div className="font-bold text-base text-brand-text truncate leading-tight">{displayName}</div>
+                                        <div className="text-[10px] uppercase text-brand-text/50 font-black mt-0.5 tracking-wide truncate">{student.isAdult ? <span className="text-brand-coral">{student.role} • {student.importedClassLabel || student.classLabel}</span> : (student.importedClassLabel || student.classLabel)}</div>
+                                    </div>
+                                    <div className="flex gap-1.5 shrink-0">
+                                        {!student.isAdult && student.pai && <div className="bg-brand-teal/20 text-brand-teal p-1.5 rounded-full shadow-inner"><FileText size={16} /></div>}
+                                        {!student.isAdult && student.disruptive && <div className="bg-brand-coral/20 text-brand-coral p-1.5 rounded-full shadow-inner"><Flag size={16} /></div>}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {tab === 'pai' && (
+                    <div className="p-4 space-y-3 mt-2 mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        {students.filter(s => s.team === selectedTeamId && s.pai && !s.isAdult).length === 0 && (
+                            <div className="text-center text-brand-text/40 font-bold py-12 uppercase tracking-widest text-xs border-2 border-dashed border-white/50 rounded-[20px] bg-black/5">Aucun élève avec PAI</div>
+                        )}
+                        {students.filter(s => s.team === selectedTeamId && s.pai && !s.isAdult).map(s => {
+                            const displayName = s.name && s.name.trim() ? s.name : `${s.lastName || ''} ${s.firstName || ''}`;
+                            return (
+                                <div key={s.id} className="bg-white rounded-[20px] p-4 shadow-sm border border-white/80 flex flex-col gap-3">
+                                    <div className="font-bold text-brand-text flex justify-between items-center text-base">
+                                        <span className="truncate pr-2 border-l-4 border-brand-teal pl-2 leading-tight">{displayName}</span>
+                                        <span className="shrink-0 text-[9px] font-black uppercase tracking-widest bg-black/5 px-2 py-1 rounded-full text-brand-text/50 shadow-inner border border-black/5">{s.importedClassLabel || s.classLabel}</span>
+                                    </div>
+                                    <div className="bg-brand-bg border border-white/50 text-brand-text/70 p-3 rounded-[12px] text-xs whitespace-pre-wrap shadow-inner font-medium leading-relaxed italic">
+                                        {s.paiComment && s.paiComment.trim() !== "" ? s.paiComment : <span className="opacity-40">Aucun protocole médical ou commentaire spécifique n'a été renseigné pour ce PAI.</span>}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                <nav className="fixed bottom-0 left-0 right-0 h-24 bg-white/90 backdrop-blur-xl shadow-[0_-10px_40px_rgba(0,0,0,0.08)] border-t border-black/5 flex justify-around items-center px-4 pb-safe z-50 rounded-t-[40px]">
+                    <button onClick={() => { if(tab === 'dashboard') setSelectedTeamId(null); else setTab('dashboard'); }} className={`flex flex-col items-center justify-center w-16 h-16 rounded-2xl gap-1.5 transition-all ${tab === 'dashboard' ? 'bg-brand-bg shadow-inner scale-105' : 'hover:bg-black/5'}`}>
+                        <ArrowLeft size={24} strokeWidth={2.5} className={tab === 'dashboard' ? 'text-brand-text/40' : 'text-brand-text/60'} />
+                        <span className={`text-[8px] uppercase font-black tracking-widest ${tab === 'dashboard' ? 'text-brand-text/30' : 'text-brand-text/50'}`}>Retour</span>
+                    </button>
+                    
+                    <button onClick={() => setTab('team')} className={`flex flex-col items-center justify-center w-16 h-16 rounded-2xl gap-1.5 transition-all ${tab === 'team' ? 'bg-brand-teal/10 text-brand-teal shadow-inner scale-105' : 'text-brand-text/60 hover:bg-black/5'}`}>
+                        <Users size={24} strokeWidth={2.5} />
+                        <span className="text-[8px] uppercase font-black tracking-widest">Équipe</span>
+                    </button>
+
+                    <button onClick={() => setTab('pai')} className={`flex flex-col items-center justify-center w-16 h-16 rounded-2xl gap-1.5 transition-all ${tab === 'pai' ? 'bg-brand-peach/20 text-brand-peach shadow-inner scale-105' : 'text-brand-text/60 hover:bg-black/5'}`}>
+                        <FileText size={24} strokeWidth={2.5} />
+                        <span className="text-[8px] uppercase font-black tracking-widest">Les PAI</span>
+                    </button>
+
+                    <button onClick={() => alert("Le programme de la journée sera bientôt disponible !")} className="flex flex-col items-center justify-center w-16 h-16 rounded-2xl gap-1.5 transition-all text-brand-text/60 hover:bg-black/5">
+                        <Calendar size={24} strokeWidth={2.5} />
+                        <span className="text-[8px] uppercase font-black tracking-widest">Prog.</span>
+                    </button>
+                </nav>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen font-sans pb-20 transition-colors duration-300 bg-brand-bg text-brand-text">
             <div className="p-4 sticky top-0 z-20 shadow-soft rounded-b-[30px] bg-white/40 backdrop-blur-md border-b border-white/50">
-                <div className="flex items-center gap-3 mb-4"><button onClick={() => navigate('/JS2026')} className="p-2 rounded-full transition-all bg-white/50 hover:bg-white text-brand-text/50 hover:text-brand-text shadow-sm active:scale-95"><ArrowLeft size={20} /></button><h1 className="text-xl font-black tracking-tight flex items-center gap-2">Consultation <span className="text-brand-teal">Équipes</span></h1></div>
-                <div className="relative"><Search className="absolute left-4 top-3.5 text-brand-text/40" size={18} /><input type="text" placeholder="Rechercher un élève..." className="w-full py-3 l-12 pr-4 rounded-[20px] focus:outline-none shadow-inner bg-white/60 border border-white/50 text-brand-text placeholder-brand-text/40 focus:bg-white focus:ring-2 focus:ring-brand-teal transition-all font-medium pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
+                <div className="flex items-center gap-3"><button onClick={() => navigate('/JS2026')} className="p-2 rounded-full transition-all bg-white/50 hover:bg-white text-brand-text/50 hover:text-brand-text shadow-sm active:scale-95"><ArrowLeft size={20} /></button><h1 className="text-xl font-black tracking-tight flex items-center gap-2">Consultation <span className="text-brand-teal">Équipes</span></h1></div>
             </div>
-            <div className="p-4 space-y-4 mt-2">
+            <div className="p-6 grid grid-cols-3 gap-4 mt-4">
                 {teams.map(team => {
-                    const teamStudents = students.filter(s => s.team === team.numId);
-                    const filteredStudents = getFilteredStudents(team.numId);
-                    const hasMatch = searchTerm && filteredStudents.length > 0;
-                    const isOpen = hasMatch || openTeams[team.numId];
-                    if (searchTerm && !hasMatch) return null;
-                    const paiCount = teamStudents.filter(s => s.pai).length;
-                    const disruptiveCount = teamStudents.filter(s => s.disruptive).length;
                     const teamColor = team.color || '#0077b6';
                     return (
-                        <div key={team.id} className="rounded-[24px] shadow-soft overflow-hidden transition-all duration-300 bg-white/80 backdrop-blur-md border border-white/50" style={{ borderLeft: `6px solid ${teamColor}` }}>
-                            <button onClick={() => toggleTeam(team.numId)} className="w-full p-4 flex justify-between items-center hover:bg-white/50 active:bg-white/30 transition-colors">
-                                <div><div className="flex items-center gap-2"><h3 className="font-black text-lg tracking-tight text-brand-text">{team.name}</h3><span className="text-[10px] uppercase font-bold tracking-wide px-2 py-0.5 rounded-full bg-black/5 text-brand-text/60 shadow-inner">{teamStudents.filter(s => !s.isAdult).length} élèves</span>{teamStudents.filter(s => s.isAdult).length > 0 && <span className="text-[10px] uppercase font-bold tracking-wide px-2 py-0.5 rounded-full bg-brand-coral/20 text-brand-coral shadow-inner border border-brand-coral/30">{teamStudents.filter(s => s.isAdult).length} adu.</span>}{team.locked && <Lock size={14} className="text-brand-text/40" />}</div><div className="flex gap-3 mt-1 text-xs">{paiCount > 0 && <span className="text-brand-teal font-bold flex items-center gap-1"><FileText size={12} /> {paiCount} PAI</span>}{disruptiveCount > 0 && <span className="text-brand-coral font-bold flex items-center gap-1"><Flag size={12} /> {disruptiveCount} À surveiller</span>}</div></div>
-                            </button>
-                            {isOpen && (<div className="border-t p-3 border-white/40 bg-black/5 shadow-inner">{filteredStudents.length === 0 ? (<div className="text-center text-brand-text/40 py-4 font-bold text-sm tracking-wide">Aucun élève trouvé</div>) : (<div className="grid grid-cols-1 gap-2">{filteredStudents.map(student => {
-                                const displayName = student.name && student.name.trim() ? student.name : `${student.lastName || ''} ${student.firstName || ''}`;
-                                return (<div key={student.id} className={`p-3 rounded-[16px] border flex justify-between items-center shadow-sm bg-white/70 border-white/80 backdrop-blur-sm ${student.isAdult ? 'border-2 border-brand-coral' : ''}`}><div><div className="font-bold text-brand-text">{searchTerm ? (<span>{displayName.split(new RegExp(`(${searchTerm})`, 'gi')).map((part, i) => part.toLowerCase() === searchTerm.toLowerCase() ? <span key={i} className="bg-brand-peach/40 text-brand-text px-1 rounded">{part}</span> : part)}</span>) : displayName}</div><div className="text-xs text-brand-text/60 font-medium mt-0.5">{student.isAdult ? <span className="text-brand-coral font-bold">{student.role} • {student.importedClassLabel || student.classLabel}</span> : (student.importedClassLabel || student.classLabel)}</div></div><div className="flex gap-1">{!student.isAdult && student.pai && <div className="bg-brand-teal/20 text-brand-teal p-1.5 rounded-full shadow-inner"><FileText size={16} /></div>}{!student.isAdult && student.disruptive && <div className="bg-brand-coral/20 text-brand-coral p-1.5 rounded-full shadow-inner"><Flag size={16} /></div>}</div></div>);
-                            })}</div>)}</div>)}
-                        </div>
+                        <button key={team.id} onClick={() => { setSelectedTeamId(team.numId); setTab('dashboard'); }} className="w-full aspect-square rounded-[24px] shadow-sm overflow-hidden transition-all duration-300 border border-white/30 flex flex-col justify-center items-center hover:scale-105 active:scale-95 relative group" style={{ backgroundColor: teamColor }}>
+                            <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
+                            <h3 className="font-black text-xl tracking-tighter text-white z-10 text-center drop-shadow-md px-1 leading-none break-all">{team.name}</h3>
+                            {team.locked && <Lock size={12} className="text-white/60 absolute bottom-3" />}
+                        </button>
                     );
                 })}
             </div>

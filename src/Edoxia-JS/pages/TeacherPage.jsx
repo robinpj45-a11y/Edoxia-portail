@@ -44,11 +44,12 @@ export default function TeacherPage() {
   const loading = context?.loading;
 
   const [currentClass, setCurrentClass] = useState(CLASSES[0]);
-  const [teamsVisibility, setTeamsVisibility] = useState({});
   const [newAdultName, setNewAdultName] = useState("");
   const [newAdultRole, setNewAdultRole] = useState("Parent");
   const [searchTerm, setSearchTerm] = useState("");
   const [comment, setComment] = useState("");
+  const [paiClassModalOpen, setPaiClassModalOpen] = useState(false);
+  const [paiTeamModalOpen, setPaiTeamModalOpen] = useState(null);
 
   useEffect(() => { setSearchTerm(""); }, [currentClass]);
 
@@ -102,8 +103,6 @@ export default function TeacherPage() {
     await updateDoc(doc(db, "students", studentId), { team: teamId });
   }, [students, teams]);
 
-  const toggleVisibility = useCallback((teamId) => { setTeamsVisibility(prev => ({ ...prev, [teamId]: !prev[teamId] })); }, []);
-
   const poolStudents = useMemo(() => {
     return students
       .filter(s => {
@@ -112,6 +111,9 @@ export default function TeacherPage() {
       })
       .sort((a, b) => (a.lastName || a.name).localeCompare(b.lastName || b.name));
   }, [students, currentClass, searchTerm]);
+
+  const classStudentsWithPAI = students.filter(s => s.classLabel === currentClass && !s.isAdult && s.pai);
+  const missingPAICommentsCount = classStudentsWithPAI.filter(s => !s.paiComment || s.paiComment.trim() === "").length;
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-brand-text/50 font-bold tracking-wide">Chargement...</div>;
 
@@ -132,6 +134,17 @@ export default function TeacherPage() {
             <h2 className="font-black tracking-tight text-xl text-brand-teal">{currentClass}</h2>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-bold uppercase tracking-wide px-3 py-1.5 rounded-full bg-black/5 text-brand-text/60 shadow-inner">{students.filter(s => s.classLabel === currentClass && !s.isAdult).length} élèves</span>
+              
+              <div className="relative flex items-center">
+                 <button onClick={() => setPaiClassModalOpen(true)} disabled={classStudentsWithPAI.length === 0} className={`p-2 rounded-full transition-colors shadow-sm ${classStudentsWithPAI.length === 0 ? 'bg-black/5 text-brand-text/30 cursor-not-allowed' : 'bg-white/50 hover:bg-white text-brand-teal'}`} title="Détails des PAI de la classe"><FileText size={18} /></button>
+                 {classStudentsWithPAI.length > 0 && missingPAICommentsCount > 0 && (
+                     <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-brand-coral border border-brand-coral/50 text-white text-[10px] font-bold px-2 py-1 rounded-[8px] shadow-soft whitespace-nowrap z-50 flex flex-col items-center animate-pulse">
+                         {missingPAICommentsCount} PAI incomplets
+                         <div className="w-2 h-2 bg-brand-coral rotate-45 absolute -bottom-1"></div>
+                     </div>
+                 )}
+              </div>
+
               <button onClick={() => generateClassPDF(currentClass, students, teams)} className="p-2 rounded-full transition-colors text-brand-text/50 hover:text-brand-teal bg-white/50 hover:bg-white shadow-sm" title="Imprimer la classe"><Printer size={18} /></button>
             </div>
           </div>
@@ -150,14 +163,18 @@ export default function TeacherPage() {
           <div className="grid grid-cols-2 gap-6 pb-10">
             {teams.map(team => {
               const teamId = team.numId; const teamName = team.name; const teamColor = team.color || '#0077b6'; const isLocked = team.locked;
-              const myStudents = students
-                .filter(s => s.team === teamId && s.classLabel === currentClass)
-                .sort((a, b) => (a.lastName || a.name).localeCompare(b.lastName || b.name));
-              const otherStudents = students.filter(s => s.team === teamId && s.classLabel !== currentClass);
-              const allStudentsInTeam = students.filter(s => s.team === teamId);
-              const isVisible = teamsVisibility[teamId];
+              const allStudentsInTeam = students
+                .filter(s => s.team === teamId)
+                .sort((a, b) => {
+                  const classIndexA = CLASSES.indexOf(a.importedClassLabel || a.classLabel);
+                  const classIndexB = CLASSES.indexOf(b.importedClassLabel || b.classLabel);
+                  const idxA = classIndexA === -1 ? 999 : classIndexA;
+                  const idxB = classIndexB === -1 ? 999 : classIndexB;
+                  if (idxA !== idxB) return idxA - idxB;
+                  return (a.lastName || a.name).localeCompare(b.lastName || b.name);
+                });
 
-              const studentsToCount = isVisible ? allStudentsInTeam : myStudents;
+              const studentsToCount = allStudentsInTeam;
               const boysCount = studentsToCount.filter(s => s.gender && s.gender.toString().trim().toUpperCase() === 'M').length;
               const girlsCount = studentsToCount.filter(s => s.gender && s.gender.toString().trim().toUpperCase() === 'F').length;
               const adultCount = studentsToCount.filter(s => s.isAdult).length;
@@ -171,16 +188,31 @@ export default function TeacherPage() {
                     <div className="absolute top-0 left-0 bottom-0 w-[6px]" style={{ backgroundColor: isLocked ? '#a1a1aa' : teamColor }}></div>
                     <div className="pl-6 pr-5 py-4 flex justify-between items-center bg-white/40 border-b border-white/50">
                       <div className="flex items-center gap-2"><span className="font-black text-xl tracking-tight text-brand-text truncate">{teamName}</span>{isLocked && <Lock size={16} className="text-brand-text/40" />}</div>
-                      <button onClick={() => toggleVisibility(teamId)} className="hover:scale-110 transition-transform bg-white/50 hover:bg-white p-2 text-brand-text/50 hover:text-brand-teal rounded-full shadow-sm"><Eye size={20} className={isVisible ? "text-brand-teal" : ""} /></button>
                     </div>
-                    <div className="px-5 py-3 flex justify-between items-center text-xs font-bold bg-black/5 border-b border-white/50 shadow-inner"><span className="text-brand-text/40 uppercase tracking-widest text-[9px]">{isVisible ? "Total" : "Moi"}</span><div className="flex items-center gap-3"><div className="flex gap-2"><span className="text-blue-600 flex items-center">G: {boysCount}</span><span className="text-pink-600 flex items-center">F: {girlsCount}</span>{adultCount > 0 && <span className="text-brand-coral flex items-center border-l border-brand-text/20 pl-2 ml-1">A: {adultCount}</span>}</div><div className="h-4 w-px bg-brand-text/20"></div><div className="flex gap-3"><span className={`flex items-center gap-1 ${paiCount > 0 ? 'text-brand-teal font-black' : 'text-brand-text/30'}`} title="Nombre de PAI"><FileText size={14} strokeWidth={3} /> {paiCount}</span><span className={`flex items-center gap-1 ${disruptiveCount > 0 ? 'text-brand-coral font-black' : 'text-brand-text/30'}`} title="Nombre d'élèves perturbateurs"><Flag size={14} strokeWidth={3} /> {disruptiveCount}</span></div></div></div>
+                    <div className="px-5 py-3 flex justify-between items-center text-xs font-bold bg-black/5 border-b border-white/50 shadow-inner"><span className="text-brand-text/40 uppercase tracking-widest text-[9px]">Total</span><div className="flex items-center gap-3"><div className="flex gap-2"><span className="text-blue-600 flex items-center">G: {boysCount}</span><span className="text-pink-600 flex items-center">F: {girlsCount}</span>{adultCount > 0 && <span className="text-brand-coral flex items-center border-l border-brand-text/20 pl-2 ml-1">A: {adultCount}</span>}</div><div className="h-4 w-px bg-brand-text/20"></div><div className="flex gap-3"><span className={`flex items-center gap-1 transition-all ${paiCount > 0 ? 'text-brand-teal font-black cursor-pointer hover:scale-110 active:scale-95' : 'text-brand-text/30'}`} title="Détails des PAI" onClick={() => paiCount > 0 && setPaiTeamModalOpen(teamId)}><FileText size={14} strokeWidth={3} /> {paiCount}</span><span className={`flex items-center gap-1 ${disruptiveCount > 0 ? 'text-brand-coral font-black' : 'text-brand-text/30'}`} title="Nombre d'élèves perturbateurs"><Flag size={14} strokeWidth={3} /> {disruptiveCount}</span></div></div></div>
                     <div className={`flex-1 p-4 space-y-3 ${isLocked ? 'cursor-not-allowed bg-black/5' : 'bg-transparent'}`} onDragOver={(e) => { if (isLocked) { e.dataTransfer.dropEffect = "none"; } e.preventDefault(); }} onDrop={(e) => handleDrop(e, teamId)}>
-                      {isVisible && otherStudents.map(s => {
-                        const displayName = s.name && s.name.trim() ? s.name : `${s.lastName || ''} ${s.firstName || ''}`;
-                        return (<div key={s.id} className={`border border-dashed rounded-[16px] p-2 text-sm flex items-center gap-2 select-none bg-black/5 text-brand-text/50 border-brand-text/20 shadow-inner ${s.isAdult ? 'border-brand-coral/40 bg-brand-coral/5 text-brand-coral/70' : ''}`}><User size={14} className={s.isAdult ? "text-brand-coral/70" : ""} /> <span className="truncate"><span className={`font-bold ${s.isAdult ? 'text-brand-coral' : ''}`}>{displayName}</span> <span className="text-[10px] uppercase tracking-wide">({s.isAdult ? <span className="font-bold">{s.role} • {s.importedClassLabel || s.classLabel}</span> : (s.importedClassLabel || s.classLabel)})</span></span></div>);
+                      {allStudentsInTeam.map(s => {
+                        if (s.classLabel === currentClass) {
+                          return <PersonCard key={s.id} student={s} onDragStart={handleDragStart} onToggle={toggleAttribute} onDelete={handleDeleteStudent} />;
+                        } else {
+                          const displayName = s.name && s.name.trim() ? s.name : `${s.lastName || ''} ${s.firstName || ''}`;
+                          return (
+                            <div key={s.id} className={`border border-dashed rounded-[16px] p-2 text-sm flex justify-between items-center select-none bg-black/5 text-brand-text/50 border-brand-text/20 shadow-inner ${s.isAdult ? 'border-brand-coral/40 bg-brand-coral/5 text-brand-coral/70' : ''}`}>
+                               <div className="flex items-center gap-2 truncate">
+                                  <User size={14} className={s.isAdult ? "text-brand-coral/70 shrink-0" : "shrink-0"} /> 
+                                  <span className="truncate"><span className={`font-bold ${s.isAdult ? 'text-brand-coral' : ''}`}>{displayName}</span> <span className="text-[10px] uppercase tracking-wide">({s.isAdult ? <span className="font-bold">{s.role} • {s.importedClassLabel || s.classLabel}</span> : (s.importedClassLabel || s.classLabel)})</span></span>
+                               </div>
+                               {(!s.isAdult && (s.pai || s.disruptive)) && (
+                                   <div className="flex gap-1 shrink-0 ml-2">
+                                     {s.pai && <FileText size={14} className="text-brand-teal" />}
+                                     {s.disruptive && <Flag size={14} className="text-brand-coral" />}
+                                   </div>
+                               )}
+                            </div>
+                          );
+                        }
                       })}
-                      {myStudents.map(s => <PersonCard key={s.id} student={s} onDragStart={handleDragStart} onToggle={toggleAttribute} onDelete={handleDeleteStudent} />)}
-                      {myStudents.length === 0 && (!isVisible || otherStudents.length === 0) && <div className="h-full flex items-center justify-center text-brand-text/30 text-[10px] font-bold uppercase tracking-widest py-6">{isLocked ? "Équipe fermée" : "Glisser un élève ici"}</div>}
+                      {allStudentsInTeam.length === 0 && <div className="h-full flex items-center justify-center text-brand-text/30 text-[10px] font-bold uppercase tracking-widest py-6">{isLocked ? "Équipe fermée" : "Glisser un élève ici"}</div>}
                     </div>
                   </div>
                 </div>
@@ -189,6 +221,66 @@ export default function TeacherPage() {
           </div>
         </div>
       </main>
+
+      {paiClassModalOpen && (
+          <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-[2px] flex items-center justify-center p-4">
+              <div className="bg-white rounded-[30px] w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl overflow-hidden border border-white/50 animate-in fade-in zoom-in duration-200">
+                  <div className="p-6 border-b border-black/5 flex justify-between items-center bg-brand-teal text-white">
+                      <h2 className="text-xl font-black flex items-center gap-2"><FileText /> Commentaires PAI - {currentClass}</h2>
+                      <button onClick={() => setPaiClassModalOpen(false)} className="hover:scale-110 transition-transform bg-white/20 hover:bg-white/30 p-2 rounded-full">✕</button>
+                  </div>
+                  <div className="p-6 overflow-y-auto flex-1 space-y-4 bg-brand-bg">
+                      {classStudentsWithPAI.length === 0 && (
+                          <div className="text-center text-brand-text/50 font-bold py-8">Aucun élève avec PAI dans cette classe.</div>
+                      )}
+                      {classStudentsWithPAI.map(s => (
+                          <div key={s.id} className="bg-white rounded-[20px] p-4 shadow-soft border border-white/50 flex flex-col gap-2 transition-all hover:shadow-md">
+                              <div className="font-bold text-brand-text flex justify-between items-center text-lg px-1">
+                                 <span>{s.name && s.name.trim() ? s.name : `${s.lastName || ''} ${s.firstName || ''}`}</span>
+                              </div>
+                              <textarea 
+                                 className="w-full h-24 rounded-[16px] p-4 text-sm focus:outline-none resize-none bg-black/5 text-brand-text border border-transparent focus:border-brand-teal focus:bg-white focus:ring-4 focus:ring-brand-teal/10 transition-all font-medium placeholder-brand-text/30 shadow-inner"
+                                 placeholder="Détails du PAI (ex: Allergie aux arachides, protocole d'urgence...)"
+                                 defaultValue={s.paiComment || ""}
+                                 onBlur={async (e) => {
+                                     if(e.target.value !== (s.paiComment || "")) {
+                                         await updateDoc(doc(db, "students", s.id), { paiComment: e.target.value });
+                                     }
+                                 }}
+                              />
+                          </div>
+                      ))}
+                  </div>
+              </div>
+          </div>
+      )}
+
+      {paiTeamModalOpen !== null && (
+          <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-[2px] flex items-center justify-center p-4">
+              <div className="bg-white rounded-[30px] w-full max-w-xl max-h-[80vh] flex flex-col shadow-2xl overflow-hidden border border-white/50 animate-in fade-in zoom-in duration-200">
+                  <div className="p-6 border-b border-black/5 flex justify-between items-center bg-brand-teal text-white">
+                      <h2 className="text-xl font-black flex items-center gap-2"><FileText /> PAI - {teams.find(t => t.numId === paiTeamModalOpen)?.name}</h2>
+                      <button onClick={() => setPaiTeamModalOpen(null)} className="hover:scale-110 transition-transform bg-white/20 hover:bg-white/30 p-2 rounded-full">✕</button>
+                  </div>
+                  <div className="p-6 overflow-y-auto flex-1 space-y-4 bg-brand-bg">
+                      {students.filter(s => s.team === paiTeamModalOpen && s.pai && !s.isAdult).map(s => {
+                          const displayName = s.name && s.name.trim() ? s.name : `${s.lastName || ''} ${s.firstName || ''}`;
+                          return (
+                              <div key={s.id} className="bg-white rounded-[20px] p-5 shadow-soft border border-white/50 flex flex-col gap-3 transition-all hover:shadow-md">
+                                  <div className="font-bold text-brand-text flex justify-between items-center text-lg">
+                                     <span>{displayName}</span>
+                                     <span className="text-[10px] font-black uppercase tracking-widest bg-black/5 px-3 py-1 rounded-full text-brand-text/50 shadow-inner border border-black/5">{s.importedClassLabel || s.classLabel}</span>
+                                  </div>
+                                  <div className="bg-brand-teal/10 border border-brand-teal/20 text-brand-teal p-4 rounded-[16px] text-sm whitespace-pre-wrap shadow-inner font-medium leading-relaxed">
+                                      {s.paiComment && s.paiComment.trim() !== "" ? s.paiComment : <span className="italic opacity-60">Aucun commentaire renseigné pour ce PAI.</span>}
+                                  </div>
+                              </div>
+                          );
+                      })}
+                  </div>
+              </div>
+          </div>
+      )}
     </div>
   );
 }
