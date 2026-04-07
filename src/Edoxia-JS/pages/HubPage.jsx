@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Map, Users, Search, Trophy, GraduationCap, Settings, ArrowLeft } from 'lucide-react';
+import { Map, Users, Search, Trophy, GraduationCap, Settings, ArrowLeft, Music } from 'lucide-react';
 
 export default function HubPage() {
   const navigate = useNavigate();
@@ -24,8 +24,9 @@ export default function HubPage() {
       <main className="p-6 max-w-5xl w-full mx-auto flex-1 flex flex-col pt-8 pb-10">
         <div className="my-auto w-full flex flex-col">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <HubCard icon={<Map size={32} className="text-brand-teal" />} title="Carte Interactive" onClick={() => alert("Bientôt disponible !")} />
+            <HubCard icon={<Map size={32} className="text-brand-teal" />} title="Carte Interactive" onClick={() => navigate('/JS2026/map')} />
             <HubCard icon={<Users size={32} className="text-brand-peach" />} title="Gérer mon équipe" onClick={() => navigate('/JS2026/teams')} />
+            <HubCard icon={<Music size={32} className="text-sky-500" />} title="Chanson JS" onClick={() => navigate('/JS2026/song')} />
             <HubCard icon={<Search size={32} className="text-brand-coral" />} title="Rechercher un élève" onClick={() => alert("Fonction bientôt intégrée ici !")} />
             <HubCard icon={<Trophy size={32} className="text-yellow-500" />} title="Score en direct" onClick={() => alert("Bientôt disponible !")} />
             <HubCard icon={<Settings size={32} className="text-rose-500" />} title="Administration" onClick={() => navigate('/JS2026/admin')} />

@@ -54,6 +54,8 @@ import MobileTeamsPage from './Edoxia-JS/pages/MobileTeamsPage';
 import TeacherPage from './Edoxia-JS/pages/TeacherPage';
 import AdminPage from './Edoxia-JS/pages/AdminPage';
 import EdoxiaJSWrapper from './Edoxia-JS/pages/EdoxiaJSWrapper';
+import SongPage from './Edoxia-JS/pages/SongPage';
+import MapInteractivePage from './Edoxia-JS/pages/MapInteractivePage';
 import ReportBug from './modules/ReportBug';
 import CompteurUser from './modules/CompteurUser';
 import GVGDC from './Edoxia-QVGDC/pages/GVGDC';
@@ -621,6 +623,8 @@ const AppLayout = () => {
             <Route path="teams" element={<MobileTeamsPage />} />
             <Route path="teacher" element={<TeacherPage />} />
             <Route path="admin" element={<AdminPage />} />
+            <Route path="song" element={<SongPage />} />
+            <Route path="map" element={<MapInteractivePage />} />
           </Route>
           <Route path="/GVGDC" element={<GVGDC />} />
           <Route path="/DashboardQVGDC" element={<DashboardQVGDC />} />
