@@ -15,10 +15,26 @@ export default function SongPage() {
 
         if (isPlaying) {
             audioRef.current.pause();
+            setIsPlaying(false);
         } else {
-            audioRef.current.play();
+            // Sur iOS, forcer le rechargement si la piste n'est pas du tout prête
+            if (audioRef.current.readyState === 0) {
+                audioRef.current.load();
+            }
+            
+            const playPromise = audioRef.current.play();
+            if (playPromise !== undefined) {
+                playPromise
+                    .then(() => setIsPlaying(true))
+                    .catch(error => {
+                        console.error("Erreur de lecture audio :", error);
+                        setIsPlaying(false);
+                        // On pourrait ici afficher un toast à l'utilisateur
+                    });
+            } else {
+                setIsPlaying(true);
+            }
         }
-        setIsPlaying(!isPlaying);
     };
 
     const handleTimeUpdate = () => {
@@ -93,15 +109,15 @@ export default function SongPage() {
                     {/* Lecteur natif masqué */}
                     <audio
                         ref={audioRef}
+                        src="/hymne-js.mp3"
+                        preload="auto"
+                        playsInline
                         onEnded={() => setIsPlaying(false)}
                         onTimeUpdate={handleTimeUpdate}
                         onLoadedMetadata={handleLoadedMetadata}
                         loop={isLooping}
                         className="hidden"
-                    >
-                        <source src="/hymne-js.mp3" type="audio/mpeg" />
-                        Votre navigateur ne supporte pas la lecture audio.
-                    </audio>
+                    />
 
                     <div className="w-full flex flex-col gap-1 z-10 mt-2 md:mt-0">
                         {/* Barre de progression */}
