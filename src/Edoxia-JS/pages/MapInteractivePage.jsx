@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Settings, MapPin, X, ArrowLeft, Move, List, Edit2, Trash2 } from 'lucide-react';
+import { Settings, MapPin, X, ArrowLeft, Move, List, Edit2, Trash2, Flag, Trophy, Target, Activity, Utensils, Droplets, Star, Info } from 'lucide-react';
 import { getFirestore, doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const AVAILABLE_ICONS = {
+    MapPin, Flag, Trophy, Target, Activity, Utensils, Droplets, Star, Info
+};
 
 const MapInteractivePage = () => {
     const navigate = useNavigate();
@@ -311,6 +315,10 @@ const MapInteractivePage = () => {
                                         else focusZone(zone.id); // Sur mobile utilisateur: cliquer sur une zone invisible/visible l'anime
                                     }}
                                 >
+                                    {zone.icon && AVAILABLE_ICONS[zone.icon] && React.createElement(AVAILABLE_ICONS[zone.icon], {
+                                        size: isAdmin ? 20 : 24,
+                                        className: `relative z-20 pointer-events-none drop-shadow-sm ${isHighlighted ? 'text-brand-teal scale-125' : 'text-brand-teal bg-white/70 p-1 rounded-full shadow-sm'} transition-all`
+                                    })}
                                     {isHighlighted && (
                                         <span className="absolute flex h-full w-full pointer-events-none">
                                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-teal opacity-20"></span>
@@ -348,7 +356,42 @@ const MapInteractivePage = () => {
                             </div>
                             <button onClick={() => setEditingZone(null)} className="p-1 text-brand-text/40 hover:text-brand-text"><X size={20} /></button>
                         </div>
-                        <div className="flex gap-2 mt-2">
+
+                        {/* Icon Selector */}
+                        <div className="flex flex-col gap-1.5 border-y border-brand-text/5 py-3">
+                            <span className="text-[10px] font-bold uppercase text-brand-text/40 tracking-wider pl-1">Pictogramme</span>
+                            <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                                <button
+                                    onClick={() => {
+                                        const newZones = zones.map(z => z.id === editingZone.id ? { ...z, icon: null } : z);
+                                        setZones(newZones);
+                                        saveZonesToFirebase(newZones);
+                                        setEditingZone({ ...editingZone, icon: null });
+                                    }}
+                                    className={`p-2 rounded-[12px] shrink-0 transition-all flex items-center justify-center ${!editingZone.icon ? 'bg-brand-teal text-white shadow-md' : 'bg-brand-bg text-brand-text/50 hover:bg-brand-teal/10 hover:text-brand-teal'}`}
+                                    title="Aucun pictogramme"
+                                >
+                                    <X size={20} />
+                                </button>
+                                {Object.entries(AVAILABLE_ICONS).map(([iconName, IconComponent]) => (
+                                    <button
+                                        key={iconName}
+                                        onClick={() => {
+                                            const newZones = zones.map(z => z.id === editingZone.id ? { ...z, icon: iconName } : z);
+                                            setZones(newZones);
+                                            saveZonesToFirebase(newZones);
+                                            setEditingZone({ ...editingZone, icon: iconName });
+                                        }}
+                                        className={`p-2 rounded-[12px] shrink-0 transition-all flex items-center justify-center ${editingZone.icon === iconName ? 'bg-brand-teal text-white shadow-md' : 'bg-brand-bg text-brand-text/60 hover:bg-brand-teal/10 hover:text-brand-teal'}`}
+                                        title={iconName}
+                                    >
+                                        <IconComponent size={20} />
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="flex gap-2 mt-1.5">
                             <button onClick={() => handleEditZone(editingZone)} className="flex-1 py-2 px-3 bg-brand-bg rounded-lg text-brand-text text-sm font-bold flex items-center justify-center gap-2 hover:bg-brand-teal/10 hover:text-brand-teal transition-colors"><Edit2 size={16}/> Editer</button>
                             <button onClick={() => handleDeleteZone(editingZone.id)} className="flex-1 py-2 px-3 bg-brand-bg rounded-lg text-rose-500 text-sm font-bold flex items-center justify-center gap-2 hover:bg-rose-50 transition-colors"><Trash2 size={16}/> Supprimer</button>
                         </div>
@@ -418,7 +461,10 @@ const MapInteractivePage = () => {
                                             >
                                                 <div className="flex items-center justify-between">
                                                     <h4 className="font-bold text-brand-text group-hover:text-brand-teal transition-colors flex items-center gap-2">
-                                                        <MapPin size={16} className="text-brand-teal opacity-50" />
+                                                        {zone.icon && AVAILABLE_ICONS[zone.icon] 
+                                                            ? React.createElement(AVAILABLE_ICONS[zone.icon], { size: 16, className: "text-brand-teal opacity-70" })
+                                                            : <MapPin size={16} className="text-brand-teal opacity-50" />
+                                                        }
                                                         {zone.name}
                                                     </h4>
                                                     <ArrowLeft size={16} className="text-brand-text/20 group-hover:text-brand-teal group-hover:translate-x-1 rotate-180 transition-all" />

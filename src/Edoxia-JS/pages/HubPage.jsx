@@ -27,7 +27,7 @@ export default function HubPage() {
             <HubCard icon={<Map size={32} className="text-brand-teal" />} title="Carte Interactive" onClick={() => navigate('/JS2026/map')} />
             <HubCard icon={<Users size={32} className="text-brand-peach" />} title="Gérer mon équipe" onClick={() => navigate('/JS2026/teams')} />
             <HubCard icon={<Music size={32} className="text-sky-500" />} title="Chanson JS" onClick={() => navigate('/JS2026/song')} />
-            <HubCard icon={<Search size={32} className="text-brand-coral" />} title="Rechercher un élève" onClick={() => alert("Fonction bientôt intégrée ici !")} />
+            <HubCard icon={<Search size={32} className="text-brand-coral" />} title="Rechercher un élève" onClick={() => navigate('/JS2026/search')} />
             <HubCard icon={<Trophy size={32} className="text-yellow-500" />} title="Score en direct" onClick={() => alert("Bientôt disponible !")} />
             <HubCard icon={<Settings size={32} className="text-rose-500" />} title="Administration" onClick={() => navigate('/JS2026/admin')} />
           </div>

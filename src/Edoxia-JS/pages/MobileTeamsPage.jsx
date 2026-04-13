@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
-import { ArrowLeft, Lock, FileText, Flag, Users, Calendar, User } from 'lucide-react';
+import { useNavigate, useOutletContext, useLocation } from 'react-router-dom';
+import { ArrowLeft, Lock, FileText, Flag, Users, Calendar, User, Search } from 'lucide-react';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { ThemeContext } from '../../ThemeContext';
@@ -8,12 +8,13 @@ import { CLASSES } from '../utils/constants';
 
 export default function Teams() {
     const navigate = useNavigate();
+    const location = useLocation();
     const context = useOutletContext();
     const students = context?.students || [];
     const teams = context?.teams || [];
     const loading = context?.loading;
 
-    const [selectedTeamId, setSelectedTeamId] = useState(null);
+    const [selectedTeamId, setSelectedTeamId] = useState(location.state?.fromTeamId !== undefined ? location.state.fromTeamId : null);
     const [tab, setTab] = useState('dashboard');
 
     const getTeamStudents = (teamId) => {
@@ -140,6 +141,11 @@ export default function Teams() {
                     <button onClick={() => alert("Le programme de la journée sera bientôt disponible !")} className="flex flex-col items-center justify-center w-16 h-16 rounded-2xl gap-1.5 transition-all text-brand-text/60 hover:bg-black/5">
                         <Calendar size={24} strokeWidth={2.5} />
                         <span className="text-[8px] uppercase font-black tracking-widest">Prog.</span>
+                    </button>
+
+                    <button onClick={() => navigate('/JS2026/search', { state: { fromTeamId: selectedTeamId } })} className="flex flex-col items-center justify-center w-16 h-16 rounded-2xl gap-1.5 transition-all text-brand-text/60 hover:bg-black/5">
+                        <Search size={24} strokeWidth={2.5} />
+                        <span className="text-[8px] uppercase font-black tracking-widest text-[9px] relative">Élèves</span>
                     </button>
                 </nav>
             </div>
