@@ -306,6 +306,7 @@ export default function SuccessEvaluationDetail() {
                                    placeholder="-"
                                    value={val ?? ''}
                                    onChange={(e) => setScore(activeStudentId, idx, e.target.value)}
+                                   onWheel={(e) => e.target.blur()}
                                    className="w-32 h-32 bg-white border-2 border-white rounded-[40px] text-center text-4xl font-black focus:outline-none focus:ring-8 focus:ring-brand-teal/5 shadow-soft transition-all no-spinner"
                                 />
                                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-brand-text text-white rounded-full text-[10px] font-black uppercase tracking-widest">

@@ -28,8 +28,10 @@ export default function SuccessReportsPage() {
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showRadarSelect, setShowRadarSelect] = useState(false);
-  const [radarStep, setRadarStep] = useState(0); // 0: Subject, 1: Student
+  const [radarStep, setRadarStep] = useState(0); // 0: Subject, 1: Student, 2: Type
   const [radarSubject, setRadarSubject] = useState(null);
+  const [radarStudentId, setRadarStudentId] = useState(null);
+  const [radarType, setRadarType] = useState('competence');
   const [radarData, setRadarData] = useState(null);
   const [exportingRadar, setExportingRadar] = useState(false);
   const radarRef = React.useRef(null);
@@ -311,52 +313,93 @@ export default function SuccessReportsPage() {
     };
   }, [selectedStudentId, evaluations, allResults, stats]);
 
-  const handleGenerateRadar = (studentId, subject) => {
+  const handleGenerateRadar = (studentId, subject, type) => {
     const student = stats.students.find(s => s.id === studentId) || evaluations.flatMap(ev => ev.students).find(s => s.id === studentId);
     if (!student) return;
 
-    // Aggregate ALL competences for this student across evaluations matching the subject
-    const compAgg = {}; // { competenceName: { total: 0, count: 0 } }
+    let finalData = [];
 
-    evaluations.forEach(ev => {
-      if (ev.subject !== subject) return;
-      const results = allResults[ev.id]?.[studentId];
-      if (!results) return;
+    if (type === 'competence') {
+      const compAgg = {}; // { competenceName: { total: 0, count: 0 } }
 
-      ev.exercises.forEach((ex, idx) => {
-        const val = results[idx];
-        if (val !== undefined && val !== null && val !== '') {
-          let score;
-          if (COLOR_MAP.hasOwnProperty(val)) {
-            const mapped = COLOR_MAP[val];
-            if (mapped === null) return;
-            score = mapped;
-          } else {
-            score = (parseFloat(val) / (ex.points || 10)) * 100;
+      evaluations.forEach(ev => {
+        if (subject !== 'Français & Mathématiques' && ev.subject !== subject) return;
+        const results = allResults[ev.id]?.[studentId];
+        if (!results) return;
+
+        ev.exercises.forEach((ex, idx) => {
+          const val = results[idx];
+          if (val !== undefined && val !== null && val !== '') {
+            let score;
+            if (COLOR_MAP.hasOwnProperty(val)) {
+              const mapped = COLOR_MAP[val];
+              if (mapped === null) return;
+              score = mapped;
+            } else {
+              score = (parseFloat(val) / (ex.points || 10)) * 100;
+            }
+
+            const compName = ex.competence?.trim() || ex.name || `Exercice ${idx + 1}`;
+            if (!compAgg[compName]) compAgg[compName] = { total: 0, count: 0 };
+            compAgg[compName].total += score;
+            compAgg[compName].count += 1;
           }
+        });
+      });
 
-          const compName = ex.competence?.trim() || ex.name || `Exercice ${idx + 1}`;
-          if (!compAgg[compName]) compAgg[compName] = { total: 0, count: 0 };
-          compAgg[compName].total += score;
-          compAgg[compName].count += 1;
+      finalData = Object.entries(compAgg).map(([name, data]) => ({
+        competence: name,
+        score: Math.round(data.total / data.count)
+      }));
+
+      if (finalData.length === 0) {
+        alert(`Cet élève n'a pas de résultats pour ${subject}.`);
+        return;
+      }
+    } else {
+      evaluations.forEach(ev => {
+        if (subject !== 'Français & Mathématiques' && ev.subject !== subject) return;
+        const results = allResults[ev.id]?.[studentId];
+        if (!results) return;
+        
+        let evalTotal = 0;
+        let evalCount = 0;
+
+        ev.exercises.forEach((ex, idx) => {
+          const val = results[idx];
+          if (val !== undefined && val !== null && val !== '') {
+            let score;
+            if (COLOR_MAP.hasOwnProperty(val)) {
+              const mapped = COLOR_MAP[val];
+              if (mapped === null) return;
+              score = mapped;
+            } else {
+              score = (parseFloat(val) / (ex.points || 10)) * 100;
+            }
+            evalTotal += score;
+            evalCount += 1;
+          }
+        });
+
+        if (evalCount > 0) {
+          finalData.push({
+            evaluation: ev.name,
+            score: Math.round(evalTotal / evalCount)
+          });
         }
       });
-    });
 
-    const finalData = Object.entries(compAgg).map(([name, data]) => ({
-      competence: name,
-      score: Math.round(data.total / data.count)
-    }));
-
-    if (finalData.length < 3) {
-      alert(`Cet élève n'a pas assez d'évaluations en ${subject} pour générer une toile (minimum 3 compétences différentes).`);
-      return;
+      if (finalData.length < 3) {
+        alert(`Cet élève n'a pas assez d'évaluations en ${subject} pour générer une toile (minimum 3).`);
+        return;
+      }
     }
 
-    setRadarData({ name: student.name, data: finalData, subject: subject });
+    setRadarData({ name: student.name, data: finalData, subject: subject, type: type });
     setShowRadarSelect(false);
     setRadarStep(0);
     setRadarSubject(null);
+    setRadarStudentId(null);
   };
 
   const exportRadarPDF = async () => {
@@ -364,16 +407,41 @@ export default function SuccessReportsPage() {
     setExportingRadar(true);
     try {
       const canvas = await html2canvas(radarRef.current, {
-        scale: 3, // Higher resolution
+        scale: 2, // Good balance between quality and performance
         backgroundColor: '#ffffff',
         logging: false,
         useCORS: true,
-        windowWidth: 1000, // Wider window for the clone to ensure no truncation
+        windowWidth: 1000, 
         onclone: (clonedDoc) => {
-          const element = clonedDoc.querySelector('#radar-export-container');
-          if (element) {
-            element.style.padding = '100px';
-            element.style.width = 'fit-content';
+          const container = clonedDoc.querySelector('#radar-export-container');
+          if (container) {
+            container.style.padding = '40px'; // Reduce excessive padding
+            container.style.width = '1000px';
+            container.style.height = 'auto';
+            container.style.maxWidth = 'none';
+            container.style.position = 'relative';
+
+            const pageHeightPx = 1000 * (297 / 210); // A4 page height
+            const items = clonedDoc.querySelectorAll('.pdf-item');
+            
+            items.forEach(item => {
+              const containerRect = container.getBoundingClientRect();
+              const itemRect = item.getBoundingClientRect();
+              
+              const itemTop = itemRect.top - containerRect.top;
+              const itemBottom = itemRect.bottom - containerRect.top;
+              
+              const pageNumber = Math.floor(itemTop / pageHeightPx);
+              const bottomPageNumber = Math.floor(itemBottom / pageHeightPx);
+              
+              if (bottomPageNumber > pageNumber) {
+                const spaceToNextPage = (bottomPageNumber * pageHeightPx) - itemTop + 40;
+                const spacer = clonedDoc.createElement('div');
+                spacer.style.gridColumn = '1 / -1';
+                spacer.style.height = `${spaceToNextPage}px`;
+                item.parentNode.insertBefore(spacer, item);
+              }
+            });
           }
         }
       });
@@ -387,16 +455,27 @@ export default function SuccessReportsPage() {
       
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
       
-      const finalWidth = imgWidth * ratio;
-      const finalHeight = imgHeight * ratio;
-      const offsetX = (pdfWidth - finalWidth) / 2;
-      const offsetY = (pdfHeight - finalHeight) / 2;
+      // Scale to fit the width of the A4 page
+      const ratio = pdfWidth / canvas.width;
+      const imgWidth = pdfWidth;
+      const imgHeight = canvas.height * ratio;
+      
+      let heightLeft = imgHeight;
+      let position = 0;
 
-      pdf.addImage(imgData, 'PNG', offsetX, offsetY, finalWidth, finalHeight);
+      // Add the first page
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+
+      // Add new pages while there is still content to print
+      while (heightLeft > 0) {
+        position -= pdfHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+
       pdf.save(`Bilan_Competences_${radarData.name.replace(/\s+/g, '_')}.pdf`);
     } catch (e) {
       console.error(e);
@@ -462,7 +541,7 @@ export default function SuccessReportsPage() {
              onClick={() => setShowRadarSelect(true)}
              className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black shadow-lg shadow-indigo-200 flex items-center gap-2 hover:brightness-110 active:scale-95 transition-all text-xs uppercase tracking-wider"
            >
-             <Target size={18} /> Générer toile
+             <Target size={18} /> Générer résultats
            </button>
         </div>
       </header>
@@ -754,19 +833,19 @@ export default function SuccessReportsPage() {
                 <>
                   <h3 className="text-2xl font-black uppercase tracking-tight mb-6">Étape 1 : Matière</h3>
                   <div className="grid grid-cols-1 gap-3">
-                    {['Français', 'Mathématiques'].map(subject => (
+                    {['Français', 'Mathématiques', 'Français & Mathématiques'].map(subject => (
                       <button 
                         key={subject} 
                         onClick={() => { setRadarSubject(subject); setRadarStep(1); }}
                         className="w-full p-6 rounded-2xl border-2 border-brand-bg hover:border-brand-teal hover:bg-brand-teal/5 font-black text-lg transition-all flex justify-between items-center group"
                       >
-                        <span>{subject === 'Français' ? '📚 Français' : '🧮 Mathématiques'}</span>
+                        <span>{subject === 'Français' ? '📚 Français' : subject === 'Mathématiques' ? '🧮 Mathématiques' : '📚🧮 Français & Mathématiques'}</span>
                         <ChevronRight size={24} className="text-brand-text/10 group-hover:text-brand-teal" />
                       </button>
                     ))}
                   </div>
                 </>
-              ) : (
+              ) : radarStep === 1 ? (
                 <>
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-2xl font-black uppercase tracking-tight">Étape 2 : Élève</h3>
@@ -776,13 +855,42 @@ export default function SuccessReportsPage() {
                     {stats.students.map(s => (
                       <button 
                         key={s.id} 
-                        onClick={() => handleGenerateRadar(s.id, radarSubject)}
+                        onClick={() => { setRadarStudentId(s.id); setRadarStep(2); }}
                         className="w-full p-4 rounded-2xl border-2 border-brand-bg hover:border-indigo-200 hover:bg-indigo-50 font-black text-sm text-left transition-all flex justify-between items-center group"
                       >
                         <span>{s.name}</span>
                         <ChevronRight size={18} className="text-brand-text/20 group-hover:text-indigo-500" />
                       </button>
                     ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-2xl font-black uppercase tracking-tight">Étape 3 : Type d'analyse</h3>
+                    <button onClick={() => setRadarStep(1)} className="text-[10px] font-black uppercase tracking-widest text-brand-teal hover:underline">Retour</button>
+                  </div>
+                  <div className="space-y-3">
+                    <button 
+                      onClick={() => handleGenerateRadar(radarStudentId, radarSubject, 'competence')}
+                      className="w-full p-6 rounded-2xl border-2 border-brand-bg hover:border-indigo-200 hover:bg-indigo-50 font-black text-sm text-left transition-all flex flex-col gap-2 group"
+                    >
+                      <div className="flex justify-between items-center w-full">
+                        <span className="text-lg">Par compétence</span>
+                        <ChevronRight size={18} className="text-brand-text/20 group-hover:text-indigo-500" />
+                      </div>
+                      <span className="text-xs text-brand-text/50 font-medium">Affiche un diagramme en colonne des résultats par compétence détaillée.</span>
+                    </button>
+                    <button 
+                      onClick={() => handleGenerateRadar(radarStudentId, radarSubject, 'evaluation')}
+                      className="w-full p-6 rounded-2xl border-2 border-brand-bg hover:border-indigo-200 hover:bg-indigo-50 font-black text-sm text-left transition-all flex flex-col gap-2 group"
+                    >
+                      <div className="flex justify-between items-center w-full">
+                        <span className="text-lg">Par évaluation</span>
+                        <ChevronRight size={18} className="text-brand-text/20 group-hover:text-indigo-500" />
+                      </div>
+                      <span className="text-xs text-brand-text/50 font-medium">Affiche un diagramme en toile d'araignée de la moyenne par évaluation.</span>
+                    </button>
                   </div>
                 </>
               )}
@@ -827,21 +935,24 @@ export default function SuccessReportsPage() {
                   </div>
                 </div>
 
-                <div className="flex justify-center mb-10">
-                  <SuccessRadarChart data={radarData.data} studentName={radarData.name} />
-                </div>
+                {radarData.type === 'evaluation' && (
+                  <div className="flex justify-center mb-10 w-full overflow-x-auto overflow-y-hidden px-4">
+                    <SuccessRadarChart data={radarData.data.map(d => ({ competence: d.evaluation, score: d.score }))} studentName={radarData.name} />
+                  </div>
+                )}
 
                 <div className="mt-10 pt-10 border-t-2 border-brand-bg space-y-4">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-brand-text/30 mb-6">Détail des résultats</h3>
+                  <h3 className="pdf-item text-xs font-black uppercase tracking-widest text-brand-text/30 mb-6">Détail des résultats</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
                     {radarData.data.map((item, idx) => {
                       const isAcquired = item.score >= 75;
                       const isLearning = item.score > 30 && item.score < 75;
+                      const label = radarData.type === 'competence' ? item.competence : item.evaluation;
                       return (
-                        <div key={idx} className="flex items-center justify-between py-3 border-b border-brand-bg group">
+                        <div key={idx} className="pdf-item flex items-center justify-between py-3 border-b border-brand-bg group">
                           <div className="flex items-center gap-3 pr-4">
                             <div className={`w-2 h-2 rounded-full shrink-0 ${isAcquired ? 'bg-brand-teal' : isLearning ? 'bg-amber-400' : 'bg-brand-coral'}`} />
-                            <span className="text-xs font-black uppercase text-brand-text/70 leading-tight">{item.competence}</span>
+                            <span className="text-xs font-black uppercase text-brand-text/70 leading-tight">{label}</span>
                           </div>
                           <div className="flex items-center gap-4 shrink-0">
                             <div className="w-20 h-1.5 bg-brand-bg rounded-full overflow-hidden hidden sm:block">
