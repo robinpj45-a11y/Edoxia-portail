@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { Lock, LogIn } from 'lucide-react';
+import { Lock, LogIn, Eye, EyeOff } from 'lucide-react';
 
 export default function EdoxiaJSWrapper() {
   const [students, setStudents] = useState([]);
@@ -13,6 +13,7 @@ export default function EdoxiaJSWrapper() {
   const [authRole, setAuthRole] = useState(localStorage.getItem('js2026_auth') || null);
   const [selectedRole, setSelectedRole] = useState('Parent');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -85,13 +86,22 @@ export default function EdoxiaJSWrapper() {
             {selectedRole !== 'Parent' && (
               <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
                 <label className="text-xs font-bold uppercase tracking-widest text-brand-text/60 px-1">Mot de passe</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Votre mot de passe..."
-                  className="w-full bg-white border-2 border-brand-bg rounded-2xl p-4 text-brand-text font-bold focus:border-brand-teal outline-none transition-colors placeholder:text-brand-text/30 placeholder:font-normal"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Votre mot de passe..."
+                    className="w-full bg-white border-2 border-brand-bg rounded-2xl p-4 pr-12 text-brand-text font-bold focus:border-brand-teal outline-none transition-colors placeholder:text-brand-text/30 placeholder:font-normal"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-brand-text/40 hover:text-brand-teal transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
               </div>
             )}
 
