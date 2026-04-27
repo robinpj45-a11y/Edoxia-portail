@@ -19,11 +19,33 @@ const generateClassPDF = (classLabel, students, teams) => {
   doc.setTextColor(100);
   doc.text(`Effectif : ${classStudents.length} élèves`, 14, 28);
 
+  const getContrastYIQ = (hexcolor) => {
+    if (!hexcolor) return '#000000';
+    hexcolor = hexcolor.replace("#", "");
+    if (hexcolor.length === 3) hexcolor = hexcolor.split("").map(x => x + x).join("");
+    const r = parseInt(hexcolor.substr(0, 2), 16);
+    const g = parseInt(hexcolor.substr(2, 2), 16);
+    const b = parseInt(hexcolor.substr(4, 2), 16);
+    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    return (yiq >= 128) ? '#000000' : '#ffffff';
+  };
+
   const tableData = classStudents.map(s => {
     let lastName = s.lastName ? s.lastName.toUpperCase() : s.name.split(' ')[0].toUpperCase();
     let firstName = s.firstName ? s.firstName : s.name.split(' ').slice(1).join(' ');
-    const teamName = s.team ? (teams.find(t => t.numId === s.team)?.name || `Équipe ${s.team}`) : "Non placé";
-    return [lastName, firstName, teamName];
+    
+    const team = s.team ? teams.find(t => t.numId === s.team) : null;
+    const teamName = team ? team.name : "Non placé";
+    
+    let equipeCell = teamName;
+    if (team && team.color) {
+      equipeCell = {
+        content: teamName,
+        styles: { fillColor: team.color, textColor: getContrastYIQ(team.color), fontStyle: 'bold' }
+      };
+    }
+    
+    return [lastName, firstName, equipeCell];
   });
 
   autoTable(doc, {
