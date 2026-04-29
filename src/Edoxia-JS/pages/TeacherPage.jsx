@@ -73,7 +73,44 @@ export default function TeacherPage() {
   const [paiClassModalOpen, setPaiClassModalOpen] = useState(false);
   const [paiTeamModalOpen, setPaiTeamModalOpen] = useState(null);
 
-  useEffect(() => { setSearchTerm(""); }, [currentClass]);
+  const [studentModalOpen, setStudentModalOpen] = useState(false);
+  const [newStudentLastName, setNewStudentLastName] = useState("");
+  const [newStudentFirstName, setNewStudentFirstName] = useState("");
+  const [newStudentGender, setNewStudentGender] = useState("");
+  const [newStudentClass, setNewStudentClass] = useState(CLASSES[0]);
+
+  useEffect(() => { setSearchTerm(""); setNewStudentClass(currentClass); }, [currentClass]);
+
+  const handleAddStudent = async (e) => {
+    e.preventDefault();
+    if (!newStudentLastName.trim() || !newStudentFirstName.trim() || !newStudentGender) return;
+    
+    const lastName = newStudentLastName.trim().toUpperCase();
+    const firstName = newStudentFirstName.trim().charAt(0).toUpperCase() + newStudentFirstName.trim().slice(1).toLowerCase();
+    const name = `${lastName} ${firstName}`;
+
+    try {
+      await addDoc(collection(db, "students"), {
+        name,
+        lastName,
+        firstName,
+        classLabel: newStudentClass,
+        team: null,
+        pai: false,
+        disruptive: false,
+        gender: newStudentGender,
+        isAdult: false,
+        createdAt: new Date()
+      });
+      setStudentModalOpen(false);
+      setNewStudentLastName("");
+      setNewStudentFirstName("");
+      setNewStudentGender("");
+    } catch (error) {
+      console.error(error);
+      alert("Erreur lors de l'ajout de l'élève.");
+    }
+  };
 
   const handleAddAdult = async (e) => {
     e.preventDefault();
@@ -177,6 +214,14 @@ export default function TeacherPage() {
               <button type="submit" disabled={loading} className="px-4 py-3 rounded-[16px] transition-all disabled:opacity-50 bg-brand-teal text-white hover:bg-brand-teal/90 shadow-soft hover:scale-105 active:scale-95"><Plus size={20} /></button>
             </div>
           </form>
+
+          <div className="flex justify-between items-end mb-2 mt-4 px-1">
+            <h3 className="text-brand-text/50 font-black tracking-tight text-xs uppercase ml-2">Élèves à placer</h3>
+            <button onClick={() => { setNewStudentClass(currentClass); setStudentModalOpen(true); }} className="flex items-center gap-1 text-[10px] uppercase font-black tracking-widest text-brand-teal bg-brand-teal/10 hover:bg-brand-teal/20 px-3 py-1.5 rounded-full transition-all shadow-sm border border-brand-teal/20">
+              <Plus size={14} /> Nouvel élève
+            </button>
+          </div>
+
           <div className="flex items-center gap-2 px-4 py-3 rounded-[20px] mb-4 bg-white/60 border border-white shadow-inner focus-within:ring-2 focus-within:ring-brand-teal transition-all"><Search size={18} className="text-brand-text/40" /><input type="text" placeholder="Rechercher..." className="bg-transparent text-sm font-bold w-full focus:outline-none text-brand-text placeholder-brand-text/40" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />{searchTerm && <button onClick={() => setSearchTerm("")} className="text-brand-text/40 hover:text-brand-text/70 p-1 bg-white/50 rounded-full shadow-sm">✕</button>}</div>
           <div className="h-[430px] overflow-y-auto space-y-3 p-3 shadow-inner rounded-[20px] bg-black/5 border border-white/40 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-brand-teal/30 hover:scrollbar-thumb-brand-teal/50 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-brand-teal/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-brand-teal/50" onDragOver={(e) => e.preventDefault()} onDrop={(e) => handleDrop(e, null)}>{poolStudents.map(student => (<PersonCard key={student.id} student={student} onDragStart={handleDragStart} onToggle={toggleAttribute} onDelete={handleDeleteStudent} />))}{poolStudents.length === 0 && <div className="text-center text-brand-text/40 font-bold uppercase tracking-wide text-[10px] py-10 opacity-70">{searchTerm ? "Aucun résultat" : "Aucun élève à placer"}</div>}</div>
           <div className="mt-4 rounded-[20px] p-4 shadow-inner shrink-0 bg-brand-teal/10 border border-brand-teal/20"><h3 className="text-brand-teal font-black tracking-tight text-sm mb-2 uppercase">Commentaires</h3><textarea className="w-full h-16 rounded-[16px] p-3 text-sm focus:outline-none resize-none bg-white/80 text-brand-text border border-white shadow-inner focus:ring-2 focus:ring-brand-teal transition-all font-medium placeholder-brand-text/30" placeholder="Notes..." value={comment} onChange={(e) => setComment(e.target.value)} /></div>
@@ -300,6 +345,46 @@ export default function TeacherPage() {
                           );
                       })}
                   </div>
+              </div>
+          </div>
+      )}
+
+      {studentModalOpen && (
+          <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-[2px] flex items-center justify-center p-4" onClick={(e) => { if(e.target === e.currentTarget) setStudentModalOpen(false); }}>
+              <div className="bg-white rounded-[30px] w-full max-w-md flex flex-col shadow-2xl overflow-hidden border border-white/50 animate-in fade-in zoom-in duration-200">
+                  <div className="p-6 border-b border-black/5 flex justify-between items-center bg-brand-teal text-white">
+                      <h2 className="text-xl font-black flex items-center gap-2"><User /> Nouvel Élève</h2>
+                      <button onClick={() => setStudentModalOpen(false)} className="hover:scale-110 transition-transform bg-white/20 hover:bg-white/30 p-2 rounded-full">✕</button>
+                  </div>
+                  <form onSubmit={handleAddStudent} className="p-6 flex-1 space-y-4 bg-brand-bg">
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold uppercase tracking-widest text-brand-text/60 ml-1">Nom</label>
+                        <input type="text" required placeholder="Ex: DUPONT" className="w-full px-4 py-3 rounded-[16px] focus:outline-none text-sm bg-white/80 border border-white shadow-inner focus:ring-2 focus:ring-brand-teal text-brand-text font-bold uppercase" value={newStudentLastName} onChange={(e) => setNewStudentLastName(e.target.value)} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold uppercase tracking-widest text-brand-text/60 ml-1">Prénom</label>
+                        <input type="text" required placeholder="Ex: Jean" className="w-full px-4 py-3 rounded-[16px] focus:outline-none text-sm bg-white/80 border border-white shadow-inner focus:ring-2 focus:ring-brand-teal text-brand-text font-bold" value={newStudentFirstName} onChange={(e) => setNewStudentFirstName(e.target.value)} />
+                      </div>
+                      <div className="flex gap-4">
+                        <div className="space-y-1 flex-1">
+                          <label className="text-xs font-bold uppercase tracking-widest text-brand-text/60 ml-1">Genre</label>
+                          <select required value={newStudentGender} onChange={(e) => setNewStudentGender(e.target.value)} className="w-full px-4 py-3 rounded-[16px] focus:outline-none text-sm bg-white/80 border border-white shadow-inner focus:ring-2 focus:ring-brand-teal text-brand-text font-bold">
+                            <option value="" disabled>Choisir</option>
+                            <option value="M">Garçon (M)</option>
+                            <option value="F">Fille (F)</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1 flex-1">
+                          <label className="text-xs font-bold uppercase tracking-widest text-brand-text/60 ml-1">Classe</label>
+                          <select required value={newStudentClass} onChange={(e) => setNewStudentClass(e.target.value)} className="w-full px-4 py-3 rounded-[16px] focus:outline-none text-sm bg-white/80 border border-white shadow-inner focus:ring-2 focus:ring-brand-teal text-brand-text font-bold">
+                            {CLASSES.map(cls => <option key={cls} value={cls}>{cls}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                      <button type="submit" disabled={loading} className="w-full mt-4 py-4 rounded-[16px] transition-all disabled:opacity-50 bg-brand-teal text-white font-black hover:bg-brand-teal/90 shadow-soft hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
+                        Créer l'élève
+                      </button>
+                  </form>
               </div>
           </div>
       )}

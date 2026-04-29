@@ -6,8 +6,8 @@ import { ArrowLeft, Save, Trash2, Plus, Edit, ChevronLeft, ChevronRight, User, C
 import { motion, AnimatePresence } from 'framer-motion';
 import SuccessMobileNav from '../components/SuccessMobileNav';
 
-// SUCCESS THRESHOLD: 75%
-const SUCCESS_THRESHOLD = 0.75;
+// SUCCESS THRESHOLD: 70%
+const SUCCESS_THRESHOLD = 0.70;
 
 // Custom styles to remove number input arrows
 const styles = `
@@ -276,7 +276,7 @@ export default function SuccessEvaluationDetail() {
                  let badgeClass = "bg-brand-text/5 text-brand-text/20";
 
                  if (!isNotEvaluated) {
-                    if (pct >= 75) { colorClass = "from-brand-teal/20 to-brand-teal/5"; ringClass = "border-brand-teal"; badgeClass = "bg-brand-teal text-white"; }
+                    if (pct >= 70) { colorClass = "from-brand-teal/20 to-brand-teal/5"; ringClass = "border-brand-teal"; badgeClass = "bg-brand-teal text-white"; }
                     else if (pct >= 31) { colorClass = "from-amber-400/20 to-amber-400/5"; ringClass = "border-amber-400"; badgeClass = "bg-amber-400 text-white"; }
                     else { colorClass = "from-brand-coral/20 to-brand-coral/5"; ringClass = "border-brand-coral"; badgeClass = "bg-brand-coral text-white"; }
                  }
@@ -290,7 +290,7 @@ export default function SuccessEvaluationDetail() {
                           <div className="space-y-1">
                              <div className="flex items-center justify-center gap-3">
                                 <span className="text-3xl font-black uppercase tracking-tighter leading-none italic">Exercice {idx + 1}</span>
-                                {pct >= 75 && !isNotEvaluated && <CheckCircle2 size={16} className="text-brand-teal" />}
+                                {pct >= 70 && !isNotEvaluated && <CheckCircle2 size={16} className="text-brand-teal" />}
                              </div>
                              <h2 className="text-[10px] font-black uppercase tracking-widest text-brand-text/40">{ex.name}</h2>
                              <p className="text-sm font-bold text-brand-text/40 leading-relaxed max-w-xl mx-auto">{ex.competence}</p>

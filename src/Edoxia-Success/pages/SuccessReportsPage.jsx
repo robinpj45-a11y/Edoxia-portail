@@ -588,8 +588,8 @@ export default function SuccessReportsPage() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {stats.exercises.map((ex, idx) => {
-                const isAcquiring = ex.avg >= 75;
-                const isLearning = ex.avg > 30 && ex.avg < 75;
+                const isAcquiring = ex.avg >= 70;
+                const isLearning = ex.avg > 30 && ex.avg < 70;
                 const isFailed = ex.avg <= 30;
 
                 return (
@@ -641,9 +641,9 @@ export default function SuccessReportsPage() {
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="w-24 md:w-32 h-2 bg-brand-text/5 rounded-full overflow-hidden">
-                      <div className={`h-full transition-all duration-1000 ${s.avg >= 75 ? 'bg-brand-teal' : s.avg > 30 ? 'bg-amber-400' : 'bg-brand-coral'}`} style={{ width: `${s.avg || 0}%` }}></div>
+                      <div className={`h-full transition-all duration-1000 ${s.avg >= 70 ? 'bg-brand-teal' : s.avg > 30 ? 'bg-amber-400' : 'bg-brand-coral'}`} style={{ width: `${s.avg || 0}%` }}></div>
                     </div>
-                    <span className={`text-sm font-black w-10 text-right ${s.avg >= 75 ? 'text-brand-teal' : s.avg > 30 ? 'text-amber-500' : 'text-brand-coral'}`}>{s.avg !== null ? `${s.avg.toFixed(0)}%` : '-'}</span>
+                    <span className={`text-sm font-black w-10 text-right ${s.avg >= 70 ? 'text-brand-teal' : s.avg > 30 ? 'text-amber-500' : 'text-brand-coral'}`}>{s.avg !== null ? `${s.avg.toFixed(0)}%` : '-'}</span>
                     <ChevronRight size={16} className="text-brand-text/20 group-hover:text-brand-teal group-hover:translate-x-1 transition-all" />
                   </div>
                 </div>
@@ -729,11 +729,11 @@ export default function SuccessReportsPage() {
                         </div>
                         <div className="flex items-center gap-3 shrink-0">
                           <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 ${c.score === null ? 'bg-blue-500/10 border-blue-100 text-blue-600' :
-                              c.score >= 75 ? 'bg-brand-teal/20 border-brand-teal/30 text-brand-teal' :
+                              c.score >= 70 ? 'bg-brand-teal/20 border-brand-teal/30 text-brand-teal' :
                                 c.score > 30 ? 'bg-amber-400/10 border-amber-200 text-amber-600' :
                                   'bg-brand-coral/10 border-brand-coral/30 text-brand-coral'
                             }`}>
-                            {c.score === null ? 'Non évalué' : c.score >= 75 ? 'Acquis' : c.score > 30 ? 'En cours' : 'Non acquis'}
+                            {c.score === null ? 'Non évalué' : c.score >= 70 ? 'Acquis' : c.score > 30 ? 'En cours' : 'Non acquis'}
                           </div>
                           <div className="text-sm font-black w-8 text-right text-brand-text/40">
                             {c.score !== null ? `${c.score}%` : '-'}
@@ -957,8 +957,8 @@ export default function SuccessReportsPage() {
                       <h3 className="text-xs font-black uppercase tracking-widest text-brand-text/30 mb-6">Détail des résultats</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
                         {data.data.map((item, idx) => {
-                          const isAcquired = item.score >= 75;
-                          const isLearning = item.score > 30 && item.score < 75;
+                          const isAcquired = item.score >= 70;
+                          const isLearning = item.score > 30 && item.score < 70;
                           const label = data.type === 'competence' ? item.competence : item.evaluation;
                           return (
                             <div key={idx} className="flex items-center justify-between py-3 border-b border-brand-bg group">
