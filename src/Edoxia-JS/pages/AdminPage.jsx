@@ -155,7 +155,7 @@ export default function AdminPage() {
                     {activeTab === 'export' && <AdminExport students={students} teams={teams} />}
                     {activeTab === 'import' && <AdminImport />}
                     {activeTab === 'bugs' && <AdminBugs />}
-                    {activeTab === 'danger' && <AdminDanger />}
+                    {activeTab === 'danger' && <AdminDanger students={students} />}
                 </div>
             </div>
             <nav className="md:hidden fixed bottom-0 left-0 right-0 flex justify-around p-3 pb-safe z-50 border-t border-white/50 bg-white/80 backdrop-blur-xl shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
@@ -251,7 +251,44 @@ function AdminBugs() {
     return (<div className="grid grid-cols-1 gap-4 pb-20 max-w-3xl mx-auto">{bugs.map(bug => (<div key={bug.id} className="rounded-[24px] shadow-soft border border-white/50 p-5 flex gap-4 bg-white/60 backdrop-blur-md"><div className="bg-brand-coral/20 text-brand-coral p-4 rounded-[20px] h-fit shrink-0 shadow-inner"><Bug size={24} /></div><div className="flex-1"><div className="flex justify-between items-start"><div><h4 className="font-black text-brand-text text-lg">{bug.prenom} {bug.nom}</h4><div className="text-[10px] text-brand-text/50 uppercase font-bold tracking-wide mt-1">{new Date(bug.date).toLocaleString()}</div></div><button onClick={() => deleteBug(bug.id)} className="text-brand-text/30 hover:text-brand-coral p-1 bg-white hover:shadow-soft rounded-full transition-all"><Trash2 size={18} /></button></div><p className="mt-4 text-sm p-4 rounded-[16px] border border-white/40 shadow-inner bg-black/5 text-brand-text">{bug.message}</p></div></div>))}</div>);
 }
 
-function AdminDanger() {
-    const handleReset = async () => { if (confirm("Tout effacer ?")) { const batch = writeBatch(db); const snaps = await getDocs(collection(db, "students")); snaps.forEach(d => batch.delete(d.ref)); await batch.commit(); alert("Terminé."); } }
-    return <div className="max-w-xl mx-auto mt-10 p-8 rounded-[30px] border border-brand-coral/30 text-center shadow-inner bg-brand-coral/10"><h3 className="font-black text-brand-coral text-xl tracking-tight mb-4 uppercase">Zone Danger</h3><button onClick={handleReset} className="px-6 py-3 rounded-full font-black tracking-wide text-white bg-brand-coral hover:bg-brand-coral/90 shadow-soft hover:scale-105 active:scale-95 transition-all">Tout effacer</button></div>
+function AdminDanger({ students }) {
+    const handleResetAll = async () => { if (confirm("Supprimer TOUTE la base de données élèves ?")) { const batch = writeBatch(db); const snaps = await getDocs(collection(db, "students")); snaps.forEach(d => batch.delete(d.ref)); await batch.commit(); alert("Terminé."); } }
+    
+    const handleEmptyTeams = async () => {
+        if (confirm("Êtes-vous sûr de vouloir retirer tous les élèves de toute l'école de leurs équipes ? Leurs attributs (PAI, classe, etc.) seront conservés.")) {
+            try {
+                const batch = writeBatch(db);
+                students.forEach(s => {
+                    if (s.team !== null) {
+                        batch.update(doc(db, "students", s.id), { team: null });
+                    }
+                });
+                await batch.commit();
+                alert("Toutes les équipes ont été vidées !");
+            } catch (err) {
+                console.error(err);
+                alert("Erreur lors de la réinitialisation.");
+            }
+        }
+    };
+
+    return (
+        <div className="max-w-xl mx-auto mt-10 p-8 rounded-[30px] border border-brand-coral/30 text-center shadow-inner bg-brand-coral/10 flex flex-col gap-8">
+            <h3 className="font-black text-brand-coral text-2xl tracking-tight uppercase">Zone Danger</h3>
+            
+            <div className="bg-white/40 p-6 rounded-[20px] shadow-sm border border-white/50">
+                <h4 className="font-black text-amber-600 text-lg tracking-tight mb-2 uppercase flex justify-center items-center gap-2"><Users size={20} /> Vider les équipes</h4>
+                <p className="text-sm font-bold text-brand-text/60 mb-6 px-4">Retire absolument tous les élèves de l'école de leurs équipes pour repartir de zéro. Conserve les classes et PAI.</p>
+                <button onClick={handleEmptyTeams} className="px-6 py-3 rounded-full font-black tracking-wide text-white bg-amber-500 hover:bg-amber-600 shadow-soft hover:scale-105 active:scale-95 transition-all w-full flex justify-center items-center gap-2"><Trash2 size={18} /> Vider toutes les équipes</button>
+            </div>
+            
+            <div className="h-px bg-brand-coral/20 w-full"></div>
+            
+            <div className="bg-white/40 p-6 rounded-[20px] shadow-sm border border-white/50">
+                <h4 className="font-black text-brand-coral text-lg tracking-tight mb-2 uppercase flex justify-center items-center gap-2"><Database size={20} /> Suppression Totale</h4>
+                <p className="text-sm font-bold text-brand-text/60 mb-6 px-4">Supprime définitivement TOUS les élèves de la base de données. Action irréversible !</p>
+                <button onClick={handleResetAll} className="px-6 py-3 rounded-full font-black tracking-wide text-white bg-brand-coral hover:bg-brand-coral/90 shadow-soft hover:scale-105 active:scale-95 transition-all w-full flex justify-center items-center gap-2"><Trash2 size={18} /> Tout effacer (Danger absolu)</button>
+            </div>
+        </div>
+    )
 }
