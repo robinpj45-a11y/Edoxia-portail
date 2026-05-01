@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Map, ArrowLeft, Calculator } from 'lucide-react';
+import { Calendar, Map, ArrowLeft, Calculator, Trophy, Users } from 'lucide-react';
 
 const QOLHubPage = () => {
   const navigate = useNavigate();
@@ -60,6 +60,28 @@ const QOLHubPage = () => {
             <div className="overflow-hidden">
               <div className="text-[12px] font-bold uppercase tracking-wider text-white/60 truncate">Suivi pédagogique</div>
               <div className="text-xl font-semibold text-white truncate">Calc. de Réussite</div>
+            </div>
+          </div>
+
+          {/* CARTE 4 - JS 2026 */}
+          <div onClick={() => navigate('/JS2026')} className="bg-orange-400 rounded-[20px] p-6 flex items-center gap-4 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:scale-105 transition-transform cursor-pointer">
+            <div className="p-3 bg-black/10 rounded-full shrink-0">
+              <Trophy className="w-8 h-8 text-white" />
+            </div>
+            <div className="overflow-hidden">
+              <div className="text-[12px] font-bold uppercase tracking-wider text-white/60 truncate">Vie scolaire</div>
+              <div className="text-xl font-semibold text-white truncate">JS 2026</div>
+            </div>
+          </div>
+
+          {/* CARTE 5 - Répartition */}
+          <div onClick={() => navigate('/repart')} className="bg-indigo-500 rounded-[20px] p-6 flex items-center gap-4 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:scale-105 transition-transform cursor-pointer">
+            <div className="p-3 bg-black/10 rounded-full shrink-0">
+              <Users className="w-8 h-8 text-white" />
+            </div>
+            <div className="overflow-hidden">
+              <div className="text-[12px] font-bold uppercase tracking-wider text-white/60 truncate">Organisation</div>
+              <div className="text-xl font-semibold text-white truncate">Répartition</div>
             </div>
           </div>
         </div>

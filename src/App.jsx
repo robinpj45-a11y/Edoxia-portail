@@ -30,7 +30,8 @@ import {
   Trophy,
   Home as HomeIcon,
   LayoutGrid,
-  UserPlus
+  UserPlus,
+  Users
 } from 'lucide-react';
 
 // IMPORT DU LOGO PERSO
@@ -73,6 +74,8 @@ import SuccessHubPage from './Edoxia-Success/pages/SuccessHubPage';
 import SuccessSpacePage from './Edoxia-Success/pages/SuccessSpacePage';
 import SuccessEvaluationDetail from './Edoxia-Success/pages/SuccessEvaluationDetail';
 import SuccessReportsPage from './Edoxia-Success/pages/SuccessReportsPage';
+import EdoxiaRepartWrapper from './Edoxia-Repart/pages/EdoxiaRepartWrapper';
+import RepartPage from './Edoxia-Repart/pages/RepartPage';
 import SuccessEvaluationCreator from './Edoxia-Success/pages/SuccessEvaluationCreator';
 
 
@@ -95,18 +98,6 @@ const ICON_MAP = {
 };
 
 const DEFAULT_MODULES = [
-  {
-    id: 'sport_stpbb',
-    name: 'Journée sportive STPBB',
-    path: '/JS2026',
-    desc: 'JS 2026',
-    icon: <Trophy className="w-6 h-6 text-orange-400" />,
-    tag: 'Vie scolaire',
-    active: true,
-    isProtected: false,
-    requiresSchoolAuth: true,
-    restrictedToRoles: ['enseignant', 'directeur', 'admin']
-  },
   {
     id: 'qvgdc',
     name: 'QVGDC ?',
@@ -473,7 +464,7 @@ const AppLayout = () => {
       </div>
 
       {/* Nouvelle Navbar Globale */}
-      {!location.pathname.startsWith('/JS2026') && !location.pathname.startsWith('/GVGDC') && !location.pathname.startsWith('/DashboardQVGDC') && !location.pathname.startsWith('/cd') && !location.pathname.startsWith('/success') && (
+      {!location.pathname.startsWith('/JS2026') && !location.pathname.startsWith('/GVGDC') && !location.pathname.startsWith('/DashboardQVGDC') && !location.pathname.startsWith('/cd') && !location.pathname.startsWith('/success') && !location.pathname.startsWith('/repart') && (
         <nav className="hidden md:flex justify-between items-center px-8 py-4 shrink-0 z-50 relative bg-brand-teal text-white shadow-soft">
           {/* Gauche : Logo */}
           <div className="flex items-center gap-6">
@@ -619,6 +610,9 @@ const AppLayout = () => {
               <AdminCalendar />
             </ProtectedRoute>
           } />
+          <Route path="/repart" element={<EdoxiaRepartWrapper />}>
+            <Route index element={<RepartPage />} />
+          </Route>
           <Route path="/JS2026" element={<EdoxiaJSWrapper />}>
             <Route index element={<HubPage />} />
             <Route path="teams" element={<MobileTeamsPage />} />
