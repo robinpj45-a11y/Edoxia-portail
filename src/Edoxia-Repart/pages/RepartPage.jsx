@@ -65,6 +65,11 @@ export default function RepartPage() {
   const teams = context?.classesList || [];
   const loading = context?.loading;
 
+  const classDisplayNames = {
+    "CP - Delphine A.": "CP - Aurélie B.",
+    "CE1 - Charlotte D.": "CE1 - Claire C."
+  };
+
   const [currentClass, setCurrentClass] = useState(CLASSES[0]);
   const [searchTerm, setSearchTerm] = useState("");
   const [addClassModalOpen, setAddClassModalOpen] = useState(false);
@@ -203,13 +208,15 @@ export default function RepartPage() {
       </header>
       <div className="shrink-0 px-8 mt-6 flex gap-2 overflow-x-auto overflow-y-hidden pb-4 border-b border-white/50 bg-white/70 backdrop-blur-xl rounded-t-[30px] pt-4 shadow-inner mx-4 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-brand-teal/30 hover:scrollbar-thumb-brand-teal/50 [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-brand-teal/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-brand-teal/50">
         {CLASSES.map((cls) => (
-          <button key={cls} onClick={() => setCurrentClass(cls)} className={`px-5 py-3 rounded-t-[20px] font-bold transition-all duration-200 border-x border-t whitespace-nowrap text-sm ${currentClass === cls ? 'z-10 bg-white text-brand-teal border-white/50 shadow-soft translate-y-[1px]' : 'bg-white/40 text-brand-text/50 border-white/40 hover:bg-white/60 hover:text-brand-text'}`}>{cls}</button>
+          <button key={cls} onClick={() => setCurrentClass(cls)} className={`px-5 py-3 rounded-t-[20px] font-bold transition-all duration-200 border-x border-t whitespace-nowrap text-sm ${currentClass === cls ? 'z-10 bg-white text-brand-teal border-white/50 shadow-soft translate-y-[1px]' : 'bg-white/40 text-brand-text/50 border-white/40 hover:bg-white/60 hover:text-brand-text'}`}>
+            {classDisplayNames[cls] || cls}
+          </button>
         ))}
       </div>
       <main className="flex gap-8 p-8 relative items-start">
         <div className="w-1/3 flex flex-col rounded-[30px] p-5 shadow-soft bg-white/60 backdrop-blur-md border border-white/50 sticky top-[150px] z-[40]">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="font-black tracking-tight text-xl text-brand-teal">{currentClass}</h2>
+            <h2 className="font-black tracking-tight text-xl text-brand-teal">{classDisplayNames[currentClass] || currentClass}</h2>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-bold uppercase tracking-wide px-3 py-1.5 rounded-full bg-black/5 text-brand-text/60 shadow-inner">{students.filter(s => s.classLabel === currentClass && !s.isAdult).length} élèves</span>
               
