@@ -76,6 +76,7 @@ import SuccessEvaluationDetail from './Edoxia-Success/pages/SuccessEvaluationDet
 import SuccessReportsPage from './Edoxia-Success/pages/SuccessReportsPage';
 import EdoxiaRepartWrapper from './Edoxia-Repart/pages/EdoxiaRepartWrapper';
 import RepartPage from './Edoxia-Repart/pages/RepartPage';
+import RepartCollegePage from './Edoxia-Repart/pages/RepartCollegePage';
 import SuccessEvaluationCreator from './Edoxia-Success/pages/SuccessEvaluationCreator';
 
 
@@ -612,6 +613,7 @@ const AppLayout = () => {
           } />
           <Route path="/repart" element={<EdoxiaRepartWrapper />}>
             <Route index element={<RepartPage />} />
+            <Route path="college" element={<RepartCollegePage />} />
           </Route>
           <Route path="/JS2026" element={<EdoxiaJSWrapper />}>
             <Route index element={<HubPage />} />

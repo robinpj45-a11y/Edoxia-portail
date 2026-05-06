@@ -6,7 +6,8 @@ import { Lock, LogIn, Eye, EyeOff } from 'lucide-react';
 
 export default function EdoxiaRepartWrapper() {
   const [students, setStudents] = useState([]);
-  const [classesList, setClassesList] = useState([]); // destination classes
+  const [classesList, setClassesList] = useState([]); // primary destination classes
+  const [classesCollegeList, setClassesCollegeList] = useState([]); // college destination classes
   const [loading, setLoading] = useState(true);
 
   // Auth state
@@ -49,12 +50,19 @@ export default function EdoxiaRepartWrapper() {
     const qClasses = query(collection(db, "repart_classes"), orderBy("numId"));
     const unsubClasses = onSnapshot(qClasses, (snap) => {
       setClassesList(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+
+    // 3. Snapshot for college classes
+    const qCollegeClasses = query(collection(db, "repart_classes_college"), orderBy("numId"));
+    const unsubCollegeClasses = onSnapshot(qCollegeClasses, (snap) => {
+      setClassesCollegeList(snap.docs.map(d => ({ id: d.id, ...d.data() })));
       setLoading(false);
     });
 
     return () => {
       unsubStudents();
       unsubClasses();
+      unsubCollegeClasses();
     };
   }, [authRole]);
 
@@ -120,6 +128,6 @@ export default function EdoxiaRepartWrapper() {
   }
 
   return (
-    <Outlet context={{ students, classesList, loading, authRole }} />
+    <Outlet context={{ students, classesList, classesCollegeList, loading, authRole }} />
   );
 }

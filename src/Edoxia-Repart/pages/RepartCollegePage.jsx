@@ -7,7 +7,7 @@ import { addDoc, updateDoc, deleteDoc, doc, collection } from 'firebase/firestor
 import { db } from '../../firebase';
 import { CLASSES as ALL_CLASSES } from '../../Edoxia-JS/utils/constants';
 
-const CLASSES = ALL_CLASSES.filter(c => !c.includes("CM2"));
+const CLASSES = ALL_CLASSES.filter(c => c.includes("CM2"));
 
 const generateClassPDF = (classLabel, students, teams) => {
   const doc = new jsPDF();
@@ -60,11 +60,11 @@ const generateClassPDF = (classLabel, students, teams) => {
   doc.save(`${classLabel}_PDF.pdf`);
 };
 
-export default function RepartPage() {
+export default function RepartCollegePage() {
   const navigate = useNavigate();
   const context = useOutletContext();
   const students = context?.students || [];
-  const teams = context?.classesList || [];
+  const teams = context?.classesCollegeList || [];
   const loading = context?.loading;
 
   const classDisplayNames = {
@@ -129,7 +129,7 @@ export default function RepartPage() {
     e.preventDefault();
     if (!newClassName.trim()) return;
     try {
-      await addDoc(collection(db, "repart_classes"), {
+      await addDoc(collection(db, "repart_classes_college"), {
         name: newClassName.trim(),
         numId: (teams.length > 0 ? Math.max(...teams.map(t => t.numId || 0)) : 0) + 1,
         locked: false,
@@ -144,7 +144,7 @@ export default function RepartPage() {
   const handleDeleteClass = async (teamId, numId) => {
     if (!confirm("Supprimer cette classe ? Les élèves seront remis en liste d'attente.")) return;
     try {
-      await deleteDoc(doc(db, "repart_classes", teamId));
+      await deleteDoc(doc(db, "repart_classes_college", teamId));
       const updates = students.filter(s => s.team === numId).map(s => 
         updateDoc(doc(db, "repart_students", s.id), { team: null })
       );
@@ -154,7 +154,7 @@ export default function RepartPage() {
 
   const toggleClassLock = async (teamId, currentLocked) => {
     try {
-      await updateDoc(doc(db, "repart_classes", teamId), { locked: !currentLocked });
+      await updateDoc(doc(db, "repart_classes_college", teamId), { locked: !currentLocked });
     } catch (error) { console.error(error); }
   };
 
@@ -248,9 +248,9 @@ export default function RepartPage() {
       <header className="sticky top-0 z-[60] border-b border-white/50 p-4 px-8 flex justify-between items-center shadow-soft bg-white/40 backdrop-blur-md">
         <button onClick={() => navigate('/qol')} className="flex items-center gap-2 transition-colors font-bold text-brand-text/50 hover:text-brand-text"><ArrowLeft size={20} /> Retour</button>
         <h1 className="text-xl font-black tracking-tight flex items-center gap-2 text-brand-text">
-          <button onClick={() => navigate('/repart/college')} className="px-4 py-1.5 rounded-full bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500 hover:text-white transition-all text-xs font-black mr-1" title="Répartition 6ème">6ème</button>
+          <button onClick={() => navigate('/repart')} className="px-4 py-1.5 rounded-full bg-brand-teal/10 text-brand-teal hover:bg-brand-teal hover:text-white transition-all text-xs font-black mr-1" title="Retour Primaire">Primaire</button>
           <button onClick={() => setHelpModalOpen(true)} className="p-1.5 rounded-full hover:bg-brand-teal/10 text-brand-teal/60 hover:text-brand-teal transition-all mr-1" title="Aide"><Info size={22} /></button>
-          <GraduationCap className="text-indigo-500" /> Répartition école 2026/2027
+          <GraduationCap className="text-indigo-500" /> Répartition 6ème 2026/2027
         </h1>
       </header>
       <div className="shrink-0 px-8 mt-6 flex gap-2 overflow-x-auto overflow-y-hidden pb-4 border-b border-white/50 bg-white/70 backdrop-blur-xl rounded-t-[30px] pt-4 shadow-inner mx-4 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-brand-teal/30 hover:scrollbar-thumb-brand-teal/50 [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-brand-teal/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-brand-teal/50">
@@ -326,8 +326,8 @@ export default function RepartPage() {
               const allStudentsInTeam = students
                 .filter(s => s.team === teamId)
                 .sort((a, b) => {
-                  const classIndexA = CLASSES.indexOf(a.importedClassLabel || a.classLabel);
-                  const classIndexB = CLASSES.indexOf(b.importedClassLabel || b.classLabel);
+                  const classIndexA = ALL_CLASSES.indexOf(a.importedClassLabel || a.classLabel);
+                  const classIndexB = ALL_CLASSES.indexOf(b.importedClassLabel || b.classLabel);
                   const idxA = classIndexA === -1 ? 999 : classIndexA;
                   const idxB = classIndexB === -1 ? 999 : classIndexB;
                   if (idxA !== idxB) return idxA - idxB;
@@ -585,7 +585,7 @@ export default function RepartPage() {
             <form onSubmit={handleAddClass} className="p-6 flex-1 space-y-4 bg-brand-bg">
               <div className="space-y-1">
                 <label className="text-xs font-bold uppercase tracking-widest text-brand-text/60 ml-1">Nom de la classe</label>
-                <input type="text" required placeholder="Ex: CM1-CM2 A" className="w-full px-4 py-3 rounded-[16px] focus:outline-none text-sm bg-white/80 border border-white shadow-inner focus:ring-2 focus:ring-indigo-500 text-brand-text font-bold" value={newClassName} onChange={(e) => setNewClassName(e.target.value)} />
+                <input type="text" required placeholder="Ex: 6ème A" className="w-full px-4 py-3 rounded-[16px] focus:outline-none text-sm bg-white/80 border border-white shadow-inner focus:ring-2 focus:ring-indigo-500 text-brand-text font-bold" value={newClassName} onChange={(e) => setNewClassName(e.target.value)} />
               </div>
               <button type="submit" disabled={loading} className="w-full mt-4 py-4 rounded-[16px] transition-all disabled:opacity-50 bg-indigo-600 text-white font-black hover:bg-indigo-700 shadow-soft hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
                 Créer la classe
