@@ -82,7 +82,7 @@ export default function CDHubPage() {
   return (
     <div className="flex flex-col h-screen">
       <header className="shrink-0 sticky top-0 z-[60] border-b border-white/50 p-4 px-8 flex justify-between items-center shadow-soft bg-white/40 backdrop-blur-md">
-        <button onClick={() => navigate('/qol')} className="flex items-center gap-2 transition-colors font-bold text-brand-text/50 hover:text-brand-text"><ArrowLeft size={20} /> Retour QoL</button>
+        <button onClick={() => navigate('/stpbb')} className="flex items-center gap-2 transition-colors font-bold text-brand-text/50 hover:text-brand-text"><ArrowLeft size={20} /> Retour QoL</button>
         <div className="flex items-center gap-4">
           <button
             onClick={() => setShowImportModal(true)}

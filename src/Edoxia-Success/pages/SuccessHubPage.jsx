@@ -18,8 +18,8 @@ export default function SuccessHubPage() {
       <div className="absolute bottom-0 -left-20 w-80 h-80 bg-brand-coral/10 rounded-full blur-3xl pointer-events-none z-0"></div>
 
       <header className="shrink-0 sticky top-0 z-[60] border-b border-white/50 p-4 px-8 flex justify-between items-center shadow-soft bg-white/40 backdrop-blur-md">
-        <button onClick={() => navigate('/')} className="flex items-center gap-2 transition-colors font-bold text-brand-text/50 hover:text-brand-text">
-          <ArrowLeft size={20} /> Retour Accueil
+        <button onClick={() => navigate('/stpbb')} className="flex items-center gap-2 transition-colors font-bold text-brand-text/50 hover:text-brand-text">
+          <ArrowLeft size={20} /> Retour
         </button>
         <h1 className="text-xl font-black tracking-tight flex items-center gap-2 text-brand-text">
           <LayoutGrid size={24} className="text-brand-teal" /> Suivi Pédagogique

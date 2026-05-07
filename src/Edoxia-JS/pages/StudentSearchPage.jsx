@@ -105,7 +105,9 @@ export default function StudentSearchPage() {
       <header className="p-4 px-6 rounded-b-[30px] flex justify-between items-center shadow-soft bg-white/40 backdrop-blur-md border-b border-white/50 sticky top-0 z-50">
         <div className="flex items-center gap-4">
           <button onClick={() => {
-            if (location.state?.fromTeamId) {
+            if (location.state?.from === 'stpbb') {
+              navigate('/stpbb');
+            } else if (location.state?.fromTeamId) {
               navigate('/JS2026/teams', { state: { fromTeamId: location.state.fromTeamId } });
             } else {
               navigate('/JS2026');

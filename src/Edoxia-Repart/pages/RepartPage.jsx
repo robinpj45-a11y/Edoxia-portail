@@ -246,7 +246,7 @@ export default function RepartPage() {
   return (
     <div className="flex flex-col font-sans min-h-screen transition-colors duration-300 bg-brand-bg text-brand-text">
       <header className="sticky top-0 z-[60] border-b border-white/50 p-4 px-8 flex justify-between items-center shadow-soft bg-white/40 backdrop-blur-md">
-        <button onClick={() => navigate('/qol')} className="flex items-center gap-2 transition-colors font-bold text-brand-text/50 hover:text-brand-text"><ArrowLeft size={20} /> Retour</button>
+        <button onClick={() => navigate('/stpbb')} className="flex items-center gap-2 transition-colors font-bold text-brand-text/50 hover:text-brand-text"><ArrowLeft size={20} /> Retour</button>
         <h1 className="text-xl font-black tracking-tight flex items-center gap-2 text-brand-text">
           <button onClick={() => navigate('/repart/college')} className="px-4 py-1.5 rounded-full bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500 hover:text-white transition-all text-xs font-black mr-1" title="Répartition 6ème">6ème</button>
           <button onClick={() => setHelpModalOpen(true)} className="p-1.5 rounded-full hover:bg-brand-teal/10 text-brand-teal/60 hover:text-brand-teal transition-all mr-1" title="Aide"><Info size={22} /></button>

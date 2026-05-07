@@ -17,7 +17,7 @@ export default function HubPage() {
     <div className="min-h-screen flex flex-col font-sans bg-brand-bg text-brand-text transition-colors duration-300">
       <header className="p-4 px-6 rounded-b-[30px] flex justify-between items-center shadow-soft bg-white/40 backdrop-blur-md border-b border-white/50 sticky top-0 z-50">
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/')} className="p-2 rounded-full transition-all bg-white/50 hover:bg-white text-brand-text/50 hover:text-brand-text shadow-sm">
+          <button onClick={() => navigate('/stpbb')} className="p-2 rounded-full transition-all bg-white/50 hover:bg-white text-brand-text/50 hover:text-brand-text shadow-sm" title="Retour QoL">
             <ArrowLeft size={20} />
           </button>
           <div>

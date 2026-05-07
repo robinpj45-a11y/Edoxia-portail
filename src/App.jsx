@@ -111,16 +111,14 @@ const DEFAULT_MODULES = [
     requiresSchoolAuth: false
   },
   {
-    id: 'qol',
+    id: 'stpbb',
     name: 'QoL',
-    path: '/qol',
+    path: '/stpbb',
     desc: 'Qualité de vie',
     icon: <Sun className="w-6 h-6 text-brand-teal" />,
     tag: 'Vie scolaire',
     active: true,
-    isProtected: false,
-    requiresSchoolAuth: true,
-    restrictedToRoles: ['enseignant', 'admin']
+    requiresSchoolAuth: false
   },
   {
     id: 'success',
@@ -465,7 +463,7 @@ const AppLayout = () => {
       </div>
 
       {/* Nouvelle Navbar Globale */}
-      {!location.pathname.startsWith('/JS2026') && !location.pathname.startsWith('/GVGDC') && !location.pathname.startsWith('/DashboardQVGDC') && !location.pathname.startsWith('/cd') && !location.pathname.startsWith('/success') && !location.pathname.startsWith('/repart') && (
+      {!location.pathname.startsWith('/JS2026') && !location.pathname.startsWith('/GVGDC') && !location.pathname.startsWith('/DashboardQVGDC') && !location.pathname.startsWith('/cd') && !location.pathname.startsWith('/success') && !location.pathname.startsWith('/repart') && !location.pathname.startsWith('/stpbb') && (
         <nav className="hidden md:flex justify-between items-center px-8 py-4 shrink-0 z-50 relative bg-brand-teal text-white shadow-soft">
           {/* Gauche : Logo */}
           <div className="flex items-center gap-6">
@@ -511,7 +509,7 @@ const AppLayout = () => {
       )}
 
       {/* Navbar Mobile (Bottom) */}
-      {!location.pathname.startsWith('/games') && !location.pathname.startsWith('/JS2026') && !location.pathname.startsWith('/GVGDC') && !location.pathname.startsWith('/DashboardQVGDC') && !location.pathname.startsWith('/events') && !location.pathname.startsWith('/calendar') && !location.pathname.startsWith('/cd') && !location.pathname.startsWith('/success') && (
+      {!location.pathname.startsWith('/games') && !location.pathname.startsWith('/JS2026') && !location.pathname.startsWith('/GVGDC') && !location.pathname.startsWith('/DashboardQVGDC') && !location.pathname.startsWith('/events') && !location.pathname.startsWith('/calendar') && !location.pathname.startsWith('/cd') && !location.pathname.startsWith('/success') && !location.pathname.startsWith('/stpbb') && (
         <nav className="md:hidden fixed bottom-6 left-6 right-6 z-[100] bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-brand-text/5 flex justify-around items-center px-2 py-3 backdrop-blur-xl">
           <button onClick={() => navigate('/')} className={`flex flex-col items-center gap-1 p-2 transition-colors ${location.pathname === '/' ? 'text-brand-text' : 'text-brand-text/40 hover:text-brand-coral'}`}>
             <HomeIcon className="w-6 h-6" />
@@ -626,11 +624,7 @@ const AppLayout = () => {
           </Route>
           <Route path="/GVGDC" element={<GVGDC />} />
           <Route path="/DashboardQVGDC" element={<DashboardQVGDC />} />
-          <Route path="/qol" element={
-            <ProtectedRoute isAllowed={isAuthorized}>
-              <QOLHubPage />
-            </ProtectedRoute>
-          } />
+          <Route path="/stpbb" element={<QOLHubPage />} />
           <Route path="/cd" element={<EdoxiaCDWrapper />}>
             <Route index element={<CDHubPage />} />
             <Route path="rooms" element={<CDRoomPlanner />} />
