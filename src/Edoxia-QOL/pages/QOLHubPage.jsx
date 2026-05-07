@@ -43,7 +43,7 @@ const QOLHubPage = () => {
             <div className="mx-auto w-16 h-16 bg-indigo-500/10 rounded-full flex items-center justify-center mb-4">
               <Lock className="w-8 h-8 text-indigo-500" />
             </div>
-            <h1 className="text-3xl font-black tracking-tighter text-brand-text">Espace QOL</h1>
+            <h1 className="text-3xl font-black tracking-tighter text-brand-text">Espace STPBB</h1>
             <p className="text-brand-text/50 font-medium mt-2">Veuillez entrer le mot de passe pour accéder aux outils</p>
           </div>
 
