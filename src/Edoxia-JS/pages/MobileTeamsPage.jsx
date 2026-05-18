@@ -12,6 +12,7 @@ export default function Teams() {
     const context = useOutletContext();
     const students = context?.students || [];
     const teams = context?.teams || [];
+    const scheduleSlots = context?.scheduleSlots || [];
     const loading = context?.loading;
 
     const [selectedTeamId, setSelectedTeamId] = useState(location.state?.fromTeamId !== undefined ? location.state.fromTeamId : null);
@@ -122,6 +123,33 @@ export default function Teams() {
                     </div>
                 )}
 
+                {tab === 'prog' && (
+                    <div className="p-4 space-y-4 mt-2 mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        {scheduleSlots.length === 0 ? (
+                            <div className="text-center text-brand-text/40 font-bold py-12 uppercase tracking-widest text-xs border-2 border-dashed border-white/50 rounded-[20px] bg-black/5">Le programme n'a pas encore été défini.</div>
+                        ) : (
+                            <div className="relative border-l-2 border-brand-teal/30 ml-4 space-y-8 py-4">
+                                {scheduleSlots.map((slot, index) => {
+                                    const activity = team.schedule?.[slot.id] || "Activité libre";
+                                    return (
+                                        <div key={slot.id} className="relative pl-6">
+                                            <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-brand-teal border-4 border-brand-bg shadow-sm"></div>
+                                            <div className="bg-white rounded-[20px] p-4 shadow-sm border border-white/80 flex flex-col gap-2">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="font-black text-brand-teal text-lg leading-none">{slot.startTime}</div>
+                                                    <div className="text-[10px] font-black uppercase tracking-widest bg-brand-teal/10 text-brand-teal px-2 py-1 rounded-full">{slot.endTime}</div>
+                                                </div>
+                                                {slot.label && <div className="text-[10px] uppercase font-bold text-brand-text/50 tracking-widest">{slot.label}</div>}
+                                                <div className="font-bold text-brand-text text-lg mt-1">{activity}</div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 <nav className="fixed bottom-0 left-0 right-0 h-24 bg-white/90 backdrop-blur-xl shadow-[0_-10px_40px_rgba(0,0,0,0.08)] border-t border-black/5 flex justify-around items-center px-4 pb-safe z-50 rounded-t-[40px]">
                     <button onClick={() => { if(tab === 'dashboard') setSelectedTeamId(null); else setTab('dashboard'); }} className={`flex flex-col items-center justify-center w-16 h-16 rounded-2xl gap-1.5 transition-all ${tab === 'dashboard' ? 'bg-brand-bg shadow-inner scale-105' : 'hover:bg-black/5'}`}>
                         <ArrowLeft size={24} strokeWidth={2.5} className={tab === 'dashboard' ? 'text-brand-text/40' : 'text-brand-text/60'} />
@@ -138,7 +166,7 @@ export default function Teams() {
                         <span className="text-[8px] uppercase font-black tracking-widest">Les PAI</span>
                     </button>
 
-                    <button onClick={() => alert("Le programme de la journée sera bientôt disponible !")} className="flex flex-col items-center justify-center w-16 h-16 rounded-2xl gap-1.5 transition-all text-brand-text/60 hover:bg-black/5">
+                    <button onClick={() => setTab('prog')} className={`flex flex-col items-center justify-center w-16 h-16 rounded-2xl gap-1.5 transition-all ${tab === 'prog' ? 'bg-brand-teal/10 text-brand-teal shadow-inner scale-105' : 'text-brand-text/60 hover:bg-black/5'}`}>
                         <Calendar size={24} strokeWidth={2.5} />
                         <span className="text-[8px] uppercase font-black tracking-widest">Prog.</span>
                     </button>

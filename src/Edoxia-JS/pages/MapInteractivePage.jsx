@@ -23,6 +23,7 @@ const MapInteractivePage = () => {
     // Interactions
     const [highlightedZoneId, setHighlightedZoneId] = useState(null);
     const [editingZone, setEditingZone] = useState(null); // Zone en cours d'édition (popup d'info)
+    const [selectedZone, setSelectedZone] = useState(null); // Zone sélectionnée pour affichage info (non-admin)
     
     // Dessin de zone
     const [isDrawing, setIsDrawing] = useState(false);
@@ -172,6 +173,11 @@ const MapInteractivePage = () => {
     const focusZone = (zoneId) => {
         setHighlightedZoneId(zoneId);
         setIsMenuOpen(false);
+        
+        const zone = zones.find(z => z.id === zoneId);
+        if (zone && !isAdmin) {
+            setSelectedZone(zone);
+        }
 
         const el = document.getElementById(`zone-${zoneId}`);
         if (el && scrollContainerRef.current) {
@@ -272,6 +278,7 @@ const MapInteractivePage = () => {
                         onPointerMove={handlePointerMove}
                         onPointerUp={handlePointerUp}
                         onPointerCancel={handlePointerUp}
+                        onClick={() => setSelectedZone(null)}
                         style={{ 
                             touchAction: (isAdmin && isAdminDrawingState) ? 'none' : 'auto',
                             width: `${zoomLevel}vw`, 
@@ -312,7 +319,10 @@ const MapInteractivePage = () => {
                                     onClick={(e) => {
                                         e.stopPropagation(); // ne pas déclencher le draw
                                         if (isAdmin) setEditingZone(zone);
-                                        else focusZone(zone.id); // Sur mobile utilisateur: cliquer sur une zone invisible/visible l'anime
+                                        else {
+                                            focusZone(zone.id);
+                                            setSelectedZone(zone);
+                                        }
                                     }}
                                 >
                                     {zone.icon && AVAILABLE_ICONS[zone.icon] && React.createElement(AVAILABLE_ICONS[zone.icon], {
@@ -394,6 +404,48 @@ const MapInteractivePage = () => {
                         <div className="flex gap-2 mt-1.5">
                             <button onClick={() => handleEditZone(editingZone)} className="flex-1 py-2 px-3 bg-brand-bg rounded-lg text-brand-text text-sm font-bold flex items-center justify-center gap-2 hover:bg-brand-teal/10 hover:text-brand-teal transition-colors"><Edit2 size={16}/> Editer</button>
                             <button onClick={() => handleDeleteZone(editingZone.id)} className="flex-1 py-2 px-3 bg-brand-bg rounded-lg text-rose-500 text-sm font-bold flex items-center justify-center gap-2 hover:bg-rose-50 transition-colors"><Trash2 size={16}/> Supprimer</button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Affichage Info Zone (Utilisateur standard) */}
+            <AnimatePresence>
+                {!isAdmin && selectedZone && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 50 }} 
+                        animate={{ opacity: 1, y: 0 }} 
+                        exit={{ opacity: 0, y: 50 }}
+                        className="fixed bottom-24 left-4 right-4 md:left-auto md:right-1/2 md:translate-x-1/2 md:w-96 bg-white rounded-2xl p-5 shadow-2xl border border-brand-text/10 z-50 flex flex-col gap-3"
+                    >
+                        <div className="flex justify-between items-start">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-brand-teal/10 p-2 rounded-xl text-brand-teal">
+                                    {selectedZone.icon && AVAILABLE_ICONS[selectedZone.icon] 
+                                        ? React.createElement(AVAILABLE_ICONS[selectedZone.icon], { size: 24 })
+                                        : <MapPin size={24} />
+                                    }
+                                </div>
+                                <h3 className="font-black text-xl text-brand-text leading-tight">{selectedZone.name}</h3>
+                            </div>
+                            <button onClick={() => setSelectedZone(null)} className="p-1 text-brand-text/40 hover:text-brand-text bg-brand-bg rounded-full"><X size={20} /></button>
+                        </div>
+                        
+                        {selectedZone.description ? (
+                            <p className="text-brand-text/70 leading-relaxed font-medium">
+                                {selectedZone.description}
+                            </p>
+                        ) : (
+                            <p className="text-brand-text/40 italic text-sm">Aucune description disponible pour ce lieu.</p>
+                        )}
+                        
+                        <div className="mt-2 pt-4 border-t border-brand-text/5 flex justify-end">
+                            <button 
+                                onClick={() => setSelectedZone(null)}
+                                className="px-6 py-2 bg-brand-teal text-white rounded-xl font-bold text-sm shadow-lg shadow-brand-teal/20 active:scale-95 transition-all"
+                            >
+                                Fermer
+                            </button>
                         </div>
                     </motion.div>
                 )}

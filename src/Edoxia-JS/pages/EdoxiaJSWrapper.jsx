@@ -7,6 +7,8 @@ import { Lock, LogIn, Eye, EyeOff } from 'lucide-react';
 export default function EdoxiaJSWrapper() {
   const [students, setStudents] = useState([]);
   const [teams, setTeams] = useState([]);
+  const [scheduleSlots, setScheduleSlots] = useState([]);
+  const [scheduleActivities, setScheduleActivities] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Auth state
@@ -30,9 +32,25 @@ export default function EdoxiaJSWrapper() {
       setLoading(false);
     });
 
+    // 3. Snapshot for schedule slots
+    const qSlots = query(collection(db, "scheduleSlots"), orderBy("order"));
+    const unsubSlots = onSnapshot(qSlots, (snap) => {
+      setScheduleSlots(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+
+    // 4. Snapshot for schedule activities
+    const unsubActivities = onSnapshot(collection(db, "scheduleActivities"), (snap) => {
+      // Sort activities alphabetically client-side to avoid needing an index
+      const activities = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      activities.sort((a, b) => a.name.localeCompare(b.name));
+      setScheduleActivities(activities);
+    });
+
     return () => {
       unsubStudents();
       unsubTeams();
+      unsubSlots();
+      unsubActivities();
     };
   }, []);
 
@@ -125,6 +143,6 @@ export default function EdoxiaJSWrapper() {
   }
 
   return (
-    <Outlet context={{ students, teams, loading, authRole }} />
+    <Outlet context={{ students, teams, scheduleSlots, scheduleActivities, loading, authRole }} />
   );
 }
