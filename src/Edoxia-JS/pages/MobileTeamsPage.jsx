@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useOutletContext, useLocation } from 'react-router-dom';
-import { ArrowLeft, Lock, FileText, Flag, Users, Calendar, User, Search } from 'lucide-react';
+import { ArrowLeft, Lock, FileText, Flag, Users, Calendar, User, Search, Trophy } from 'lucide-react';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { ThemeContext } from '../../ThemeContext';
@@ -13,6 +13,7 @@ export default function Teams() {
     const students = context?.students || [];
     const teams = context?.teams || [];
     const scheduleSlots = context?.scheduleSlots || [];
+    const scores = context?.scores || [];
     const loading = context?.loading;
 
     const [selectedTeamId, setSelectedTeamId] = useState(location.state?.fromTeamId !== undefined ? location.state.fromTeamId : null);
@@ -150,29 +151,89 @@ export default function Teams() {
                     </div>
                 )}
 
+                {tab === 'score' && (
+                    <div className="p-4 space-y-4 mt-2 mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        {(() => {
+                            const teamScores = scores.filter(s => s.teamId === selectedTeamId);
+                            const totalClassic = teamScores.reduce((sum, s) => sum + (s.classicScore || 0), 0);
+                            const totalSpirit = teamScores.reduce((sum, s) => sum + (s.spiritScore || 0), 0);
+                            const grandTotal = totalClassic + totalSpirit;
+
+                            return (
+                                <>
+                                    <div className="bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-[24px] p-6 text-center shadow-soft border border-yellow-300/50 text-white flex flex-col items-center justify-center gap-2">
+                                        <Trophy size={48} className="drop-shadow-md mb-2" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-yellow-100">Score Total</span>
+                                        <span className="text-6xl font-black drop-shadow-md leading-none">{grandTotal}</span>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="bg-white p-4 rounded-[20px] shadow-sm border border-black/5 flex flex-col items-center justify-center text-center gap-1">
+                                            <span className="text-[9px] font-black uppercase tracking-widest text-brand-text/40">Classique</span>
+                                            <span className="text-2xl font-black text-brand-text">{totalClassic}</span>
+                                        </div>
+                                        <div className="bg-brand-teal/10 p-4 rounded-[20px] shadow-sm border border-brand-teal/20 flex flex-col items-center justify-center text-center gap-1">
+                                            <span className="text-[9px] font-black uppercase tracking-widest text-brand-teal/60">Esprit d'équipe</span>
+                                            <span className="text-2xl font-black text-brand-teal">{totalSpirit}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-6 space-y-3">
+                                        <h3 className="text-xs font-black uppercase tracking-widest text-brand-text/50 ml-2 mb-4">Détail par activité</h3>
+                                        {teamScores.length === 0 ? (
+                                            <div className="text-center py-8 text-[10px] font-bold uppercase tracking-widest text-brand-text/40 bg-black/5 rounded-[20px] border border-dashed border-black/10">Aucun score enregistré</div>
+                                        ) : (
+                                            teamScores.map(score => (
+                                                <div key={score.id} className="bg-white p-4 rounded-[20px] shadow-sm border border-black/5 flex flex-col gap-2">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="font-bold text-brand-text text-lg">{score.activity}</span>
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <span className="flex-1 bg-black/5 px-2 py-1.5 rounded-lg text-xs font-black text-brand-text/70 flex justify-between items-center">
+                                                            Classique <span>{score.classicScore}</span>
+                                                        </span>
+                                                        <span className="flex-1 bg-brand-teal/10 px-2 py-1.5 rounded-lg text-xs font-black text-brand-teal flex justify-between items-center">
+                                                            Esprit <span>{score.spiritScore}</span>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </>
+                            );
+                        })()}
+                    </div>
+                )}
+
                 <nav className="fixed bottom-0 left-0 right-0 h-24 bg-white/90 backdrop-blur-xl shadow-[0_-10px_40px_rgba(0,0,0,0.08)] border-t border-black/5 flex justify-around items-center px-4 pb-safe z-50 rounded-t-[40px]">
-                    <button onClick={() => { if(tab === 'dashboard') setSelectedTeamId(null); else setTab('dashboard'); }} className={`flex flex-col items-center justify-center w-16 h-16 rounded-2xl gap-1.5 transition-all ${tab === 'dashboard' ? 'bg-brand-bg shadow-inner scale-105' : 'hover:bg-black/5'}`}>
-                        <ArrowLeft size={24} strokeWidth={2.5} className={tab === 'dashboard' ? 'text-brand-text/40' : 'text-brand-text/60'} />
+                    <button onClick={() => { if(tab === 'dashboard') setSelectedTeamId(null); else setTab('dashboard'); }} className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl gap-1 transition-all ${tab === 'dashboard' ? 'bg-brand-bg shadow-inner scale-105' : 'hover:bg-black/5'}`}>
+                        <ArrowLeft size={22} strokeWidth={2.5} className={tab === 'dashboard' ? 'text-brand-text/40' : 'text-brand-text/60'} />
                         <span className={`text-[8px] uppercase font-black tracking-widest ${tab === 'dashboard' ? 'text-brand-text/30' : 'text-brand-text/50'}`}>Retour</span>
                     </button>
                     
-                    <button onClick={() => setTab('team')} className={`flex flex-col items-center justify-center w-16 h-16 rounded-2xl gap-1.5 transition-all ${tab === 'team' ? 'bg-brand-teal/10 text-brand-teal shadow-inner scale-105' : 'text-brand-text/60 hover:bg-black/5'}`}>
-                        <Users size={24} strokeWidth={2.5} />
+                    <button onClick={() => setTab('team')} className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl gap-1 transition-all ${tab === 'team' ? 'bg-brand-teal/10 text-brand-teal shadow-inner scale-105' : 'text-brand-text/60 hover:bg-black/5'}`}>
+                        <Users size={22} strokeWidth={2.5} />
                         <span className="text-[8px] uppercase font-black tracking-widest">Équipe</span>
                     </button>
 
-                    <button onClick={() => setTab('pai')} className={`flex flex-col items-center justify-center w-16 h-16 rounded-2xl gap-1.5 transition-all ${tab === 'pai' ? 'bg-brand-peach/20 text-brand-peach shadow-inner scale-105' : 'text-brand-text/60 hover:bg-black/5'}`}>
-                        <FileText size={24} strokeWidth={2.5} />
+                    <button onClick={() => setTab('pai')} className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl gap-1 transition-all ${tab === 'pai' ? 'bg-brand-peach/20 text-brand-peach shadow-inner scale-105' : 'text-brand-text/60 hover:bg-black/5'}`}>
+                        <FileText size={22} strokeWidth={2.5} />
                         <span className="text-[8px] uppercase font-black tracking-widest">Les PAI</span>
                     </button>
 
-                    <button onClick={() => setTab('prog')} className={`flex flex-col items-center justify-center w-16 h-16 rounded-2xl gap-1.5 transition-all ${tab === 'prog' ? 'bg-brand-teal/10 text-brand-teal shadow-inner scale-105' : 'text-brand-text/60 hover:bg-black/5'}`}>
-                        <Calendar size={24} strokeWidth={2.5} />
+                    <button onClick={() => setTab('prog')} className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl gap-1 transition-all ${tab === 'prog' ? 'bg-brand-teal/10 text-brand-teal shadow-inner scale-105' : 'text-brand-text/60 hover:bg-black/5'}`}>
+                        <Calendar size={22} strokeWidth={2.5} />
                         <span className="text-[8px] uppercase font-black tracking-widest">Prog.</span>
                     </button>
 
-                    <button onClick={() => navigate('/JS2026/search', { state: { fromTeamId: selectedTeamId } })} className="flex flex-col items-center justify-center w-16 h-16 rounded-2xl gap-1.5 transition-all text-brand-text/60 hover:bg-black/5">
-                        <Search size={24} strokeWidth={2.5} />
+                    <button onClick={() => setTab('score')} className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl gap-1 transition-all ${tab === 'score' ? 'bg-yellow-500/10 text-yellow-600 shadow-inner scale-105' : 'text-brand-text/60 hover:bg-black/5'}`}>
+                        <Trophy size={22} strokeWidth={2.5} />
+                        <span className="text-[8px] uppercase font-black tracking-widest">Score</span>
+                    </button>
+
+                    <button onClick={() => navigate('/JS2026/search', { state: { fromTeamId: selectedTeamId } })} className="flex flex-col items-center justify-center w-14 h-14 rounded-2xl gap-1 transition-all text-brand-text/60 hover:bg-black/5">
+                        <Search size={22} strokeWidth={2.5} />
                         <span className="text-[8px] uppercase font-black tracking-widest text-[9px] relative">Élèves</span>
                     </button>
                 </nav>

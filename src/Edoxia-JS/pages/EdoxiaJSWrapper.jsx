@@ -9,6 +9,7 @@ export default function EdoxiaJSWrapper() {
   const [teams, setTeams] = useState([]);
   const [scheduleSlots, setScheduleSlots] = useState([]);
   const [scheduleActivities, setScheduleActivities] = useState([]);
+  const [scores, setScores] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Auth state
@@ -46,11 +47,18 @@ export default function EdoxiaJSWrapper() {
       setScheduleActivities(activities);
     });
 
+    // 5. Snapshot for scores
+    const qScores = query(collection(db, "scores"), orderBy("createdAt", "desc"));
+    const unsubScores = onSnapshot(qScores, (snap) => {
+      setScores(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+
     return () => {
       unsubStudents();
       unsubTeams();
       unsubSlots();
       unsubActivities();
+      unsubScores();
     };
   }, []);
 
@@ -143,6 +151,6 @@ export default function EdoxiaJSWrapper() {
   }
 
   return (
-    <Outlet context={{ students, teams, scheduleSlots, scheduleActivities, loading, authRole }} />
+    <Outlet context={{ students, teams, scheduleSlots, scheduleActivities, scores, loading, authRole }} />
   );
 }

@@ -58,6 +58,8 @@ import EdoxiaJSWrapper from './Edoxia-JS/pages/EdoxiaJSWrapper';
 import SongPage from './Edoxia-JS/pages/SongPage';
 import MapInteractivePage from './Edoxia-JS/pages/MapInteractivePage';
 import StudentSearchPage from './Edoxia-JS/pages/StudentSearchPage';
+import AdminScorePage from './Edoxia-JS/pages/AdminScorePage';
+import PublicScorePage from './Edoxia-JS/pages/PublicScorePage';
 import ReportBug from './modules/ReportBug';
 import CompteurUser from './modules/CompteurUser';
 import GVGDC from './Edoxia-QVGDC/pages/GVGDC';
@@ -621,6 +623,8 @@ const AppLayout = () => {
             <Route path="song" element={<SongPage />} />
             <Route path="map" element={<MapInteractivePage />} />
             <Route path="search" element={<StudentSearchPage />} />
+            <Route path="scores" element={<AdminScorePage />} />
+            <Route path="live-scores" element={<PublicScorePage />} />
           </Route>
           <Route path="/GVGDC" element={<GVGDC />} />
           <Route path="/DashboardQVGDC" element={<DashboardQVGDC />} />

@@ -45,11 +45,11 @@ export default function HubPage() {
             {/* Accessible à tous */}
             <HubCard icon={<Map size={32} className="text-brand-teal" />} title="Carte Interactive" onClick={() => navigate('/JS2026/map')} />
             <HubCard icon={<Music size={32} className="text-sky-500" />} title="Chanson JS" onClick={() => navigate('/JS2026/song')} />
-            <HubCard icon={<Trophy size={32} className="text-yellow-500" />} title="Score en direct" onClick={() => alert("Bientôt disponible !")} />
+            <HubCard icon={<Trophy size={32} className="text-yellow-500" />} title="Score en direct" onClick={() => navigate('/JS2026/live-scores')} />
 
             {/* Formasat & Ecole */}
             {(authRole === 'Formasat' || authRole === 'Ecole') && (
-              <HubCard icon={<ClipboardList size={32} className="text-indigo-500" />} title="Administrer les scores" onClick={() => alert("Administration des scores bientôt disponible !")} />
+              <HubCard icon={<ClipboardList size={32} className="text-indigo-500" />} title="Administrer les scores" onClick={() => navigate('/JS2026/scores')} />
             )}
 
             {/* Uniquement Ecole */}
