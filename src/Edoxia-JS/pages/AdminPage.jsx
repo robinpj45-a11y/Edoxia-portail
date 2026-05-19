@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Settings, LogIn, LayoutDashboard, Download, Upload, Bug, Database, ArrowLeft, GraduationCap, Printer, Users, CheckSquare, Square, Save, X, Edit3, Lock, Unlock, Trash2, FileText, Flag, Plus, Calendar } from 'lucide-react';
+import { Settings, LogIn, LayoutDashboard, Download, Upload, Bug, Database, ArrowLeft, GraduationCap, Printer, Users, CheckSquare, Square, Save, X, Edit3, Lock, Unlock, Trash2, FileText, Flag, Plus, Calendar, Bus, HelpCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { updateDoc, deleteDoc, addDoc, doc, collection, writeBatch, getDocs, query } from 'firebase/firestore';
+import { updateDoc, deleteDoc, addDoc, doc, collection, writeBatch, getDocs, query, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { CLASSES } from '../utils/constants';
 
@@ -165,6 +165,7 @@ export default function AdminPage() {
     const teams = context?.teams || [];
     const scheduleSlots = context?.scheduleSlots || [];
     const scheduleActivities = context?.scheduleActivities || [];
+    const busSchedules = context?.busSchedules || [];
 
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [password, setPassword] = useState("");
@@ -214,6 +215,7 @@ export default function AdminPage() {
                 <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
                     <AdminTabButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={<LayoutDashboard size={20} />} label="Vue d'ensemble" />
                     <AdminTabButton active={activeTab === 'schedule'} onClick={() => setActiveTab('schedule')} icon={<Calendar size={20} />} label="Emploi du temps" />
+                    <AdminTabButton active={activeTab === 'bus'} onClick={() => setActiveTab('bus')} icon={<Bus size={20} />} label="Horaires Bus" />
                     <AdminTabButton active={activeTab === 'export'} onClick={() => setActiveTab('export')} icon={<Download size={20} />} label="Exports PDF" />
                     <AdminTabButton active={activeTab === 'import'} onClick={() => setActiveTab('import')} icon={<Upload size={20} />} label="Importer Élèves" />
                     <AdminTabButton active={activeTab === 'bugs'} onClick={() => setActiveTab('bugs')} icon={<Bug size={20} />} label="Signalements" />
@@ -225,6 +227,7 @@ export default function AdminPage() {
                     <h2 className="text-xl md:text-2xl font-black tracking-tight text-brand-text">
                         {activeTab === 'overview' && "Vue Globale"}
                         {activeTab === 'schedule' && "Emploi du temps"}
+                        {activeTab === 'bus' && "Horaires Bus"}
                         {activeTab === 'export' && "Exports PDF"}
                         {activeTab === 'import' && "Import"}
                         {activeTab === 'bugs' && "Signalements Bugs"}
@@ -235,6 +238,7 @@ export default function AdminPage() {
                 <div className="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8 relative z-0">
                     {activeTab === 'overview' && <AdminOverview students={students} teams={teams} />}
                     {activeTab === 'schedule' && <AdminSchedule teams={teams} scheduleSlots={scheduleSlots} scheduleActivities={scheduleActivities} />}
+                    {activeTab === 'bus' && <AdminBus busSchedules={busSchedules} />}
                     {activeTab === 'export' && <AdminExport students={students} teams={teams} />}
                     {activeTab === 'import' && <AdminImport />}
                     {activeTab === 'bugs' && <AdminBugs />}
@@ -244,6 +248,7 @@ export default function AdminPage() {
             <nav className="md:hidden fixed bottom-0 left-0 right-0 flex justify-around p-3 pb-safe z-50 border-t border-white/50 bg-white/80 backdrop-blur-xl shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
                 <button onClick={() => setActiveTab('overview')} className={`p-3 rounded-full transition-all ${activeTab === 'overview' ? 'bg-brand-teal text-white shadow-soft scale-110' : 'text-brand-text/40 hover:bg-white/50'}`}><LayoutDashboard size={22} /></button>
                 <button onClick={() => setActiveTab('schedule')} className={`p-3 rounded-full transition-all ${activeTab === 'schedule' ? 'bg-brand-teal text-white shadow-soft scale-110' : 'text-brand-text/40 hover:bg-white/50'}`}><Calendar size={22} /></button>
+                <button onClick={() => setActiveTab('bus')} className={`p-3 rounded-full transition-all ${activeTab === 'bus' ? 'bg-brand-teal text-white shadow-soft scale-110' : 'text-brand-text/40 hover:bg-white/50'}`}><Bus size={22} /></button>
                 <button onClick={() => setActiveTab('export')} className={`p-3 rounded-full transition-all ${activeTab === 'export' ? 'bg-brand-teal text-white shadow-soft scale-110' : 'text-brand-text/40 hover:bg-white/50'}`}><Download size={22} /></button>
                 <button onClick={() => setActiveTab('import')} className={`p-3 rounded-full transition-all ${activeTab === 'import' ? 'bg-brand-teal text-white shadow-soft scale-110' : 'text-brand-text/40 hover:bg-white/50'}`}><Upload size={22} /></button>
                 <button onClick={() => navigate('/JS2026')} className="p-3 text-brand-text/40 hover:bg-white/50 rounded-full transition-all"><ArrowLeft size={22} /></button>
@@ -353,11 +358,11 @@ function AdminOverview({ students, teams }) {
                                 className={`text-sm flex justify-between items-center p-3 rounded-[16px] border border-white/50 shadow-sm bg-white/70 cursor-grab active:cursor-grabbing hover:bg-white transition-colors ${s.isAdult ? 'border-brand-coral/40 bg-brand-coral/5 text-brand-coral' : ''}`}
                             >
                                 <div className="flex items-center gap-2">
-                                    <span className={`font-bold text-brand-text ${s.isAdult ? 'text-brand-coral' : ''}`}>{displayName}</span>
+                                    <span className={`font-bold ${s.isAdult ? 'text-brand-coral' : 'text-brand-text'}`}>{displayName}</span>
                                     {!s.isAdult && s.pai && <div className="bg-brand-teal/20 text-brand-teal p-1 rounded-full"><FileText size={12} /></div>}
                                     {!s.isAdult && s.disruptive && <div className="bg-brand-coral/20 text-brand-coral p-1 rounded-full"><Flag size={12} /></div>}
                                 </div>
-                                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full text-brand-text/50 bg-black/5">{s.isAdult ? `${s.role} • ${s.importedClassLabel || s.classLabel}` : (s.importedClassLabel || s.classLabel)}</span>
+                                <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-black/5 ${s.isAdult ? 'text-brand-coral' : 'text-brand-text/50'}`}>{s.isAdult ? `${s.role} • ${s.importedClassLabel || s.classLabel}` : (s.importedClassLabel || s.classLabel)}</span>
                             </div>
                         )
                     })}</div></div>
@@ -430,6 +435,86 @@ function AdminDanger({ students }) {
             </div>
         </div>
     )
+}
+
+function AdminBus({ busSchedules }) {
+    const safeId = (id) => id.replace(/\//g, '_');
+
+    const updateBus = async (classLabel, direction, time) => {
+        const busDoc = doc(db, "busSchedules", safeId(classLabel));
+        await setDoc(busDoc, { [direction]: time }, { merge: true });
+    };
+
+    return (
+        <div className="space-y-8 max-w-6xl mx-auto pb-20">
+            <div className="p-6 rounded-[30px] border border-white/50 bg-white/60 backdrop-blur-md shadow-soft overflow-x-auto">
+                <div className="flex flex-col mb-6 bg-indigo-50/50 p-4 rounded-[20px] border border-indigo-100/50">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <h3 className="text-lg font-black tracking-tight text-brand-text flex items-center gap-2"><Bus className="text-brand-teal" /> Horaires de Bus par Classe</h3>
+                        <button 
+                            onClick={() => { const n = prompt("Note privée d'administration :", busSchedules.find(b => b.id === 'global_note')?.note || ""); if(n !== null) updateBus('global_note', 'note', n); }}
+                            className={`px-4 py-2 rounded-full transition-all flex items-center gap-2 text-sm font-bold shadow-sm ${busSchedules.find(b => b.id === 'global_note')?.note ? 'bg-indigo-500 text-white hover:scale-105' : 'text-brand-text/60 bg-white border border-black/10 hover:bg-black/5'}`}
+                        >
+                            <HelpCircle size={18} />
+                            <span>Note mémo (Admin)</span>
+                        </button>
+                    </div>
+                    {busSchedules.find(b => b.id === 'global_note')?.note && (
+                        <div className="mt-4 p-4 bg-white rounded-[15px] border border-indigo-100 shadow-sm flex gap-3 text-left animate-in fade-in zoom-in duration-300">
+                            <HelpCircle className="text-indigo-500 shrink-0" size={20} />
+                            <p className="text-sm font-bold text-indigo-900 whitespace-pre-wrap">{busSchedules.find(b => b.id === 'global_note').note}</p>
+                        </div>
+                    )}
+                </div>
+                <table className="w-full min-w-[600px] text-left border-collapse">
+                    <thead>
+                        <tr>
+                            <th className="p-3 font-black text-brand-text border-b border-black/10">Classe</th>
+                            <th className="p-3 font-black text-brand-teal border-b border-black/10 text-center">Départ (Aller)</th>
+                            <th className="p-3 font-black text-brand-teal border-b border-black/10 text-center">Retour</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {CLASSES.map(cls => {
+                            const busData = busSchedules.find(b => b.id === safeId(cls)) || {};
+                            return (
+                                <tr key={cls} className="border-b border-white/50 last:border-none hover:bg-white/40 transition-colors">
+                                    <td className="p-3 font-bold text-brand-text whitespace-nowrap text-sm">{cls}</td>
+                                    <td className="p-2">
+                                        <select 
+                                            value={busData.aller || ""} 
+                                            onChange={(e) => updateBus(cls, "aller", e.target.value)}
+                                            className="w-full p-2 text-sm rounded-[12px] border border-white shadow-inner focus:outline-none focus:ring-2 focus:ring-brand-teal bg-white/80 font-bold text-brand-text text-center"
+                                        >
+                                            <option value="" disabled>Sélectionner</option>
+                                            <option value="8h45">8h45</option>
+                                            <option value="8h55">8h55</option>
+                                            <option value="9h15">9h15</option>
+                                            <option value="9h25">9h25</option>
+                                        </select>
+                                    </td>
+                                    <td className="p-2">
+                                        <select 
+                                            value={busData.retour || ""} 
+                                            onChange={(e) => updateBus(cls, "retour", e.target.value)}
+                                            className="w-full p-2 text-sm rounded-[12px] border border-white shadow-inner focus:outline-none focus:ring-2 focus:ring-brand-teal bg-white/80 font-bold text-brand-text text-center"
+                                        >
+                                            <option value="" disabled>Sélectionner</option>
+                                            <option value="13h00">13h00</option>
+                                            <option value="15h30">15h30</option>
+                                            <option value="15h45">15h45</option>
+                                            <option value="16h00">16h00</option>
+                                            <option value="16h15">16h15</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
 }
 
 function AdminSchedule({ teams, scheduleSlots, scheduleActivities }) {

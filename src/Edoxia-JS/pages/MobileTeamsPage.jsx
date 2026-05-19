@@ -1,10 +1,21 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useOutletContext, useLocation } from 'react-router-dom';
-import { ArrowLeft, Lock, FileText, Flag, Users, Calendar, User, Search, Trophy } from 'lucide-react';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { ArrowLeft, Lock, FileText, Flag, Users, Calendar, User, Search, Trophy, GraduationCap, CheckSquare, Square, Bus, HelpCircle } from 'lucide-react';
+import { collection, onSnapshot, query, orderBy, doc, updateDoc, writeBatch } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { ThemeContext } from '../../ThemeContext';
 import { CLASSES } from '../utils/constants';
+
+const normalize = (str) => {
+    if (!str) return "";
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+};
+
+const getTeamClass = (teamName) => {
+    if (!teamName) return null;
+    const normalizedTeam = normalize(teamName.replace(/équipe/i, ''));
+    return CLASSES.find(c => normalize(c).includes(normalizedTeam)) || null;
+};
 
 export default function Teams() {
     const navigate = useNavigate();
@@ -14,10 +25,12 @@ export default function Teams() {
     const teams = context?.teams || [];
     const scheduleSlots = context?.scheduleSlots || [];
     const scores = context?.scores || [];
+    const busSchedules = context?.busSchedules || [];
     const loading = context?.loading;
 
     const [selectedTeamId, setSelectedTeamId] = useState(location.state?.fromTeamId !== undefined ? location.state.fromTeamId : null);
     const [tab, setTab] = useState('dashboard');
+    const [showBus, setShowBus] = useState(false);
 
     const getTeamStudents = (teamId) => {
         return students.filter(s => s.team === teamId).sort((a, b) => {
@@ -33,10 +46,34 @@ export default function Teams() {
         });
     };
 
+    const toggleAppel = async (studentId, currentState) => {
+        try {
+            await updateDoc(doc(db, "students", studentId), { isCalled: !currentState });
+        } catch (error) {
+            console.error("Erreur lors de l'appel", error);
+        }
+    };
+
+    const resetAppel = async (classLabel) => {
+        if (!confirm("Voulez-vous décocher tous les élèves de votre classe ?")) return;
+        try {
+            const batch = writeBatch(db);
+            const classStudents = students.filter(s => s.classLabel === classLabel);
+            classStudents.forEach(s => {
+                if (s.isCalled) {
+                    batch.update(doc(db, "students", s.id), { isCalled: false });
+                }
+            });
+            await batch.commit();
+        } catch (error) {
+            console.error("Erreur reset appel", error);
+        }
+    };
+
     if (loading) return <div className="min-h-screen flex items-center justify-center text-brand-text/50 font-bold tracking-wide">Chargement...</div>;
 
     if (selectedTeamId) {
-        const team = teams.find(t => t.numId === selectedTeamId);
+        const team = teams.find(t => t.numId === selectedTeamId) || { numId: 999, name: "Anna", color: "#0f766e", schedule: {} };
         const teamStudents = getTeamStudents(team.numId);
         const paiCount = teamStudents.filter(s => s.pai && !s.isAdult).length;
         const disruptiveCount = teamStudents.filter(s => s.disruptive && !s.isAdult).length;
@@ -99,6 +136,82 @@ export default function Teams() {
                                 </div>
                             );
                         })}
+                    </div>
+                )}
+
+                {tab === 'maclasse' && (
+                    <div className="p-4 space-y-2 mt-2 mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        {(() => {
+                            const teamClass = getTeamClass(team.name);
+                            if (!teamClass) {
+                                return <div className="text-center text-brand-text/40 font-bold py-12 uppercase tracking-widest text-xs border-2 border-dashed border-white/50 rounded-[20px] bg-black/5">Aucune classe associée à cette équipe</div>;
+                            }
+                            
+                            const myClassStudents = students
+                                .filter(s => s.classLabel === teamClass && !s.isAdult)
+                                .sort((a, b) => {
+                                    const nameA = a.name && a.name.trim() ? a.name : `${a.lastName || ''} ${a.firstName || ''}`;
+                                    const nameB = b.name && b.name.trim() ? b.name : `${b.lastName || ''} ${b.firstName || ''}`;
+                                    return nameA.localeCompare(nameB);
+                                });
+
+                            return (
+                                <>
+                                    <div className="flex justify-between items-center mb-4">
+                                        <div className="flex gap-2 items-center">
+                                            <div className="text-xs font-black uppercase tracking-widest text-brand-teal bg-brand-teal/10 px-3 py-1.5 rounded-full">{teamClass}</div>
+                                            <button onClick={() => setShowBus(true)} className="text-[10px] uppercase font-black tracking-widest text-indigo-600 bg-indigo-100 hover:bg-indigo-200 px-3 py-1.5 rounded-full transition-colors flex items-center gap-1 shadow-sm"><Bus size={14}/> Horaire bus</button>
+                                        </div>
+                                        <button onClick={() => resetAppel(teamClass)} className="text-[10px] uppercase font-black tracking-widest text-brand-coral bg-brand-coral/10 hover:bg-brand-coral/20 px-3 py-1.5 rounded-full transition-colors">Tout décocher</button>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {myClassStudents.map(student => {
+                                            const displayName = student.name && student.name.trim() ? student.name : `${student.lastName || ''} ${student.firstName || ''}`;
+                                            const teamObj = student.team ? teams.find(t => t.numId === student.team) : null;
+                                            const teamName = teamObj ? teamObj.name : "Non placé";
+                                            return (
+                                                <button key={student.id} onClick={() => toggleAppel(student.id, student.isCalled)} className={`w-full text-left p-3 rounded-[16px] border flex justify-between items-center shadow-sm transition-colors ${student.isCalled ? 'bg-brand-teal/10 border-brand-teal/30' : 'bg-white border-white/80'}`}>
+                                                    <div className="flex-1 min-w-0 pr-2">
+                                                        <div className={`font-bold text-base truncate leading-tight ${student.isCalled ? 'text-brand-teal' : 'text-brand-text'}`}>{displayName}</div>
+                                                        <div className={`text-[10px] uppercase font-black mt-0.5 tracking-wide truncate ${student.isCalled ? 'text-brand-teal/60' : 'text-brand-text/50'}`}>Équipe : {teamName}</div>
+                                                    </div>
+                                                    <div className="shrink-0 flex items-center justify-center">
+                                                        {student.isCalled ? <CheckSquare size={24} className="text-brand-teal" /> : <Square size={24} className="text-brand-text/30" />}
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                        {myClassStudents.length === 0 && (
+                                            <div className="text-center text-brand-text/40 font-bold py-12 uppercase tracking-widest text-xs border-2 border-dashed border-white/50 rounded-[20px] bg-black/5">Aucun élève dans cette classe</div>
+                                        )}
+                                    </div>
+
+                                    {showBus && (
+                                        <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-[2px] flex items-center justify-center p-4">
+                                            <div className="bg-white rounded-[30px] w-full max-w-sm flex flex-col shadow-2xl overflow-hidden border border-white/50 animate-in fade-in zoom-in duration-200">
+                                                <div className="p-6 border-b border-black/5 flex justify-between items-center bg-indigo-500 text-white">
+                                                    <h2 className="text-xl font-black flex items-center gap-2"><Bus /> Horaires Bus</h2>
+                                                    <button onClick={() => setShowBus(false)} className="hover:scale-110 transition-transform bg-white/20 hover:bg-white/30 w-8 h-8 flex items-center justify-center rounded-full font-bold">✕</button>
+                                                </div>
+                                                <div className="p-8 space-y-6 text-center bg-brand-bg">
+                                                    <div className="text-sm font-bold uppercase tracking-widest text-brand-text/50">{teamClass}</div>
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div className="bg-white p-4 rounded-[20px] shadow-sm border border-black/5 flex flex-col gap-2">
+                                                            <span className="text-[10px] uppercase font-black tracking-widest text-indigo-500">Aller</span>
+                                                            <span className="text-2xl font-black text-brand-text">{busSchedules.find(b => b.id === teamClass.replace(/\//g, '_'))?.aller || "--:--"}</span>
+                                                        </div>
+                                                        <div className="bg-white p-4 rounded-[20px] shadow-sm border border-black/5 flex flex-col gap-2">
+                                                            <span className="text-[10px] uppercase font-black tracking-widest text-indigo-500">Retour</span>
+                                                            <span className="text-2xl font-black text-brand-text">{busSchedules.find(b => b.id === teamClass.replace(/\//g, '_'))?.retour || "--:--"}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            );
+                        })()}
                     </div>
                 )}
 
@@ -206,33 +319,38 @@ export default function Teams() {
                     </div>
                 )}
 
-                <nav className="fixed bottom-0 left-0 right-0 h-24 bg-white/90 backdrop-blur-xl shadow-[0_-10px_40px_rgba(0,0,0,0.08)] border-t border-black/5 flex justify-around items-center px-4 pb-safe z-50 rounded-t-[40px]">
-                    <button onClick={() => { if(tab === 'dashboard') setSelectedTeamId(null); else setTab('dashboard'); }} className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl gap-1 transition-all ${tab === 'dashboard' ? 'bg-brand-bg shadow-inner scale-105' : 'hover:bg-black/5'}`}>
+                <nav className="fixed bottom-0 left-0 right-0 h-24 bg-white/90 backdrop-blur-xl shadow-[0_-10px_40px_rgba(0,0,0,0.08)] border-t border-black/5 flex justify-around items-center px-2 pb-safe z-50 rounded-t-[40px]">
+                    <button onClick={() => { if(tab === 'dashboard') setSelectedTeamId(null); else setTab('dashboard'); }} className={`flex flex-col items-center justify-center w-12 sm:w-14 h-14 rounded-2xl gap-1 transition-all ${tab === 'dashboard' ? 'bg-brand-bg shadow-inner scale-105' : 'hover:bg-black/5'}`}>
                         <ArrowLeft size={22} strokeWidth={2.5} className={tab === 'dashboard' ? 'text-brand-text/40' : 'text-brand-text/60'} />
                         <span className={`text-[8px] uppercase font-black tracking-widest ${tab === 'dashboard' ? 'text-brand-text/30' : 'text-brand-text/50'}`}>Retour</span>
                     </button>
                     
-                    <button onClick={() => setTab('team')} className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl gap-1 transition-all ${tab === 'team' ? 'bg-brand-teal/10 text-brand-teal shadow-inner scale-105' : 'text-brand-text/60 hover:bg-black/5'}`}>
+                    <button onClick={() => setTab('team')} className={`flex flex-col items-center justify-center w-12 sm:w-14 h-14 rounded-2xl gap-1 transition-all ${tab === 'team' ? 'bg-brand-teal/10 text-brand-teal shadow-inner scale-105' : 'text-brand-text/60 hover:bg-black/5'}`}>
                         <Users size={22} strokeWidth={2.5} />
                         <span className="text-[8px] uppercase font-black tracking-widest">Équipe</span>
                     </button>
 
-                    <button onClick={() => setTab('pai')} className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl gap-1 transition-all ${tab === 'pai' ? 'bg-brand-peach/20 text-brand-peach shadow-inner scale-105' : 'text-brand-text/60 hover:bg-black/5'}`}>
+                    <button onClick={() => setTab('maclasse')} className={`flex flex-col items-center justify-center w-12 sm:w-14 h-14 rounded-2xl gap-1 transition-all ${tab === 'maclasse' ? 'bg-brand-teal/10 text-brand-teal shadow-inner scale-105' : 'text-brand-text/60 hover:bg-black/5'}`}>
+                        <GraduationCap size={22} strokeWidth={2.5} />
+                        <span className="text-[8px] uppercase font-black tracking-widest">Classe</span>
+                    </button>
+
+                    <button onClick={() => setTab('pai')} className={`flex flex-col items-center justify-center w-12 sm:w-14 h-14 rounded-2xl gap-1 transition-all ${tab === 'pai' ? 'bg-brand-peach/20 text-brand-peach shadow-inner scale-105' : 'text-brand-text/60 hover:bg-black/5'}`}>
                         <FileText size={22} strokeWidth={2.5} />
                         <span className="text-[8px] uppercase font-black tracking-widest">Les PAI</span>
                     </button>
 
-                    <button onClick={() => setTab('prog')} className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl gap-1 transition-all ${tab === 'prog' ? 'bg-brand-teal/10 text-brand-teal shadow-inner scale-105' : 'text-brand-text/60 hover:bg-black/5'}`}>
+                    <button onClick={() => setTab('prog')} className={`flex flex-col items-center justify-center w-12 sm:w-14 h-14 rounded-2xl gap-1 transition-all ${tab === 'prog' ? 'bg-brand-teal/10 text-brand-teal shadow-inner scale-105' : 'text-brand-text/60 hover:bg-black/5'}`}>
                         <Calendar size={22} strokeWidth={2.5} />
                         <span className="text-[8px] uppercase font-black tracking-widest">Prog.</span>
                     </button>
 
-                    <button onClick={() => setTab('score')} className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl gap-1 transition-all ${tab === 'score' ? 'bg-yellow-500/10 text-yellow-600 shadow-inner scale-105' : 'text-brand-text/60 hover:bg-black/5'}`}>
+                    <button onClick={() => setTab('score')} className={`flex flex-col items-center justify-center w-12 sm:w-14 h-14 rounded-2xl gap-1 transition-all ${tab === 'score' ? 'bg-yellow-500/10 text-yellow-600 shadow-inner scale-105' : 'text-brand-text/60 hover:bg-black/5'}`}>
                         <Trophy size={22} strokeWidth={2.5} />
                         <span className="text-[8px] uppercase font-black tracking-widest">Score</span>
                     </button>
 
-                    <button onClick={() => navigate('/JS2026/search', { state: { fromTeamId: selectedTeamId } })} className="flex flex-col items-center justify-center w-14 h-14 rounded-2xl gap-1 transition-all text-brand-text/60 hover:bg-black/5">
+                    <button onClick={() => navigate('/JS2026/search', { state: { fromTeamId: selectedTeamId } })} className="flex flex-col items-center justify-center w-12 sm:w-14 h-14 rounded-2xl gap-1 transition-all text-brand-text/60 hover:bg-black/5">
                         <Search size={22} strokeWidth={2.5} />
                         <span className="text-[8px] uppercase font-black tracking-widest text-[9px] relative">Élèves</span>
                     </button>
@@ -257,6 +375,11 @@ export default function Teams() {
                         </button>
                     );
                 })}
+                <button onClick={() => { setSelectedTeamId(999); setTab('maclasse'); }} className="w-full aspect-square rounded-[24px] shadow-sm overflow-hidden transition-all duration-300 border border-white/30 flex flex-col justify-center items-center hover:scale-105 active:scale-95 relative group" style={{ backgroundColor: '#0f766e' }}>
+                    <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
+                    <h3 className="font-black text-xl tracking-tighter text-white z-10 text-center drop-shadow-md px-1 leading-none break-all">Anna</h3>
+                    <span className="text-[8px] text-white/80 absolute bottom-3 font-bold uppercase tracking-widest bg-black/20 px-2 py-0.5 rounded-full">TPS</span>
+                </button>
             </div>
         </div>
     );

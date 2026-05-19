@@ -10,6 +10,7 @@ export default function EdoxiaJSWrapper() {
   const [scheduleSlots, setScheduleSlots] = useState([]);
   const [scheduleActivities, setScheduleActivities] = useState([]);
   const [scores, setScores] = useState([]);
+  const [busSchedules, setBusSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Auth state
@@ -53,12 +54,18 @@ export default function EdoxiaJSWrapper() {
       setScores(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     });
 
+    // 6. Snapshot for bus schedules
+    const unsubBus = onSnapshot(collection(db, "busSchedules"), (snap) => {
+      setBusSchedules(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+
     return () => {
       unsubStudents();
       unsubTeams();
       unsubSlots();
       unsubActivities();
       unsubScores();
+      unsubBus();
     };
   }, []);
 
@@ -151,6 +158,6 @@ export default function EdoxiaJSWrapper() {
   }
 
   return (
-    <Outlet context={{ students, teams, scheduleSlots, scheduleActivities, scores, loading, authRole }} />
+    <Outlet context={{ students, teams, scheduleSlots, scheduleActivities, scores, busSchedules, loading, authRole }} />
   );
 }
