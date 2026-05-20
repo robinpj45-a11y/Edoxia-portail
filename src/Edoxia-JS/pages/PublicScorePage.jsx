@@ -5,7 +5,7 @@ import { ArrowLeft, Trophy, Flag, ChevronDown, ChevronUp } from 'lucide-react';
 export default function PublicScorePage() {
     const navigate = useNavigate();
     const context = useOutletContext();
-    const teams = context?.teams || [];
+    const teams = (context?.teams || []).filter(t => t.name !== "Anna");
     const scores = context?.scores || [];
 
     const [activeTab, setActiveTab] = useState('general'); // 'general' or 'spirit'

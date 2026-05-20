@@ -162,7 +162,7 @@ export default function AdminPage() {
     const navigate = useNavigate();
     const context = useOutletContext();
     const students = context?.students || [];
-    const teams = context?.teams || [];
+    const teams = (context?.teams || []).filter(t => t.name !== "Anna");
     const scheduleSlots = context?.scheduleSlots || [];
     const scheduleActivities = context?.scheduleActivities || [];
     const busSchedules = context?.busSchedules || [];
@@ -481,17 +481,28 @@ function AdminBus({ busSchedules }) {
                                 <tr key={cls} className="border-b border-white/50 last:border-none hover:bg-white/40 transition-colors">
                                     <td className="p-3 font-bold text-brand-text whitespace-nowrap text-sm">{cls}</td>
                                     <td className="p-2">
-                                        <select 
-                                            value={busData.aller || ""} 
-                                            onChange={(e) => updateBus(cls, "aller", e.target.value)}
-                                            className="w-full p-2 text-sm rounded-[12px] border border-white shadow-inner focus:outline-none focus:ring-2 focus:ring-brand-teal bg-white/80 font-bold text-brand-text text-center"
-                                        >
-                                            <option value="" disabled>Sélectionner</option>
-                                            <option value="8h45">8h45</option>
-                                            <option value="8h55">8h55</option>
-                                            <option value="9h15">9h15</option>
-                                            <option value="9h25">9h25</option>
-                                        </select>
+                                        <div className="flex flex-col gap-1">
+                                            <select 
+                                                value={busData.aller || ""} 
+                                                onChange={(e) => updateBus(cls, "aller", e.target.value)}
+                                                className="w-full p-2 text-sm rounded-[12px] border border-white shadow-inner focus:outline-none focus:ring-2 focus:ring-brand-teal bg-white/80 font-bold text-brand-text text-center"
+                                            >
+                                                <option value="" disabled>Heure</option>
+                                                <option value="8h45">8h45</option>
+                                                <option value="8h55">8h55</option>
+                                                <option value="9h15">9h15</option>
+                                                <option value="9h25">9h25</option>
+                                            </select>
+                                            <select 
+                                                value={busData.allerLieu || ""} 
+                                                onChange={(e) => updateBus(cls, "allerLieu", e.target.value)}
+                                                className="w-full p-2 text-sm rounded-[12px] border border-white shadow-inner focus:outline-none focus:ring-2 focus:ring-brand-teal bg-white/80 font-bold text-brand-text text-center"
+                                            >
+                                                <option value="">Lieu</option>
+                                                <option value="Théâtre">Théâtre</option>
+                                                <option value="Saint-Euverte">Saint-Euverte</option>
+                                            </select>
+                                        </div>
                                     </td>
                                     <td className="p-2">
                                         <select 

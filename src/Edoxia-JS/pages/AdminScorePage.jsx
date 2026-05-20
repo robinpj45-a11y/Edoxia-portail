@@ -7,7 +7,7 @@ import { db } from '../../firebase';
 export default function AdminScorePage() {
     const navigate = useNavigate();
     const context = useOutletContext();
-    const teams = context?.teams || [];
+    const teams = (context?.teams || []).filter(t => t.name !== "Anna");
     const scheduleActivities = context?.scheduleActivities || [];
     const authRole = context?.authRole;
 

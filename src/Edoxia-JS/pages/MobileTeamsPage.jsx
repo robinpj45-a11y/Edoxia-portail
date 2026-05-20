@@ -73,7 +73,8 @@ export default function Teams() {
     if (loading) return <div className="min-h-screen flex items-center justify-center text-brand-text/50 font-bold tracking-wide">Chargement...</div>;
 
     if (selectedTeamId) {
-        const team = teams.find(t => t.numId === selectedTeamId) || { numId: 999, name: "Anna", color: "#0f766e", schedule: {} };
+        const team = teams.find(t => t.numId === selectedTeamId);
+        if (!team) return null;
         const teamStudents = getTeamStudents(team.numId);
         const paiCount = teamStudents.filter(s => s.pai && !s.isAdult).length;
         const disruptiveCount = teamStudents.filter(s => s.disruptive && !s.isAdult).length;
@@ -199,6 +200,9 @@ export default function Teams() {
                                                         <div className="bg-white p-4 rounded-[20px] shadow-sm border border-black/5 flex flex-col gap-2">
                                                             <span className="text-[10px] uppercase font-black tracking-widest text-indigo-500">Aller</span>
                                                             <span className="text-2xl font-black text-brand-text">{busSchedules.find(b => b.id === teamClass.replace(/\//g, '_'))?.aller || "--:--"}</span>
+                                                            {busSchedules.find(b => b.id === teamClass.replace(/\//g, '_'))?.allerLieu && (
+                                                                <span className="text-[9px] font-black uppercase tracking-widest bg-indigo-50 text-indigo-600 px-2 py-1 rounded-md">{busSchedules.find(b => b.id === teamClass.replace(/\//g, '_'))?.allerLieu}</span>
+                                                            )}
                                                         </div>
                                                         <div className="bg-white p-4 rounded-[20px] shadow-sm border border-black/5 flex flex-col gap-2">
                                                             <span className="text-[10px] uppercase font-black tracking-widest text-indigo-500">Retour</span>
@@ -375,11 +379,6 @@ export default function Teams() {
                         </button>
                     );
                 })}
-                <button onClick={() => { setSelectedTeamId(999); setTab('maclasse'); }} className="w-full aspect-square rounded-[24px] shadow-sm overflow-hidden transition-all duration-300 border border-white/30 flex flex-col justify-center items-center hover:scale-105 active:scale-95 relative group" style={{ backgroundColor: '#0f766e' }}>
-                    <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
-                    <h3 className="font-black text-xl tracking-tighter text-white z-10 text-center drop-shadow-md px-1 leading-none break-all">Anna</h3>
-                    <span className="text-[8px] text-white/80 absolute bottom-3 font-bold uppercase tracking-widest bg-black/20 px-2 py-0.5 rounded-full">TPS</span>
-                </button>
             </div>
         </div>
     );

@@ -65,7 +65,8 @@ export default function TeacherPage() {
   const teams = context?.teams || [];
   const loading = context?.loading;
 
-  const [currentClass, setCurrentClass] = useState(CLASSES[0]);
+  const DISPLAY_CLASSES = CLASSES.filter(c => c !== "TPS - Anna R.");
+  const [currentClass, setCurrentClass] = useState(DISPLAY_CLASSES[0]);
   const [newAdultName, setNewAdultName] = useState("");
   const [newAdultRole, setNewAdultRole] = useState("Parent");
   const [searchTerm, setSearchTerm] = useState("");
@@ -188,7 +189,7 @@ export default function TeacherPage() {
         <h1 className="text-xl font-black tracking-tight flex items-center gap-2 text-brand-text"><GraduationCap className="text-brand-teal" /> Espace enseignant</h1>
       </header>
       <div className="shrink-0 px-8 mt-6 flex gap-2 overflow-x-auto overflow-y-hidden pb-4 border-b border-white/50 bg-white/70 backdrop-blur-xl rounded-t-[30px] pt-4 shadow-inner mx-4 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-brand-teal/30 hover:scrollbar-thumb-brand-teal/50 [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-brand-teal/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-brand-teal/50">
-        {CLASSES.map((cls) => (
+        {DISPLAY_CLASSES.map((cls) => (
           <button key={cls} onClick={() => setCurrentClass(cls)} className={`px-5 py-3 rounded-t-[20px] font-bold transition-all duration-200 border-x border-t whitespace-nowrap text-sm ${currentClass === cls ? 'z-10 bg-white text-brand-teal border-white/50 shadow-soft translate-y-[1px]' : 'bg-white/40 text-brand-text/50 border-white/40 hover:bg-white/60 hover:text-brand-text'}`}>{cls}</button>
         ))}
       </div>
@@ -387,7 +388,7 @@ export default function TeacherPage() {
                         <div className="space-y-1 flex-1">
                           <label className="text-xs font-bold uppercase tracking-widest text-brand-text/60 ml-1">Classe</label>
                           <select required value={newStudentClass} onChange={(e) => setNewStudentClass(e.target.value)} className="w-full px-4 py-3 rounded-[16px] focus:outline-none text-sm bg-white/80 border border-white shadow-inner focus:ring-2 focus:ring-brand-teal text-brand-text font-bold">
-                            {CLASSES.map(cls => <option key={cls} value={cls}>{cls}</option>)}
+                            {DISPLAY_CLASSES.map(cls => <option key={cls} value={cls}>{cls}</option>)}
                           </select>
                         </div>
                       </div>
