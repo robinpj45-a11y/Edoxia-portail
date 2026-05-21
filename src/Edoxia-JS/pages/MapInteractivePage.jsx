@@ -299,23 +299,34 @@ const MapInteractivePage = () => {
                         {zones.map((zone) => {
                             const isHighlighted = highlightedZoneId === zone.id;
                             
+                            // Calcul du centre de la zone d'origine pour y placer la gomette uniforme
+                            const centerX = zone.left + (zone.width ? zone.width / 2 : 0);
+                            const centerY = zone.top + (zone.height ? zone.height / 2 : 0);
+
+                            // Détermination du type d'icône (chiffre entre 1 et 20 ou Lucide)
+                            const isNumberIcon = zone.icon && !isNaN(Number(zone.icon)) && Number(zone.icon) >= 1 && Number(zone.icon) <= 20;
+
                             return (
                                 <motion.div 
                                     key={zone.id}
                                     id={`zone-${zone.id}`}
-                                    className={`absolute cursor-pointer interactive-zone flex items-center justify-center transition-all rounded-full ${isHighlighted ? 'z-30' : 'z-10'} ${isAdmin ? 'hover:border-2 hover:border-black/50' : ''}`}
+                                    className="absolute cursor-pointer interactive-zone flex items-center justify-center rounded-full transition-all"
                                     style={{
-                                        left: `${zone.left}%`,
-                                        top: `${zone.top}%`,
-                                        width: `${zone.width}%`,
-                                        height: `${zone.height}%`,
-                                        backgroundColor: isHighlighted ? 'rgba(45, 212, 191, 0.4)' : 'transparent',
-                                        border: isHighlighted ? '3px solid #2DD4BF' : (isAdmin ? '2px dashed rgba(0,0,0,0.5)' : 'none'),
-                                        boxShadow: isHighlighted ? '0 0 30px rgba(45, 212, 191, 0.8)' : 'none'
+                                        left: `${centerX}%`,
+                                        top: `${centerY}%`,
+                                        x: '-50%',
+                                        y: '-50%',
+                                        width: '40px',
+                                        height: '40px',
+                                        backgroundColor: isHighlighted ? '#CE6A6B' : '#4A919E',
+                                        border: '2px solid #FFFFFF',
+                                        boxShadow: isHighlighted ? '0 0 15px rgba(206, 106, 107, 0.8)' : '0 4px 10px rgba(0, 0, 0, 0.15)',
+                                        zIndex: isHighlighted ? 30 : 10,
                                     }}
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1, scale: isHighlighted ? 1.05 : 1 }}
-                                    exit={{ opacity: 0 }}
+                                    initial={{ opacity: 0, scale: 0 }}
+                                    animate={{ opacity: 1, scale: isHighlighted ? 1.25 : 1 }}
+                                    whileHover={{ scale: isHighlighted ? 1.3 : 1.15 }}
+                                    exit={{ opacity: 0, scale: 0 }}
                                     onClick={(e) => {
                                         e.stopPropagation(); // ne pas déclencher le draw
                                         if (isAdmin) setEditingZone(zone);
@@ -325,13 +336,23 @@ const MapInteractivePage = () => {
                                         }
                                     }}
                                 >
-                                    {zone.icon && AVAILABLE_ICONS[zone.icon] && React.createElement(AVAILABLE_ICONS[zone.icon], {
-                                        size: isAdmin ? 20 : 24,
-                                        className: `relative z-20 pointer-events-none drop-shadow-sm ${isHighlighted ? 'text-brand-teal scale-125' : 'text-brand-teal bg-white/70 p-1 rounded-full shadow-sm'} transition-all`
-                                    })}
+                                    {isNumberIcon ? (
+                                        <span className="font-extrabold text-sm select-none text-white leading-none">
+                                            {zone.icon}
+                                        </span>
+                                    ) : (
+                                        zone.icon && AVAILABLE_ICONS[zone.icon] ? (
+                                            React.createElement(AVAILABLE_ICONS[zone.icon], {
+                                                size: 18,
+                                                className: "text-white pointer-events-none"
+                                            })
+                                        ) : (
+                                            <MapPin size={18} className="text-white pointer-events-none" />
+                                        )
+                                    )}
                                     {isHighlighted && (
-                                        <span className="absolute flex h-full w-full pointer-events-none">
-                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-teal opacity-20"></span>
+                                        <span className="absolute flex h-full w-full pointer-events-none rounded-full">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-coral opacity-40"></span>
                                         </span>
                                     )}
                                 </motion.div>
@@ -368,7 +389,7 @@ const MapInteractivePage = () => {
                         </div>
 
                         {/* Icon Selector */}
-                        <div className="flex flex-col gap-1.5 border-y border-brand-text/5 py-3">
+                        <div className="flex flex-col gap-1.5 border-t border-brand-text/5 pt-3">
                             <span className="text-[10px] font-bold uppercase text-brand-text/40 tracking-wider pl-1">Pictogramme</span>
                             <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                                 <button
@@ -401,6 +422,31 @@ const MapInteractivePage = () => {
                             </div>
                         </div>
 
+                        {/* Numéro d'atelier Selector */}
+                        <div className="flex flex-col gap-1.5 border-b border-brand-text/5 pb-3">
+                            <span className="text-[10px] font-bold uppercase text-brand-text/40 tracking-wider pl-1">Numéro d'atelier (1 - 20)</span>
+                            <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                                {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => {
+                                    const numStr = num.toString();
+                                    const isSelected = editingZone.icon === numStr;
+                                    return (
+                                        <button
+                                            key={numStr}
+                                            onClick={() => {
+                                                const newZones = zones.map(z => z.id === editingZone.id ? { ...z, icon: numStr } : z);
+                                                setZones(newZones);
+                                                saveZonesToFirebase(newZones);
+                                                setEditingZone({ ...editingZone, icon: numStr });
+                                            }}
+                                            className={`w-9 h-9 rounded-[12px] shrink-0 transition-all flex items-center justify-center font-black text-sm ${isSelected ? 'bg-brand-teal text-white shadow-md' : 'bg-brand-bg text-brand-text/60 hover:bg-brand-teal/10 hover:text-brand-teal'}`}
+                                        >
+                                            {num}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
                         <div className="flex gap-2 mt-1.5">
                             <button onClick={() => handleEditZone(editingZone)} className="flex-1 py-2 px-3 bg-brand-bg rounded-lg text-brand-text text-sm font-bold flex items-center justify-center gap-2 hover:bg-brand-teal/10 hover:text-brand-teal transition-colors"><Edit2 size={16}/> Editer</button>
                             <button onClick={() => handleDeleteZone(editingZone.id)} className="flex-1 py-2 px-3 bg-brand-bg rounded-lg text-rose-500 text-sm font-bold flex items-center justify-center gap-2 hover:bg-rose-50 transition-colors"><Trash2 size={16}/> Supprimer</button>
@@ -416,37 +462,30 @@ const MapInteractivePage = () => {
                         initial={{ opacity: 0, y: 50 }} 
                         animate={{ opacity: 1, y: 0 }} 
                         exit={{ opacity: 0, y: 50 }}
-                        className="fixed bottom-24 left-4 right-4 md:left-auto md:right-1/2 md:translate-x-1/2 md:w-96 bg-white rounded-2xl p-5 shadow-2xl border border-brand-text/10 z-50 flex flex-col gap-3"
+                        className="fixed bottom-24 left-4 right-4 md:left-auto md:right-1/2 md:translate-x-1/2 md:w-96 bg-white rounded-2xl p-3.5 shadow-2xl border border-brand-text/10 z-50 flex items-center justify-between gap-3"
                     >
-                        <div className="flex justify-between items-start">
-                            <div className="flex items-center gap-3">
-                                <div className="bg-brand-teal/10 p-2 rounded-xl text-brand-teal">
-                                    {selectedZone.icon && AVAILABLE_ICONS[selectedZone.icon] 
-                                        ? React.createElement(AVAILABLE_ICONS[selectedZone.icon], { size: 24 })
-                                        : <MapPin size={24} />
-                                    }
-                                </div>
-                                <h3 className="font-black text-xl text-brand-text leading-tight">{selectedZone.name}</h3>
+                        <div className="flex items-center gap-3">
+                            <div className="bg-brand-teal/10 p-2 rounded-xl text-brand-teal shrink-0 w-9 h-9 flex items-center justify-center">
+                                {selectedZone.icon && !isNaN(Number(selectedZone.icon)) ? (
+                                    <span className="font-extrabold text-sm select-none text-brand-teal">
+                                        {selectedZone.icon}
+                                    </span>
+                                ) : (
+                                    selectedZone.icon && AVAILABLE_ICONS[selectedZone.icon] ? (
+                                        React.createElement(AVAILABLE_ICONS[selectedZone.icon], { size: 20 })
+                                    ) : (
+                                        <MapPin size={20} />
+                                    )
+                                )}
                             </div>
-                            <button onClick={() => setSelectedZone(null)} className="p-1 text-brand-text/40 hover:text-brand-text bg-brand-bg rounded-full"><X size={20} /></button>
+                            <h3 className="font-bold text-base text-brand-text leading-tight">{selectedZone.name}</h3>
                         </div>
-                        
-                        {selectedZone.description ? (
-                            <p className="text-brand-text/70 leading-relaxed font-medium">
-                                {selectedZone.description}
-                            </p>
-                        ) : (
-                            <p className="text-brand-text/40 italic text-sm">Aucune description disponible pour ce lieu.</p>
-                        )}
-                        
-                        <div className="mt-2 pt-4 border-t border-brand-text/5 flex justify-end">
-                            <button 
-                                onClick={() => setSelectedZone(null)}
-                                className="px-6 py-2 bg-brand-teal text-white rounded-xl font-bold text-sm shadow-lg shadow-brand-teal/20 active:scale-95 transition-all"
-                            >
-                                Fermer
-                            </button>
-                        </div>
+                        <button 
+                            onClick={() => setSelectedZone(null)} 
+                            className="p-1.5 text-brand-text/40 hover:text-brand-text hover:bg-brand-bg rounded-full transition-colors shrink-0"
+                        >
+                            <X size={18} />
+                        </button>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -513,10 +552,17 @@ const MapInteractivePage = () => {
                                             >
                                                 <div className="flex items-center justify-between">
                                                     <h4 className="font-bold text-brand-text group-hover:text-brand-teal transition-colors flex items-center gap-2">
-                                                        {zone.icon && AVAILABLE_ICONS[zone.icon] 
-                                                            ? React.createElement(AVAILABLE_ICONS[zone.icon], { size: 16, className: "text-brand-teal opacity-70" })
-                                                            : <MapPin size={16} className="text-brand-teal opacity-50" />
-                                                        }
+                                                        {zone.icon && !isNaN(Number(zone.icon)) ? (
+                                                            <span className="w-5 h-5 flex items-center justify-center rounded-full bg-brand-teal/10 text-brand-teal font-extrabold text-xs shrink-0 select-none">
+                                                                {zone.icon}
+                                                            </span>
+                                                        ) : (
+                                                            zone.icon && AVAILABLE_ICONS[zone.icon] ? (
+                                                                React.createElement(AVAILABLE_ICONS[zone.icon], { size: 16, className: "text-brand-teal opacity-70" })
+                                                            ) : (
+                                                                <MapPin size={16} className="text-brand-teal opacity-50" />
+                                                            )
+                                                        )}
                                                         {zone.name}
                                                     </h4>
                                                     <ArrowLeft size={16} className="text-brand-text/20 group-hover:text-brand-teal group-hover:translate-x-1 rotate-180 transition-all" />
