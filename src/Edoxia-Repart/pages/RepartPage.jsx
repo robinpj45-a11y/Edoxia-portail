@@ -72,11 +72,12 @@ const generateTeamPDF = (teamName, studentsInTeam) => {
   const boysCount = activeStudents.filter(s => s.gender && (s.gender.toString().trim().toUpperCase() === 'M' || s.gender.toString().trim().toUpperCase() === 'G')).length;
   const girlsCount = activeStudents.filter(s => s.gender && s.gender.toString().trim().toUpperCase() === 'F').length;
   const paiCount = activeStudents.filter(s => s.pai).length;
+  const ebepCount = activeStudents.filter(s => s.ebep).length;
   const disruptiveCount = activeStudents.filter(s => s.disruptive).length;
 
   doc.setFontSize(10);
   doc.setTextColor(100);
-  doc.text(`Effectif : ${activeStudents.length} élèves (G : ${boysCount} | F : ${girlsCount} | PAI : ${paiCount} | à surveiller : ${disruptiveCount})`, 14, 28);
+  doc.text(`Effectif : ${activeStudents.length} élèves (G : ${boysCount} | F : ${girlsCount} | PAI : ${paiCount} | EBEP : ${ebepCount} | à surveiller : ${disruptiveCount})`, 14, 28);
 
   const tableData = activeStudents.map(s => {
     let lastName = s.lastName ? s.lastName.toUpperCase() : s.name.split(' ')[0].toUpperCase();
