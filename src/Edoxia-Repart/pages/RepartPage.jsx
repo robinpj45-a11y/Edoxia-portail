@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { GraduationCap, ArrowLeft, Printer, Plus, Search, Lock, Eye, FileText, Flag, User, Users, Trash2, ChevronDown, ChevronUp, Filter, Sparkles, Circle, AlertCircle, XCircle, Info } from 'lucide-react';
+import { GraduationCap, ArrowLeft, Printer, Plus, Search, Lock, Eye, FileText, Flag, User, Users, Trash2, ChevronDown, ChevronUp, Filter, Sparkles, Circle, AlertCircle, XCircle, Info, History } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
-import { addDoc, updateDoc, deleteDoc, doc, collection } from 'firebase/firestore';
+import { addDoc, updateDoc, deleteDoc, doc, collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { CLASSES as ALL_CLASSES } from '../../Edoxia-JS/utils/constants';
 
@@ -203,6 +203,23 @@ export default function RepartPage() {
   const [newStudentFirstName, setNewStudentFirstName] = useState("");
   const [newStudentGender, setNewStudentGender] = useState("");
   const [newStudentClass, setNewStudentClass] = useState(CLASSES[0]);
+  
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [historyLogs, setHistoryLogs] = useState([]);
+  const [showSophieAlert, setShowSophieAlert] = useState(false);
+
+  useEffect(() => {
+    if (historyModalOpen) {
+      const fetchHistory = async () => {
+        try {
+          const q = query(collection(db, "repart_history"), orderBy("timestamp", "desc"));
+          const snap = await getDocs(q);
+          setHistoryLogs(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        } catch (e) { console.error(e); }
+      };
+      fetchHistory();
+    }
+  }, [historyModalOpen]);
 
   useEffect(() => { setSearchTerm(""); setNewStudentClass(currentClass); }, [currentClass]);
 
@@ -324,7 +341,43 @@ export default function RepartPage() {
       const sourceTeam = teams.find(t => t.numId === student.team);
       if (sourceTeam && sourceTeam.locked) { alert(`La classe d'origine "${sourceTeam.name}" est verrouillée 🔒.`); return; }
     }
-    await updateDoc(doc(db, "repart_students", studentId), { team: teamId });
+    
+    if (student && student.team !== teamId) {
+      const fromTeamName = student.team ? (teams.find(t => t.numId === student.team)?.name || "Inconnue") : "Liste d'attente";
+      const toTeamName = teamId !== null ? (teams.find(t => t.numId === teamId)?.name || "Inconnue") : "Liste d'attente";
+      
+      try {
+        await addDoc(collection(db, "repart_history"), {
+          studentId: student.id,
+          studentName: student.name || `${student.lastName || ''} ${student.firstName || ''}`,
+          fromTeam: fromTeamName,
+          toTeam: toTeamName,
+          timestamp: new Date()
+        });
+      } catch(e) { console.error("Erreur historique:", e); }
+      
+      setShowSophieAlert(true);
+      setTimeout(() => setShowSophieAlert(false), 4000);
+      
+      let updateData = { team: teamId, hasMoved: true };
+      
+      if (!student.hasMoved) {
+        updateData.originalTeam = student.team;
+        updateData.movedAt = new Date().toISOString();
+      } else {
+        const movedAtDate = student.movedAt ? new Date(student.movedAt) : new Date(0);
+        const now = new Date();
+        const diffMinutes = (now - movedAtDate) / (1000 * 60);
+
+        if (teamId === student.originalTeam && diffMinutes <= 5) {
+          updateData.hasMoved = false;
+          updateData.originalTeam = null;
+          updateData.movedAt = null;
+        }
+      }
+
+      await updateDoc(doc(db, "repart_students", studentId), updateData);
+    }
   }, [students, teams]);
 
   const poolStudents = useMemo(() => {
@@ -360,11 +413,20 @@ export default function RepartPage() {
       <header className="sticky top-0 z-[60] border-b border-white/50 p-4 px-8 flex justify-between items-center shadow-soft bg-white/40 backdrop-blur-md">
         <button onClick={() => navigate('/stpbb')} className="flex items-center gap-2 transition-colors font-bold text-brand-text/50 hover:text-brand-text"><ArrowLeft size={20} /> Retour</button>
         <h1 className="text-xl font-black tracking-tight flex items-center gap-2 text-brand-text">
-          <button onClick={() => navigate('/repart/college')} className="px-4 py-1.5 rounded-full bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500 hover:text-white transition-all text-xs font-black mr-1" title="Répartition 6ème">6ème</button>
-          <button onClick={() => setHelpModalOpen(true)} className="p-1.5 rounded-full hover:bg-brand-teal/10 text-brand-teal/60 hover:text-brand-teal transition-all mr-1" title="Aide"><Info size={22} /></button>
-          <GraduationCap className="text-indigo-500" /> Répartition école 2026/2027
+          <button onClick={() => navigate('/repart-college')} className="px-4 py-1.5 rounded-full bg-brand-teal/10 text-brand-teal hover:bg-brand-teal hover:text-white transition-all text-xs font-black mr-1" title="Voir les classes de 6ème">Passage 6ème</button>
+          <button onClick={() => setHelpModalOpen(true)} className="p-1.5 rounded-full hover:bg-brand-teal/10 text-brand-teal/60 hover:text-brand-teal transition-all" title="Aide"><Info size={22} /></button>
+          <button onClick={() => setHistoryModalOpen(true)} className="p-1.5 rounded-full hover:bg-brand-teal/10 text-brand-teal/60 hover:text-brand-teal transition-all mr-1" title="Historique des modifications"><History size={22} /></button>
+          <GraduationCap className="text-brand-teal" /> Répartition Primaire 2026/2027
         </h1>
       </header>
+      
+      {showSophieAlert && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] bg-orange-500 text-white font-bold px-6 py-3 rounded-full shadow-lg flex items-center gap-3 animate-[pulse_1s_ease-in-out_infinite]">
+          <AlertCircle size={20} />
+          <span>Il faut informer Sophie de chaque changement.</span>
+        </div>
+      )}
+
       <div className="shrink-0 px-8 mt-6 flex gap-2 overflow-x-auto overflow-y-hidden pb-4 border-b border-white/50 bg-white/70 backdrop-blur-xl rounded-t-[30px] pt-4 shadow-inner mx-4 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-brand-teal/30 hover:scrollbar-thumb-brand-teal/50 [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-brand-teal/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-brand-teal/50">
         {CLASSES.map((cls) => (
           <button key={cls} onClick={() => setCurrentClass(cls)} className={`px-5 py-3 rounded-t-[20px] font-bold transition-all duration-200 border-x border-t whitespace-nowrap text-sm ${currentClass === cls ? 'z-10 bg-white text-brand-teal border-white/50 shadow-soft translate-y-[1px]' : 'bg-white/40 text-brand-text/50 border-white/40 hover:bg-white/60 hover:text-brand-text'}`}>
@@ -837,6 +899,35 @@ export default function RepartPage() {
           </div>
         </div>
       )}
+
+      {historyModalOpen && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-md z-[100] flex items-center justify-center p-4" onClick={() => setHistoryModalOpen(false)}>
+          <div className="bg-brand-bg rounded-[30px] w-full max-w-2xl max-h-[85vh] overflow-hidden shadow-soft flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="p-6 border-b border-white/50 bg-white/40 flex justify-between items-center sticky top-0 z-10">
+              <h2 className="text-xl font-black text-brand-text flex items-center gap-2">
+                <div className="bg-white/20 p-2 rounded-2xl"><History size={24} /></div>
+                Historique des modifications
+              </h2>
+              <button onClick={() => setHistoryModalOpen(false)} className="p-2 bg-white/50 hover:bg-white rounded-full transition-all text-brand-text/50 hover:text-brand-text shadow-sm"><XCircle size={24} /></button>
+            </div>
+            <div className="p-6 overflow-y-auto font-medium text-brand-text space-y-4 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-brand-teal/30 hover:scrollbar-thumb-brand-teal/50 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-brand-teal/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-brand-teal/50">
+              {historyLogs.length === 0 ? (
+                <div className="text-center text-brand-text/50 py-8">Aucun historique disponible.</div>
+              ) : (
+                historyLogs.map(log => (
+                  <div key={log.id} className="bg-white/60 p-4 rounded-xl border border-white/50 shadow-sm text-sm">
+                    <span className="font-bold text-brand-teal">
+                      {log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : new Date(log.timestamp).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
+                    </span>
+                    <span className="text-brand-text/70 mx-2">|</span>
+                    <span className="font-bold text-brand-text">{log.studentName}</span> a été déplacé(e) de <span className="font-semibold text-indigo-500">{log.fromTeam}</span> vers <span className="font-semibold text-brand-coral">{log.toTeam}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -850,7 +941,10 @@ const PersonCard = memo(function PersonCard({ student, onDragStart, onToggle, on
 
   let cardBg = "bg-white";
   let borderColor = "border-white/50";
-  if (status === 'leaving') { cardBg = "bg-red-50"; borderColor = "border-red-200"; }
+  let textColor = "text-brand-text";
+  
+  if (student.hasMoved) { cardBg = "bg-orange-50"; borderColor = "border-orange-200"; }
+  else if (status === 'leaving') { cardBg = "bg-red-50"; borderColor = "border-red-200"; }
   else if (status === 'uncertain') { cardBg = "bg-yellow-50"; borderColor = "border-yellow-200"; }
   else if (isAdult) { cardBg = "bg-brand-coral/5"; borderColor = "border-brand-coral"; }
 
