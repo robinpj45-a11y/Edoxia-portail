@@ -3,6 +3,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import { GraduationCap, ArrowLeft, Printer, Plus, Search, Lock, Eye, FileText, Flag, User, Users, Trash2, ChevronDown, ChevronUp, Filter, Sparkles, Circle, AlertCircle, XCircle, Info } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 import { addDoc, updateDoc, deleteDoc, doc, collection } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { CLASSES as ALL_CLASSES } from '../../Edoxia-JS/utils/constants';
@@ -60,6 +61,96 @@ const generateClassPDF = (classLabel, students, teams) => {
   doc.save(`${classLabel}_PDF.pdf`);
 };
 
+const generateTeamPDF = (teamName, studentsInTeam) => {
+  const doc = new jsPDF();
+  const activeStudents = studentsInTeam.filter(s => !s.isAdult);
+  activeStudents.sort((a, b) => (a.lastName || a.name).localeCompare(b.lastName || b.name));
+
+  doc.setFontSize(18);
+  doc.setTextColor(99, 102, 241);
+  doc.text(`Classe : ${teamName}`, 14, 20);
+  doc.setFontSize(10);
+  doc.setTextColor(100);
+  doc.text(`Effectif : ${activeStudents.length} élèves`, 14, 28);
+
+  const tableData = activeStudents.map(s => {
+    let lastName = s.lastName ? s.lastName.toUpperCase() : s.name.split(' ')[0].toUpperCase();
+    let firstName = s.firstName ? s.firstName : s.name.split(' ').slice(1).join(' ');
+    let originClass = s.importedClassLabel || s.classLabel || "Non renseignée";
+    return [lastName, firstName, originClass];
+  });
+
+  autoTable(doc, {
+    startY: 35,
+    head: [['Nom', 'Prénom', 'Classe d\'origine']],
+    body: tableData,
+    theme: 'grid',
+    headStyles: { fillColor: [99, 102, 241] },
+  });
+  doc.save(`${teamName}_PDF.pdf`);
+};
+
+const generateTeamExcel = (teamName, studentsInTeam) => {
+  const activeStudents = studentsInTeam.filter(s => !s.isAdult);
+  activeStudents.sort((a, b) => (a.lastName || a.name).localeCompare(b.lastName || b.name));
+
+  const aoa = [
+    [null, null, null, "2026 - 2027"],
+    [teamName],
+    [],
+    ["Nom", "Prénom", "SV", "G", "Classe", "Date de naissance"],
+    [null, null, "PAI", "F", null, null]
+  ];
+
+  activeStudents.forEach(s => {
+    let lastName = s.lastName ? s.lastName.toUpperCase() : s.name.split(' ')[0].toUpperCase();
+    let firstName = s.firstName ? s.firstName : s.name.split(' ').slice(1).join(' ');
+    let originClass = s.importedClassLabel || s.classLabel || "";
+    let rawBirthDate = String(s.birthDate || s.dateOfBirth || s.birthday || s.date_naissance || "").trim();
+    let birthDate = rawBirthDate;
+    if (rawBirthDate && !isNaN(rawBirthDate) && Number(rawBirthDate) > 10000) {
+      birthDate = new Date((parseInt(rawBirthDate) - 25569) * 86400 * 1000).toLocaleDateString("fr-FR");
+    }
+    let genderSymbol = "";
+    if (s.gender) {
+      const g = s.gender.toString().trim().toUpperCase();
+      if (g === 'M' || g === 'G') genderSymbol = 'G';
+      else if (g === 'F') genderSymbol = 'F';
+    }
+
+    aoa.push([
+      lastName,
+      firstName,
+      s.pai ? "PAI" : "",
+      genderSymbol,
+      originClass,
+      birthDate
+    ]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+  ws['!merges'] = [
+    { s: { r: 3, c: 0 }, e: { r: 4, c: 0 } },
+    { s: { r: 3, c: 1 }, e: { r: 4, c: 1 } },
+    { s: { r: 3, c: 4 }, e: { r: 4, c: 4 } },
+    { s: { r: 3, c: 5 }, e: { r: 4, c: 5 } }
+  ];
+
+  ws['!cols'] = [
+    { wch: 25 },
+    { wch: 20 },
+    { wch: 8 },
+    { wch: 6 },
+    { wch: 20 },
+    { wch: 18 }
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Répartition");
+  XLSX.writeFile(wb, `${teamName}_Export.xlsx`);
+};
+
 export default function RepartCollegePage() {
   const navigate = useNavigate();
   const context = useOutletContext();
@@ -85,6 +176,7 @@ export default function RepartCollegePage() {
   const [hiddenClassIds, setHiddenClassIds] = useState([]);
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [helpModalOpen, setHelpModalOpen] = useState(false);
+  const [activePrintMenu, setActivePrintMenu] = useState(null);
 
   const [studentModalOpen, setStudentModalOpen] = useState(false);
   const [newStudentLastName, setNewStudentLastName] = useState("");
@@ -93,6 +185,19 @@ export default function RepartCollegePage() {
   const [newStudentClass, setNewStudentClass] = useState(CLASSES[0]);
 
   useEffect(() => { setSearchTerm(""); setNewStudentClass(currentClass); }, [currentClass]);
+
+  useEffect(() => {
+    const defaultGroupsToDelete = ["groupe 1", "groupe 2", "groupe 3", "groupe 4", "groupe 5"];
+    teams.forEach(async (team) => {
+      if (defaultGroupsToDelete.includes(team.name.toLowerCase())) {
+        try {
+          await deleteDoc(doc(db, "repart_classes_college", team.id));
+        } catch (e) {
+          console.error("Erreur suppression groupe par défaut :", e);
+        }
+      }
+    });
+  }, [teams]);
 
   const handleAddStudent = async (e) => {
     e.preventDefault();
@@ -324,7 +429,7 @@ export default function RepartCollegePage() {
             {teams.filter(t => !hiddenClassIds.includes(t.numId)).map(team => {
               const teamId = team.numId; const teamName = team.name; const teamColor = team.color || '#0077b6'; const isLocked = team.locked;
               const allStudentsInTeam = students
-                .filter(s => s.team === teamId)
+                .filter(s => s.team === teamId && (s.isAdult || CLASSES.includes(s.classLabel)))
                 .sort((a, b) => {
                   const classIndexA = ALL_CLASSES.indexOf(a.importedClassLabel || a.classLabel);
                   const classIndexB = ALL_CLASSES.indexOf(b.importedClassLabel || b.classLabel);
@@ -353,7 +458,23 @@ export default function RepartCollegePage() {
                         <span className="font-black text-lg tracking-tight text-brand-text truncate">{teamName}</span>
                         {isLocked && <Lock size={16} className="text-brand-text/40 shrink-0" />}
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 relative">
+                        <button onClick={(e) => { e.stopPropagation(); setActivePrintMenu(activePrintMenu === teamId ? null : teamId); }} className="p-1.5 rounded-full text-brand-text/20 hover:text-brand-teal hover:bg-white transition-all" title="Exporter la classe">
+                          <Printer size={16} />
+                        </button>
+                        {activePrintMenu === teamId && (
+                          <>
+                            <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setActivePrintMenu(null); }} />
+                            <div className="absolute right-0 top-full mt-1 bg-white rounded-2xl shadow-xl border border-black/5 p-2 flex flex-col gap-1 z-50 text-sm font-bold w-48 text-brand-text animate-in fade-in slide-in-from-top-2 duration-150">
+                              <button onClick={(e) => { e.stopPropagation(); generateTeamPDF(teamName, allStudentsInTeam); setActivePrintMenu(null); }} className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-indigo-50 hover:text-indigo-500 transition-colors w-full text-left">
+                                <FileText size={16} className="text-indigo-500" /> Exporter en PDF
+                              </button>
+                              <button onClick={(e) => { e.stopPropagation(); generateTeamExcel(teamName, allStudentsInTeam); setActivePrintMenu(null); }} className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-brand-teal/10 hover:text-brand-teal transition-colors w-full text-left">
+                                <FileText size={16} className="text-brand-teal" /> Exporter en Excel
+                              </button>
+                            </div>
+                          </>
+                        )}
                         <button onClick={(e) => { e.stopPropagation(); toggleClassLock(team.id, isLocked); }} className={`p-1.5 rounded-full transition-all ${isLocked ? 'text-indigo-500 bg-indigo-50' : 'text-brand-text/20 hover:text-indigo-500 hover:bg-white'}`} title={isLocked ? "Déverrouiller" : "Verrouiller"}>
                           {isLocked ? <Lock size={16} /> : <Eye size={16} />}
                         </button>

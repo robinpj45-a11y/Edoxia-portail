@@ -148,6 +148,8 @@ export default function Teams() {
                                 return <div className="text-center text-brand-text/40 font-bold py-12 uppercase tracking-widest text-xs border-2 border-dashed border-white/50 rounded-[20px] bg-black/5">Aucune classe associée à cette équipe</div>;
                             }
                             
+                            const isSpecialTeam = teamClass.includes("Ingrid") || teamClass.includes("Aude") || teamClass.includes("Sylvie");
+                            
                             const myClassStudents = students
                                 .filter(s => s.classLabel === teamClass && !s.isAdult)
                                 .sort((a, b) => {
@@ -209,6 +211,12 @@ export default function Teams() {
                                                             <span className="text-2xl font-black text-brand-text">{busSchedules.find(b => b.id === teamClass.replace(/\//g, '_'))?.retour || "--:--"}</span>
                                                         </div>
                                                     </div>
+                                                    {isSpecialTeam && (
+                                                        <div className="bg-white p-4 rounded-[20px] shadow-sm border border-black/5 flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                                                            <span className="text-[10px] uppercase font-black tracking-widest text-indigo-500">Départ PS</span>
+                                                            <span className="text-2xl font-black text-brand-text">13h30</span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
