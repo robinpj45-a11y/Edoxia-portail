@@ -69,20 +69,39 @@ const generateTeamPDF = (teamName, studentsInTeam) => {
   doc.setFontSize(18);
   doc.setTextColor(99, 102, 241);
   doc.text(`Classe : ${teamName}`, 14, 20);
+  const boysCount = activeStudents.filter(s => s.gender && (s.gender.toString().trim().toUpperCase() === 'M' || s.gender.toString().trim().toUpperCase() === 'G')).length;
+  const girlsCount = activeStudents.filter(s => s.gender && s.gender.toString().trim().toUpperCase() === 'F').length;
+  const paiCount = activeStudents.filter(s => s.pai).length;
+  const disruptiveCount = activeStudents.filter(s => s.disruptive).length;
+
   doc.setFontSize(10);
   doc.setTextColor(100);
-  doc.text(`Effectif : ${activeStudents.length} élèves`, 14, 28);
+  doc.text(`Effectif : ${activeStudents.length} élèves (G : ${boysCount} | F : ${girlsCount} | PAI : ${paiCount} | à surveiller : ${disruptiveCount})`, 14, 28);
 
   const tableData = activeStudents.map(s => {
     let lastName = s.lastName ? s.lastName.toUpperCase() : s.name.split(' ')[0].toUpperCase();
     let firstName = s.firstName ? s.firstName : s.name.split(' ').slice(1).join(' ');
     let originClass = s.importedClassLabel || s.classLabel || "Non renseignée";
-    return [lastName, firstName, originClass];
+    
+    let genderSymbol = "";
+    if (s.gender) {
+      const g = s.gender.toString().trim().toUpperCase();
+      if (g === 'M' || g === 'G') genderSymbol = 'G';
+      else if (g === 'F') genderSymbol = 'F';
+    }
+
+    let infos = [];
+    if (s.pai) infos.push("PAI");
+    if (s.ebep) infos.push("EBEP");
+    if (s.disruptive) infos.push("à surveiller");
+    let infoStr = infos.join(", ");
+
+    return [lastName, firstName, genderSymbol, infoStr, originClass];
   });
 
   autoTable(doc, {
     startY: 35,
-    head: [['Nom', 'Prénom', 'Classe d\'origine']],
+    head: [['Nom', 'Prénom', 'G/F', 'Infos', 'Classe d\'origine']],
     body: tableData,
     theme: 'grid',
     headStyles: { fillColor: [99, 102, 241] },
