@@ -92,6 +92,22 @@ export default function SuccessReportsPage() {
     }
   }, [classes, selectedClassId]);
 
+  const allCompetences = useMemo(() => {
+    const comps = new Set();
+    const filteredEvals = selectedClassId === 'all'
+      ? evaluations
+      : evaluations.filter(ev => ev.selectedClassId === selectedClassId);
+      
+    filteredEvals.forEach(ev => {
+      ev.exercises?.forEach(ex => {
+        if (ex.competence && ex.competence.trim()) {
+          comps.add(ex.competence.trim());
+        }
+      });
+    });
+    return Array.from(comps).sort();
+  }, [evaluations, selectedClassId]);
+
   const stats = useMemo(() => {
     // Filter evaluations by class if a class is selected
     const filteredEvals = selectedClassId === 'all'
@@ -101,18 +117,22 @@ export default function SuccessReportsPage() {
     if (filteredEvals.length === 0) return null;
 
     const isSubjectView = selectedEvalId.startsWith('subject_');
+    const isCompetenceView = selectedEvalId.startsWith('comp_');
     const isGlobalView = selectedEvalId === 'global';
 
-    if (isGlobalView || isSubjectView) {
+    if (isGlobalView || isSubjectView || isCompetenceView) {
       const targetSubject = isSubjectView ? selectedEvalId.replace('subject_', '') : null;
+      const targetCompetence = isCompetenceView ? selectedEvalId.replace('comp_', '') : null;
 
       const evalsToAggregate = targetSubject
         ? filteredEvals.filter(ev => ev.subject === targetSubject)
+        : targetCompetence
+        ? filteredEvals.filter(ev => ev.exercises.some(ex => ex.competence === targetCompetence))
         : filteredEvals;
 
       if (evalsToAggregate.length === 0 && !isGlobalView) {
-        // Return an empty state for subject view to avoid UI mismatch
-        return { type: 'subject', subject: targetSubject, globalAvg: 0, students: [], struggling: [], exercises: [] };
+        // Return an empty state for subject/competence view to avoid UI mismatch
+        return { type: isSubjectView ? 'subject' : 'competence', subject: targetSubject, name: targetCompetence, globalAvg: 0, students: [], struggling: [], exercises: [] };
       }
       if (evalsToAggregate.length === 0) return null;
 
@@ -129,6 +149,9 @@ export default function SuccessReportsPage() {
             let evalScore = 0;
             let evaluatedCount = 0;
             ev.exercises.forEach((ex, idx) => {
+              // If competence view, only aggregate exercises matching this competence
+              if (isCompetenceView && ex.competence !== targetCompetence) return;
+
               const resVal = res[idx];
               if (resVal !== undefined && resVal !== null && resVal !== '') {
                 // Handle points (number) or legacy colors (string)
@@ -181,8 +204,9 @@ export default function SuccessReportsPage() {
       })).sort((a, b) => b.avg - a.avg);
 
       return {
-        type: isSubjectView ? 'subject' : 'global',
+        type: isSubjectView ? 'subject' : isCompetenceView ? 'competence' : 'global',
         subject: targetSubject,
+        name: targetCompetence,
         globalAvg,
         students,
         struggling: students.filter(s => s.avg !== null && s.avg <= 30),
@@ -534,6 +558,13 @@ export default function SuccessReportsPage() {
                 <option key={ev.id} value={ev.id}>{ev.name}</option>
               ))}
             </optgroup>
+            {allCompetences.length > 0 && (
+              <optgroup label="Par compétence">
+                {allCompetences.map(comp => (
+                  <option key={comp} value={`comp_${comp}`}>{comp}</option>
+                ))}
+              </optgroup>
+            )}
           </select>
 
           <button
@@ -556,7 +587,7 @@ export default function SuccessReportsPage() {
               {stats?.globalAvg?.toFixed(1) || '0.0'}%
             </div>
             <div className="text-[10px] font-black uppercase tracking-widest text-brand-text/40">
-              Pourcentage de réussite {stats?.type === 'global' ? '' : stats?.type === 'subject' ? 'de la matière' : 'de l\'évaluation'}
+              Pourcentage de réussite {stats?.type === 'global' ? '' : stats?.type === 'subject' ? 'de la matière' : stats?.type === 'competence' ? 'de la compétence' : 'de l\'évaluation'}
             </div>
           </motion.div>
 
@@ -565,9 +596,9 @@ export default function SuccessReportsPage() {
               <Users className="text-brand-coral" />
             </div>
             <div className="text-4xl font-black tracking-tighter mb-1">
-              {stats?.type === 'global' ? evaluations.length : stats?.exercises.length}
+              {stats?.type === 'global' ? evaluations.length : stats?.type === 'competence' ? stats?.students.length : stats?.exercises.length}
             </div>
-            <div className="text-[10px] font-black uppercase tracking-widest text-brand-text/40">{stats?.type === 'global' ? 'Évaluations' : 'Exercices'}</div>
+            <div className="text-[10px] font-black uppercase tracking-widest text-brand-text/40">{stats?.type === 'global' ? 'Évaluations' : stats?.type === 'competence' ? 'Élèves évalués' : 'Exercices'}</div>
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="p-8 bg-white/60 backdrop-blur-md border border-white rounded-[40px] shadow-soft text-center group">
@@ -803,7 +834,8 @@ export default function SuccessReportsPage() {
                       { id: 'global', label: '🌍 Vue Globale' },
                       { id: 'subject_Français', label: '📚 Vue Français' },
                       { id: 'subject_Mathématiques', label: '🧮 Vue Mathématiques' },
-                      ...(selectedClassId === 'all' ? evaluations : evaluations.filter(ev => ev.selectedClassId === selectedClassId)).map(ev => ({ id: ev.id, label: `📝 ${ev.name}` }))
+                      ...((selectedClassId === 'all' ? evaluations : evaluations.filter(ev => ev.selectedClassId === selectedClassId)).map(ev => ({ id: ev.id, label: `📝 ${ev.name}` }))),
+                      ...(allCompetences.map(comp => ({ id: `comp_${comp}`, label: `🎯 ${comp}` })))
                     ].map(opt => (
                       <button
                         key={opt.id}
