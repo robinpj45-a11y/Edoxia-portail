@@ -31,7 +31,8 @@ import {
   Home as HomeIcon,
   LayoutGrid,
   UserPlus,
-  Users
+  Users,
+  Mic2
 } from 'lucide-react';
 
 // IMPORT DU LOGO PERSO
@@ -80,6 +81,9 @@ import EdoxiaRepartWrapper from './Edoxia-Repart/pages/EdoxiaRepartWrapper';
 import RepartPage from './Edoxia-Repart/pages/RepartPage';
 import RepartCollegePage from './Edoxia-Repart/pages/RepartCollegePage';
 import SuccessEvaluationCreator from './Edoxia-Success/pages/SuccessEvaluationCreator';
+import EdoxiaKaraokeWrapper from './Edoxia-Karaoke/pages/EdoxiaKaraokeWrapper';
+import KaraokeScreenPage from './Edoxia-Karaoke/pages/KaraokeScreenPage';
+import KaraokeRemotePage from './Edoxia-Karaoke/pages/KaraokeRemotePage';
 
 
 
@@ -128,6 +132,17 @@ const DEFAULT_MODULES = [
     path: '/success',
     desc: 'Suivi pédagogique',
     icon: <Calculator className="w-6 h-6 text-brand-teal" />,
+    active: true,
+    isProtected: false,
+    requiresSchoolAuth: false
+  },
+  {
+    id: 'karaoke',
+    name: 'Karaoké Box',
+    path: '/karaoke/remote',
+    desc: 'Karaoké collaboratif',
+    icon: <Mic2 className="w-6 h-6 text-indigo-400" />,
+    tag: 'Jeux',
     active: true,
     isProtected: false,
     requiresSchoolAuth: false
@@ -465,7 +480,7 @@ const AppLayout = () => {
       </div>
 
       {/* Nouvelle Navbar Globale */}
-      {!location.pathname.startsWith('/JS2026') && !location.pathname.startsWith('/GVGDC') && !location.pathname.startsWith('/DashboardQVGDC') && !location.pathname.startsWith('/cd') && !location.pathname.startsWith('/success') && !location.pathname.startsWith('/repart') && !location.pathname.startsWith('/stpbb') && (
+      {!location.pathname.startsWith('/JS2026') && !location.pathname.startsWith('/GVGDC') && !location.pathname.startsWith('/DashboardQVGDC') && !location.pathname.startsWith('/cd') && !location.pathname.startsWith('/success') && !location.pathname.startsWith('/repart') && !location.pathname.startsWith('/stpbb') && !location.pathname.startsWith('/karaoke') && (
         <nav className="hidden md:flex justify-between items-center px-8 py-4 shrink-0 z-50 relative bg-brand-teal text-white shadow-soft">
           {/* Gauche : Logo */}
           <div className="flex items-center gap-6">
@@ -511,7 +526,7 @@ const AppLayout = () => {
       )}
 
       {/* Navbar Mobile (Bottom) */}
-      {!location.pathname.startsWith('/games') && !location.pathname.startsWith('/JS2026') && !location.pathname.startsWith('/GVGDC') && !location.pathname.startsWith('/DashboardQVGDC') && !location.pathname.startsWith('/events') && !location.pathname.startsWith('/calendar') && !location.pathname.startsWith('/cd') && !location.pathname.startsWith('/success') && !location.pathname.startsWith('/stpbb') && (
+      {!location.pathname.startsWith('/games') && !location.pathname.startsWith('/JS2026') && !location.pathname.startsWith('/GVGDC') && !location.pathname.startsWith('/DashboardQVGDC') && !location.pathname.startsWith('/events') && !location.pathname.startsWith('/calendar') && !location.pathname.startsWith('/cd') && !location.pathname.startsWith('/success') && !location.pathname.startsWith('/stpbb') && !location.pathname.startsWith('/karaoke') && (
         <nav className="md:hidden fixed bottom-6 left-6 right-6 z-[100] bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-brand-text/5 flex justify-around items-center px-2 py-3 backdrop-blur-xl">
           <button onClick={() => navigate('/')} className={`flex flex-col items-center gap-1 p-2 transition-colors ${location.pathname === '/' ? 'text-brand-text' : 'text-brand-text/40 hover:text-brand-coral'}`}>
             <HomeIcon className="w-6 h-6" />
@@ -642,7 +657,10 @@ const AppLayout = () => {
             <Route path=":spaceId/eval/:evalId" element={<SuccessEvaluationDetail />} />
             <Route path=":spaceId/reports" element={<SuccessReportsPage />} />
           </Route>
-
+          <Route path="/karaoke" element={<EdoxiaKaraokeWrapper />}>
+            <Route index element={<KaraokeScreenPage />} />
+            <Route path="remote" element={<KaraokeRemotePage />} />
+          </Route>
         </Routes>
       </div>
 
