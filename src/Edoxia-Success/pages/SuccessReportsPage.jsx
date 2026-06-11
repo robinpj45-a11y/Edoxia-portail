@@ -35,6 +35,9 @@ export default function SuccessReportsPage() {
   const [radarData, setRadarData] = useState(null);
   const [exportingRadar, setExportingRadar] = useState(false);
   const radarRef = React.useRef(null);
+  const [showCustomModal, setShowCustomModal] = useState(false);
+  const [tempCustomComps, setTempCustomComps] = useState([]);
+  const [activeCustomComps, setActiveCustomComps] = useState([]);
 
   useEffect(() => {
     // 1. Fetch all evaluations for this space
@@ -119,20 +122,23 @@ export default function SuccessReportsPage() {
     const isSubjectView = selectedEvalId.startsWith('subject_');
     const isCompetenceView = selectedEvalId.startsWith('comp_');
     const isGlobalView = selectedEvalId === 'global';
+    const isCustomView = selectedEvalId === 'custom';
 
-    if (isGlobalView || isSubjectView || isCompetenceView) {
+    if (isGlobalView || isSubjectView || isCompetenceView || isCustomView) {
       const targetSubject = isSubjectView ? selectedEvalId.replace('subject_', '') : null;
       const targetCompetence = isCompetenceView ? selectedEvalId.replace('comp_', '') : null;
 
       const evalsToAggregate = targetSubject
         ? filteredEvals.filter(ev => ev.subject === targetSubject)
         : targetCompetence
-        ? filteredEvals.filter(ev => ev.exercises.some(ex => ex.competence === targetCompetence))
+        ? filteredEvals.filter(ev => ev.exercises.some(ex => ex.competence?.trim() === targetCompetence))
+        : isCustomView
+        ? filteredEvals.filter(ev => ev.exercises.some(ex => activeCustomComps.includes(ex.competence?.trim())))
         : filteredEvals;
 
       if (evalsToAggregate.length === 0 && !isGlobalView) {
         // Return an empty state for subject/competence view to avoid UI mismatch
-        return { type: isSubjectView ? 'subject' : 'competence', subject: targetSubject, name: targetCompetence, globalAvg: 0, students: [], struggling: [], exercises: [] };
+        return { type: isCustomView ? 'custom' : isSubjectView ? 'subject' : 'competence', subject: targetSubject, name: targetCompetence || 'Personnalisé', globalAvg: 0, students: [], struggling: [], exercises: [] };
       }
       if (evalsToAggregate.length === 0) return null;
 
@@ -150,7 +156,8 @@ export default function SuccessReportsPage() {
             let evaluatedCount = 0;
             ev.exercises.forEach((ex, idx) => {
               // If competence view, only aggregate exercises matching this competence
-              if (isCompetenceView && ex.competence !== targetCompetence) return;
+              if (isCompetenceView && ex.competence?.trim() !== targetCompetence) return;
+              if (isCustomView && !activeCustomComps.includes(ex.competence?.trim())) return;
 
               const resVal = res[idx];
               if (resVal !== undefined && resVal !== null && resVal !== '') {
@@ -204,9 +211,9 @@ export default function SuccessReportsPage() {
       })).sort((a, b) => b.avg - a.avg);
 
       return {
-        type: isSubjectView ? 'subject' : isCompetenceView ? 'competence' : 'global',
+        type: isCustomView ? 'custom' : isSubjectView ? 'subject' : isCompetenceView ? 'competence' : 'global',
         subject: targetSubject,
-        name: targetCompetence,
+        name: isCustomView ? 'Personnalisé' : targetCompetence,
         globalAvg,
         students,
         struggling: students.filter(s => s.avg !== null && s.avg <= 30),
@@ -278,7 +285,7 @@ export default function SuccessReportsPage() {
         struggling: studentScores.filter(s => s.avg !== null && s.avg <= 30)
       };
     }
-  }, [evaluations, allResults, selectedEvalId, selectedClassId]);
+  }, [evaluations, allResults, selectedEvalId, selectedClassId, activeCustomComps]);
 
   const studentDetails = useMemo(() => {
     if (!selectedStudentId || !stats) return null;
@@ -550,6 +557,9 @@ export default function SuccessReportsPage() {
             <option value="global">🌍 Vue Globale</option>
             <option value="subject_Français">📚 Vue Français</option>
             <option value="subject_Mathématiques">🧮 Vue Mathématiques</option>
+            {activeCustomComps.length > 0 && (
+              <option value="custom">🛠️ Vue personnalisée</option>
+            )}
             <optgroup label="Évaluations de la classe">
               {(selectedClassId === 'all'
                 ? evaluations
@@ -567,16 +577,42 @@ export default function SuccessReportsPage() {
             )}
           </select>
 
-          <button
-            onClick={() => setShowRadarSelect(true)}
-            className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black shadow-lg shadow-indigo-200 flex items-center gap-2 hover:brightness-110 active:scale-95 transition-all text-xs uppercase tracking-wider"
-          >
-            <Target size={18} /> Générer résultats
-          </button>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => setShowRadarSelect(true)}
+              className="w-full bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 transition-all text-xs uppercase tracking-wider"
+            >
+              <Target size={18} /> Générer résultats
+            </button>
+            <button
+              onClick={() => {
+                setTempCustomComps(activeCustomComps);
+                setShowCustomModal(true);
+              }}
+              className="w-full bg-brand-teal/10 text-brand-teal border border-brand-teal/20 px-6 py-3 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-brand-teal/20 active:scale-95 transition-all text-xs uppercase tracking-wider"
+            >
+              Personnaliser
+            </button>
+          </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto space-y-10 pb-20">
+        {stats?.type === 'custom' && activeCustomComps.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-brand-teal/5 border border-brand-teal/20 rounded-3xl p-6">
+            <h2 className="text-sm font-black text-brand-teal uppercase tracking-widest mb-3 flex items-center gap-2">
+              <Target size={16} /> Compétences sélectionnées ({activeCustomComps.length})
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {activeCustomComps.map(comp => (
+                <span key={comp} className="px-3 py-1.5 bg-white text-brand-teal font-black text-xs rounded-xl shadow-sm border border-brand-teal/10">
+                  {comp}
+                </span>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
         {/* Résumé */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="p-8 bg-white/60 backdrop-blur-md border border-white rounded-[40px] shadow-soft text-center group">
@@ -587,7 +623,7 @@ export default function SuccessReportsPage() {
               {stats?.globalAvg?.toFixed(1) || '0.0'}%
             </div>
             <div className="text-[10px] font-black uppercase tracking-widest text-brand-text/40">
-              Pourcentage de réussite {stats?.type === 'global' ? '' : stats?.type === 'subject' ? 'de la matière' : stats?.type === 'competence' ? 'de la compétence' : 'de l\'évaluation'}
+              Pourcentage de réussite {stats?.type === 'global' ? '' : stats?.type === 'subject' ? 'de la matière' : stats?.type === 'competence' ? 'de la compétence' : stats?.type === 'custom' ? 'des compétences sélectionnées' : 'de l\'évaluation'}
             </div>
           </motion.div>
 
@@ -596,9 +632,9 @@ export default function SuccessReportsPage() {
               <Users className="text-brand-coral" />
             </div>
             <div className="text-4xl font-black tracking-tighter mb-1">
-              {stats?.type === 'global' ? evaluations.length : stats?.type === 'competence' ? stats?.students.length : stats?.exercises.length}
+              {stats?.type === 'global' ? evaluations.length : (stats?.type === 'competence' || stats?.type === 'custom') ? stats?.students.length : stats?.exercises.length}
             </div>
-            <div className="text-[10px] font-black uppercase tracking-widest text-brand-text/40">{stats?.type === 'global' ? 'Évaluations' : stats?.type === 'competence' ? 'Élèves évalués' : 'Exercices'}</div>
+            <div className="text-[10px] font-black uppercase tracking-widest text-brand-text/40">{stats?.type === 'global' ? 'Évaluations' : (stats?.type === 'competence' || stats?.type === 'custom') ? 'Élèves évalués' : 'Exercices'}</div>
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="p-8 bg-white/60 backdrop-blur-md border border-white rounded-[40px] shadow-soft text-center group">
@@ -1016,6 +1052,80 @@ export default function SuccessReportsPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Custom Competences Modal */}
+      <AnimatePresence>
+        {showCustomModal && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-10">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowCustomModal(false)} className="absolute inset-0 bg-brand-bg/95" />
+            <motion.div
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
+              className="relative w-full max-w-2xl bg-white rounded-[40px] shadow-2xl border border-white flex flex-col max-h-[85vh] overflow-hidden"
+            >
+              <header className="p-8 border-b border-brand-text/5 flex justify-between items-center shrink-0">
+                <div>
+                  <h2 className="text-2xl font-black uppercase tracking-tight">Personnaliser la vue</h2>
+                  <p className="text-xs font-bold text-brand-text/40 uppercase tracking-widest">
+                    Sélectionnez les compétences à combiner
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowCustomModal(false)}
+                  className="p-3 hover:bg-brand-bg rounded-2xl transition-colors text-brand-text/20 hover:text-brand-coral"
+                >
+                  <X size={24} />
+                </button>
+              </header>
+
+              <div className="flex-1 overflow-y-auto p-8 space-y-4">
+                {allCompetences.map(comp => (
+                  <label key={comp} className="flex items-center gap-4 p-4 rounded-2xl border border-brand-bg hover:bg-brand-bg/50 cursor-pointer transition-colors group">
+                    <input
+                      type="checkbox"
+                      checked={tempCustomComps.includes(comp)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setTempCustomComps([...tempCustomComps, comp]);
+                        } else {
+                          setTempCustomComps(tempCustomComps.filter(c => c !== comp));
+                        }
+                      }}
+                      className="w-5 h-5 rounded border-brand-text/20 text-brand-teal focus:ring-brand-teal"
+                    />
+                    <span className="font-black text-sm">{comp}</span>
+                  </label>
+                ))}
+              </div>
+
+              <footer className="p-8 border-t border-brand-text/5 flex justify-end gap-4 shrink-0 bg-white">
+                <button
+                  onClick={() => {
+                    setTempCustomComps([]);
+                  }}
+                  className="px-6 py-3 bg-brand-bg border border-transparent rounded-2xl font-black text-brand-text/60 hover:text-brand-text transition-all text-xs uppercase tracking-wider"
+                >
+                  Tout décocher
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveCustomComps(tempCustomComps);
+                    if (tempCustomComps.length > 0) {
+                      setSelectedEvalId('custom');
+                    } else {
+                      setSelectedEvalId('global');
+                    }
+                    setShowCustomModal(false);
+                  }}
+                  className="px-6 py-3 bg-brand-teal text-white rounded-2xl font-black shadow-lg shadow-brand-teal/30 hover:brightness-110 active:scale-95 transition-all text-xs uppercase tracking-wider"
+                >
+                  Valider la sélection
+                </button>
+              </footer>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
+

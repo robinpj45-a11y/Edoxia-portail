@@ -77,6 +77,7 @@ export default function EventApp({ user: propUser }) {
     return (
       <RegisterUser
         event={selectedEvent}
+        entries={entries}
         user={user}
         onBack={handleBackToHome}
       />

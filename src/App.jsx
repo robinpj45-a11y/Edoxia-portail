@@ -615,11 +615,7 @@ const AppLayout = () => {
               <GlobalAdmin defaultModules={DEFAULT_MODULES} />
             </ProtectedRoute>
           } />
-          <Route path="/events" element={
-            <ProtectedRoute isAllowed={isAuthorized}>
-              <EventApp user={user} />
-            </ProtectedRoute>
-          } />
+          <Route path="/events" element={<EventApp user={user} />} />
           <Route path="/calendar" element={<PublicCalendar user={user} />} />
           <Route path="/calendar/admin" element={
             <ProtectedRoute isAllowed={isAuthorized}>

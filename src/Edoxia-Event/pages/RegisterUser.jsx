@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useContext } from 'react';
 import {
     User, Utensils, CheckCircle, CalendarPlus, ArrowLeft,
-    MapPin, Clock, Info, Lock, Wine, ChevronRight, List, MessageSquare, ChevronDown
+    MapPin, Clock, Info, Lock, Wine, ChevronRight, List, MessageSquare, ChevronDown, Euro
 } from 'lucide-react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { TEMPLATE_REPAS, TEMPLATE_ACTIVITE } from '../constants';
 import { ThemeContext } from '../../ThemeContext';
 
-export default function RegisterUser({ event, user, onBack }) {
+export default function RegisterUser({ event, entries = [], user, onBack }) {
     const { theme } = useContext(ThemeContext);
     const isDark = theme === 'dark';
     const [formEntry, setFormEntry] = useState({ firstName: user?.prenom || '', lastName: user?.nom || '', selectionType: 'carte', selections: {}, comment: '', total: 0 });
@@ -38,6 +38,7 @@ export default function RegisterUser({ event, user, onBack }) {
         if (event.isPaid && !event.isLocked) {
             let total = 0;
             if (event.type === TEMPLATE_REPAS) {
+                total += parseFloat(event.price || 0);
                 if (formEntry.selectionType === 'carte') {
                     Object.values(formEntry.selections).forEach(val => {
                         if (val && !val.toString().startsWith('APERO:')) {
@@ -47,7 +48,7 @@ export default function RegisterUser({ event, user, onBack }) {
                     });
                 } else {
                     const menu = event.menus.find(m => m.id === formEntry.selectionType);
-                    if (menu) total = parseFloat(menu.price);
+                    if (menu) total += parseFloat(menu.price || 0);
                 }
             } else {
                 total += parseFloat(event.price || 0);
@@ -61,6 +62,17 @@ export default function RegisterUser({ event, user, onBack }) {
             setFormEntry(prev => ({ ...prev, total }));
         }
     }, [formEntry.selections, formEntry.selectionType, event]);
+
+    // Helper pour compter les choix déjà effectués par d'autres participants
+    const getChoiceCount = (category, itemName) => {
+        return entries.filter(ent => {
+            if (ent.eventId !== event.id) return false;
+            const sel = ent.selections && ent.selections[category];
+            if (!sel) return false;
+            const name = sel.toString().split('|')[0];
+            return name === itemName;
+        }).length;
+    };
 
     // Helper pour formater les choix en texte
     const formatSelections = () => {
@@ -261,7 +273,7 @@ export default function RegisterUser({ event, user, onBack }) {
                 {/* Infos Activité (COMMUN) */}
                 {(event.date || event.address) && (
                     <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className={`grid gap-4 ${event.isPaid && event.price > 0 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2'}`}>
                             <div className="p-4 rounded-[20px] border shadow-soft flex flex-col items-center text-center gap-2 bg-white/50 border-white/50">
                                 <div className={`${themeBg} p-3 rounded-full ${themeColor} shadow-inner bg-white/60`}><Clock size={24} /></div>
                                 <div><div className="text-[10px] font-bold text-brand-text/50 uppercase tracking-wider">Quand ?</div><div className="font-bold text-sm text-brand-text">{event.date || 'À définir'} <br /> {event.time}</div></div>
@@ -270,6 +282,15 @@ export default function RegisterUser({ event, user, onBack }) {
                                 <div className={`${themeBg} p-3 rounded-full ${themeColor} shadow-inner bg-white/60`}><MapPin size={24} /></div>
                                 <div><div className="text-[10px] font-bold text-brand-text/50 uppercase tracking-wider">Où ?</div><div className="font-bold text-sm text-brand-text">{event.address || 'Non spécifié'}</div></div>
                             </div>
+                            {event.isPaid && event.price > 0 && (
+                                <div className="p-4 rounded-[20px] border shadow-soft flex flex-col items-center text-center gap-2 bg-white/50 border-white/50">
+                                    <div className={`${themeBg} p-3 rounded-full ${themeColor} shadow-inner bg-white/60`}><Euro size={24} /></div>
+                                    <div>
+                                        <div className="text-[10px] font-bold text-brand-text/50 uppercase tracking-wider">Prix de base</div>
+                                        <div className="font-bold text-sm text-brand-text">{parseFloat(event.price).toFixed(2)}€</div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {event.address && (
@@ -382,11 +403,14 @@ export default function RegisterUser({ event, user, onBack }) {
                                                             className="w-full p-3 rounded-xl border appearance-none outline-none transition-colors bg-white/70 border-white/50 text-brand-text font-medium focus:border-brand-teal shadow-inner"
                                                         >
                                                             <option value="">-- Choisir --</option>
-                                                            {event.carte[type].map((item, idx) => (
-                                                                <option key={idx} value={`${item.name}|${item.price}`}>
-                                                                    {item.name} {event.isPaid && item.price > 0 ? `(+${item.price}€)` : ''}
-                                                                </option>
-                                                            ))}
+                                                            {event.carte[type].map((item, idx) => {
+                                                                const count = getChoiceCount(type, item.name);
+                                                                return (
+                                                                    <option key={idx} value={`${item.name}|${item.price}`}>
+                                                                        {item.name} {event.isPaid && item.price > 0 ? `(+${item.price}€)` : ''} {count > 0 ? `(${count} sélection${count > 1 ? 's' : ''})` : ''}
+                                                                    </option>
+                                                                );
+                                                            })}
                                                         </select>
                                                         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50 text-brand-teal">
                                                             <ChevronDown size={16} />
@@ -420,9 +444,14 @@ export default function RegisterUser({ event, user, onBack }) {
                                                                         className="w-full p-3 rounded-xl border appearance-none outline-none transition-colors bg-white/70 border-white text-brand-text font-medium focus:border-brand-teal shadow-sm"
                                                                     >
                                                                         <option value="">-- Choisir --</option>
-                                                                        {menu[type].map((item, i) => (
-                                                                            <option key={i} value={item}>{item}</option>
-                                                                        ))}
+                                                                        {menu[type].map((item, i) => {
+                                                                            const count = getChoiceCount(type, item);
+                                                                            return (
+                                                                                <option key={i} value={item}>
+                                                                                    {item} {count > 0 ? `(${count} sélection${count > 1 ? 's' : ''})` : ''}
+                                                                                </option>
+                                                                            );
+                                                                        })}
                                                                     </select>
                                                                     <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50 text-brand-teal">
                                                                         <ChevronDown size={16} />

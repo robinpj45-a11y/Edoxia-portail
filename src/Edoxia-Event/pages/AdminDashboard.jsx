@@ -246,8 +246,13 @@ function AdminCreateForm({ eventToEdit, user, onFinish }) {
           <label htmlFor="isPaid" className="font-bold text-brand-text">Évènement payant ?</label>
         </div>
 
-        {data.isPaid && data.type === TEMPLATE_ACTIVITE && (
-          <div><label className={labelClass}>Prix par personne (€)</label><input type="number" className={inputClass} value={data.price} onChange={e => setData({ ...data, price: e.target.value })} /></div>
+        {data.isPaid && (
+          <div>
+            <label className={labelClass}>
+              {data.type === TEMPLATE_REPAS ? "Prix de base fixe (€) (ajouté aux choix du repas)" : "Prix par personne (€)"}
+            </label>
+            <input type="number" className={inputClass} value={data.price} onChange={e => setData({ ...data, price: e.target.value })} />
+          </div>
         )}
 
         {/* CONFIGURATION REPAS */}

@@ -34,7 +34,7 @@ export default function EventHome({ events, entries, onSelect, onViewChange, loa
           </div>
         </div>
         <button onClick={() => onViewChange('admin')} className="flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition-all bg-brand-coral hover:bg-brand-coral/90 text-white shadow-soft hover:scale-105 active:scale-95">
-          <Plus size={16} /> Créer un évenement
+          <Plus size={16} /> Espace admin
         </button>
       </header>
 
