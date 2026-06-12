@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { Sparkles, Utensils, Calendar, Lock, Clock, ChevronRight, ArrowLeft, Plus, Users, X, MessageSquare, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { TEMPLATE_REPAS } from '../constants';
+import { TEMPLATE_REPAS, TEMPLATE_SOIREE } from '../constants';
 import { ThemeContext } from '../../ThemeContext';
 import { motion } from 'framer-motion';
 
@@ -10,11 +10,19 @@ export default function EventHome({ events, entries, onSelect, onViewChange, loa
   const isDark = theme === 'dark';
   const [showEntriesModal, setShowEntriesModal] = React.useState(false);
   const [selectedEventForEntries, setSelectedEventForEntries] = React.useState(null);
+  const [showProgrammeModal, setShowProgrammeModal] = React.useState(false);
+  const [selectedEventForProgramme, setSelectedEventForProgramme] = React.useState(null);
 
   const handleShowEntries = (e, event) => {
     e.stopPropagation();
     setSelectedEventForEntries(event);
     setShowEntriesModal(true);
+  };
+
+  const handleShowProgramme = (e, event) => {
+    e.stopPropagation();
+    setSelectedEventForProgramme(event);
+    setShowProgrammeModal(true);
   };
 
   return (
@@ -75,6 +83,11 @@ export default function EventHome({ events, entries, onSelect, onViewChange, loa
                         <Users size={12} /> Voir les inscrits
                       </button>
                     )}
+                    {e.type === TEMPLATE_SOIREE && (
+                      <button onClick={(ev) => handleShowProgramme(ev, e)} className="text-xs font-bold px-4 py-2 rounded-full flex items-center gap-1 transition-colors border bg-purple-500/10 border-purple-500/20 text-purple-600 hover:bg-purple-500/20 hover:shadow-sm">
+                        <Sparkles size={12} /> Programme
+                      </button>
+                    )}
                   </div>
                 </div>
                 <div className="p-3 rounded-full transition-colors hidden md:block bg-black/5 text-brand-text/50 group-hover:bg-brand-coral group-hover:text-white">
@@ -127,6 +140,11 @@ export default function EventHome({ events, entries, onSelect, onViewChange, loa
                         <p className="text-xs text-brand-text/60 font-medium">Inscrit le {entry.timestamp ? new Date(entry.timestamp.seconds * 1000).toLocaleDateString() : 'Date inconnue'}</p>
                       </div>
                     </div>
+                    {selectedEventForEntries.type === TEMPLATE_SOIREE && entry.selections && entry.selections['Mission'] && (
+                      <div className="mt-2 text-xs p-2 rounded-xl inline-flex w-fit items-center font-bold uppercase tracking-wide bg-purple-500/10 text-purple-600">
+                        Mission : {entry.selections['Mission'].split('|')[0]}
+                      </div>
+                    )}
                     {entry.comment && (
                       <div className="mt-2 text-sm p-4 rounded-[16px] flex gap-3 items-start bg-brand-bg/60 text-brand-text/80 shadow-inner">
                         <MessageSquare size={14} className="mt-0.5 shrink-0 opacity-50 text-brand-teal" />
@@ -140,6 +158,35 @@ export default function EventHome({ events, entries, onSelect, onViewChange, loa
 
             <div className="p-4 border-t text-center text-xs font-bold border-brand-text/10 text-brand-text/60 bg-white/30">
               Total : {entries.filter(ent => ent.eventId === selectedEventForEntries.id).length} participant(s)
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* MODAL PROGRAMME */}
+      {showProgrammeModal && selectedEventForProgramme && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-brand-bg/80 backdrop-blur-sm" onClick={() => setShowProgrammeModal(false)}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            onClick={e => e.stopPropagation()}
+            className="w-full max-w-lg max-h-[80vh] flex flex-col rounded-[30px] shadow-2xl overflow-hidden border bg-white/90 backdrop-blur-md border-white/50"
+          >
+            <div className="p-6 border-b flex justify-between items-center border-brand-text/10 bg-white/50">
+              <h3 className="font-black text-xl flex items-center gap-2 text-brand-text">
+                <Sparkles size={20} className="text-purple-600" />
+                Programme - {selectedEventForProgramme.title}
+              </h3>
+              <button onClick={() => setShowProgrammeModal(false)} className="p-2 rounded-full transition-colors text-brand-text/50 hover:bg-black/5 hover:text-brand-text">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              <div className="text-brand-text/80 whitespace-pre-wrap font-medium text-sm leading-relaxed">
+                {selectedEventForProgramme.programme || "Aucun programme défini pour cette soirée."}
+              </div>
             </div>
           </motion.div>
         </div>

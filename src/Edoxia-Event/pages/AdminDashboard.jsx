@@ -139,7 +139,16 @@ function AdminOverview({ events, entries, onEdit }) {
               <div className="max-h-80 overflow-y-auto p-2 bg-white/30 backdrop-blur-sm">
                 <table className="w-full text-left text-sm border-separate border-spacing-y-1">
                   <thead className="text-[10px] uppercase font-bold sticky top-0 bg-white/80 backdrop-blur-md text-brand-text/50 z-10 rounded-xl">
-                    <tr><th className="p-3">Nom</th><th className="p-3">Détails</th><th className="p-3 text-right">Total</th><th className="p-3 text-center">Paiement</th></tr>
+                    <tr>
+                      <th className="p-3">Nom</th>
+                      <th className="p-3">Détails</th>
+                      {e.type !== TEMPLATE_SOIREE && (
+                        <>
+                          <th className="p-3 text-right">Total</th>
+                          <th className="p-3 text-center">Paiement</th>
+                        </>
+                      )}
+                    </tr>
                   </thead>
                   <tbody>
                     {eventEntries.map(ent => (
@@ -167,22 +176,25 @@ function AdminOverview({ events, entries, onEdit }) {
                           ))}
                         </td>
 
-                        <td className="p-3 text-right font-mono font-bold text-brand-coral">{ent.total}€</td>
-
-                        <td className="p-3 text-center rounded-r-[10px]">
-                          {ent.total > 0 ? (
-                            <button
-                              onClick={() => togglePaid(ent.id, ent.isPaid)}
-                              className={`p-1.5 rounded-full transition-all flex items-center justify-center mx-auto hover:scale-110 ${ent.isPaid ? 'bg-green-500/20 text-green-600 shadow-inner' : 'bg-black/5 text-brand-text/30 hover:bg-brand-text/10'}`}
-                              title={ent.isPaid ? "Payé" : "Marquer comme payé"}
-                            >
-                              {ent.isPaid ? <CheckCircle size={16} /> : <Circle size={16} />}
-                            </button>
-                          ) : <span className="text-xs text-brand-text/30 font-bold p-1.5">-</span>}
-                        </td>
+                        {e.type !== TEMPLATE_SOIREE && (
+                          <>
+                            <td className="p-3 text-right font-mono font-bold text-brand-coral">{ent.total}€</td>
+                            <td className="p-3 text-center rounded-r-[10px]">
+                              {ent.total > 0 ? (
+                                <button
+                                  onClick={() => togglePaid(ent.id, ent.isPaid)}
+                                  className={`p-1.5 rounded-full transition-all flex items-center justify-center mx-auto hover:scale-110 ${ent.isPaid ? 'bg-green-500/20 text-green-600 shadow-inner' : 'bg-black/5 text-brand-text/30 hover:bg-brand-text/10'}`}
+                                  title={ent.isPaid ? "Payé" : "Marquer comme payé"}
+                                >
+                                  {ent.isPaid ? <CheckCircle size={16} /> : <Circle size={16} />}
+                                </button>
+                              ) : <span className="text-xs text-brand-text/30 font-bold p-1.5">-</span>}
+                            </td>
+                          </>
+                        )}
                       </tr>
                     ))}
-                    {eventEntries.length === 0 && <tr><td colSpan="4" className="p-4 text-center text-brand-text/40 italic font-medium">Aucune inscription</td></tr>}
+                    {eventEntries.length === 0 && <tr><td colSpan={e.type === TEMPLATE_SOIREE ? 2 : 4} className="p-4 text-center text-brand-text/40 italic font-medium">Aucune inscription</td></tr>}
                   </tbody>
                 </table>
               </div>
@@ -352,6 +364,10 @@ function AdminCreateForm({ eventToEdit, user, onFinish }) {
         {/* CONFIGURATION SOIREE SPECIALE */}
         {data.type === TEMPLATE_SOIREE && (
           <div className="space-y-6 mt-6 border-t border-slate-200 pt-6">
+            <div>
+              <label className={labelClass}>Programme de la soirée</label>
+              <textarea rows="4" placeholder="Détaillez le programme de la soirée..." className={inputClass} value={data.programme || ''} onChange={e => setData({ ...data, programme: e.target.value })} />
+            </div>
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className={labelClass}>Missions</label>
