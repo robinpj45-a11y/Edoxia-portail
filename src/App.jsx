@@ -616,6 +616,7 @@ const AppLayout = () => {
             </ProtectedRoute>
           } />
           <Route path="/events" element={<EventApp user={user} />} />
+          <Route path="/events/:eventId" element={<EventApp user={user} />} />
           <Route path="/calendar" element={<PublicCalendar user={user} />} />
           <Route path="/calendar/admin" element={
             <ProtectedRoute isAllowed={isAuthorized}>

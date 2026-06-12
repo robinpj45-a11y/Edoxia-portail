@@ -5,8 +5,12 @@ import { db } from '../firebase';
 import Home from './pages/Home';
 import RegisterUser from './pages/RegisterUser';
 import AdminDashboard from './pages/AdminDashboard';
+import { useParams, useNavigate } from 'react-router-dom';
 
 export default function EventApp({ user: propUser }) {
+  const { eventId } = useParams();
+  const navigate = useNavigate();
+
   const [view, setView] = useState('home'); // 'home', 'register', 'admin'
   const [events, setEvents] = useState([]);
   const [entries, setEntries] = useState([]);
@@ -51,14 +55,35 @@ export default function EventApp({ user: propUser }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!loading && events.length > 0) {
+      if (eventId) {
+        const found = events.find(e => e.id === eventId);
+        if (found) {
+          setSelectedEvent(found);
+          setView('register');
+        } else {
+          navigate('/events', { replace: true });
+        }
+      } else {
+        if (selectedEvent !== null && view === 'register') {
+          setSelectedEvent(null);
+          setView('home');
+        }
+      }
+    }
+  }, [eventId, events, loading, selectedEvent, view, navigate]);
+
   const handleSelectEvent = (event) => {
-    setSelectedEvent(event);
-    setView('register');
+    navigate(`/events/${event.id}`);
   };
 
   const handleBackToHome = () => {
-    setSelectedEvent(null);
-    setView('home');
+    if (view === 'admin') {
+      setView('home');
+    } else {
+      navigate('/events');
+    }
   };
 
   // Rendu conditionnel selon la vue active

@@ -1,11 +1,11 @@
 import React, { useState, useContext } from 'react';
 import {
   Settings, LayoutDashboard, Plus, ArrowLeft, Edit3, Unlock, Lock,
-  Trash2, Download, Eye, CheckCircle, Circle
+  Trash2, Download, Eye, CheckCircle, Circle, Link
 } from 'lucide-react';
 import { updateDoc, doc, deleteDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { ADMIN_PASSWORD, TEMPLATE_REPAS, TEMPLATE_ACTIVITE } from '../constants';
+import { ADMIN_PASSWORD, TEMPLATE_REPAS, TEMPLATE_ACTIVITE, TEMPLATE_SOIREE } from '../constants';
 import { ThemeContext } from '../../ThemeContext';
 
 export default function AdminDashboard({ events, entries, user, onBack }) {
@@ -103,7 +103,8 @@ function AdminOverview({ events, entries, onEdit }) {
     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
       {events.map(e => {
         const isRepas = e.type === TEMPLATE_REPAS;
-        const bgHeader = isRepas ? 'bg-brand-peach' : 'bg-brand-teal';
+        const isSoiree = e.type === TEMPLATE_SOIREE;
+        const bgHeader = isRepas ? 'bg-brand-peach' : (isSoiree ? 'bg-purple-500' : 'bg-brand-teal');
         const eventEntries = entries.filter(entry => entry.eventId === e.id);
 
         return (
@@ -127,6 +128,7 @@ function AdminOverview({ events, entries, onEdit }) {
             <div className="px-5 py-3 border-b flex justify-between items-center text-xs font-bold bg-white/50 border-white text-brand-text/70">
               <span className="uppercase tracking-widest">{e.type}</span>
               <div className="flex gap-4">
+                <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/events/${e.id}`); alert('Lien copié !'); }} className="flex items-center gap-1.5 hover:text-brand-teal transition-colors" title="Copier le lien public"><Link size={14} /> Lien</button>
                 <button onClick={() => exportCsv(e)} className="flex items-center gap-1.5 hover:text-brand-teal transition-colors"><Download size={14} /> CSV</button>
                 <button onClick={() => setExpandedId(expandedId === e.id ? null : e.id)} className={`flex items-center gap-1.5 transition-colors ${expandedId === e.id ? 'text-brand-teal' : 'hover:text-brand-teal'}`}><Eye size={14} /> {expandedId === e.id ? 'Masquer' : 'Voir'}</button>
               </div>
@@ -144,12 +146,22 @@ function AdminOverview({ events, entries, onEdit }) {
                       <tr key={ent.id} className="hover:bg-white/60 transition-colors bg-white/40 rounded-[10px] shadow-sm">
                         <td className="p-3 font-bold text-brand-text rounded-l-[10px]">{ent.lastName} {ent.firstName}</td>
 
-                        {/* Affichage Menu ou Carte */}
+                        {/* Affichage Menu ou Carte ou Mission */}
                         <td className="p-3 text-xs text-brand-text/70">
-                          <span className="inline-block px-2 py-1 rounded-md font-bold mr-2 uppercase tracking-wide bg-brand-teal/10 text-brand-teal">
-                            {ent.selectionType === 'carte' ? 'À la carte' : (e.menus?.find(m => m.id === ent.selectionType)?.name || 'Menu')}
-                          </span>
-                          {Object.values(ent.selections).map(v => v && !v.startsWith('APERO:') && <span key={v} className="inline-block border px-1.5 py-0.5 rounded mr-1 bg-white/50 border-white text-brand-text/60 font-medium">{v.split('|')[0]}</span>)}
+                          {e.type === TEMPLATE_SOIREE && ent.selections['Mission'] && (
+                            <span className="inline-block px-2 py-1 rounded-md font-bold mr-2 uppercase tracking-wide bg-purple-500/10 text-purple-600">
+                              Mission : {ent.selections['Mission'].split('|')[0]}
+                            </span>
+                          )}
+                          {e.type === TEMPLATE_REPAS && (
+                            <span className="inline-block px-2 py-1 rounded-md font-bold mr-2 uppercase tracking-wide bg-brand-teal/10 text-brand-teal">
+                              {ent.selectionType === 'carte' ? 'À la carte' : (e.menus?.find(m => m.id === ent.selectionType)?.name || 'Menu')}
+                            </span>
+                          )}
+                          {Object.entries(ent.selections).map(([k, v]) => {
+                            if (!v || v.toString().startsWith('APERO:') || k === 'Mission') return null;
+                            return <span key={v} className="inline-block border px-1.5 py-0.5 rounded mr-1 bg-white/50 border-white text-brand-text/60 font-medium">{v.split('|')[0]}</span>;
+                          })}
                           {Object.values(ent.selections).filter(v => v && v.toString().startsWith('APERO:')).map(v => (
                             <span key={v} className="inline-block border px-1.5 py-0.5 rounded font-bold mr-1 bg-brand-peach/10 text-brand-peach border-brand-peach/20">{v.split(':')[1]}</span>
                           ))}
@@ -188,6 +200,7 @@ function AdminCreateForm({ eventToEdit, user, onFinish }) {
     title: '', description: '', type: TEMPLATE_REPAS, isPaid: false,
     menus: [], carte: { entrees: [], plats: [], desserts: [] },
     date: '', time: '', address: '', price: 0, activityOptions: [],
+    missions: [],
     hasApero: false, aperoChoices: ['', ''],
     isLocked: false
   });
@@ -217,6 +230,10 @@ function AdminCreateForm({ eventToEdit, user, onFinish }) {
     setData({ ...data, aperoChoices: newChoices });
   };
 
+  const addMission = () => setData(p => ({ ...p, missions: [...(p.missions || []), { id: Date.now().toString(), name: '', maxParticipants: 1, description: '' }] }));
+  const updateMission = (id, k, v) => setData(p => ({ ...p, missions: p.missions.map(m => m.id === id ? { ...m, [k]: v } : m) }));
+  const removeMission = (id) => setData(p => ({ ...p, missions: p.missions.filter(m => m.id !== id) }));
+
   const inputClass = "w-full border rounded-xl p-3 font-bold outline-none transition-colors bg-white/60 border-white text-brand-text placeholder-brand-text/40 focus:border-brand-teal shadow-inner";
   const labelClass = "text-[10px] font-bold uppercase mb-1 text-brand-text/50 tracking-wider";
 
@@ -232,27 +249,36 @@ function AdminCreateForm({ eventToEdit, user, onFinish }) {
         <div className="flex gap-4">
           <button onClick={() => setData({ ...data, type: TEMPLATE_REPAS })} className={`flex-1 py-3 rounded-2xl font-bold border-2 transition-all ${data.type === TEMPLATE_REPAS ? 'border-brand-peach text-brand-peach bg-brand-peach/10 shadow-sm scale-[1.02]' : 'border-white/60 bg-white/30 text-brand-text/50 hover:bg-white hover:border-white shadow-inner'}`}>Repas</button>
           <button onClick={() => setData({ ...data, type: TEMPLATE_ACTIVITE })} className={`flex-1 py-3 rounded-2xl font-bold border-2 transition-all ${data.type === TEMPLATE_ACTIVITE ? 'border-brand-teal text-brand-teal bg-brand-teal/10 shadow-sm scale-[1.02]' : 'border-white/60 bg-white/30 text-brand-text/50 hover:bg-white hover:border-white shadow-inner'}`}>Activité</button>
+          <button onClick={() => setData({ ...data, type: TEMPLATE_SOIREE })} className={`flex-1 py-3 rounded-2xl font-bold border-2 transition-all ${data.type === TEMPLATE_SOIREE ? 'border-purple-500 text-purple-500 bg-purple-500/10 shadow-sm scale-[1.02]' : 'border-white/60 bg-white/30 text-brand-text/50 hover:bg-white hover:border-white shadow-inner'}`}>Soirée avec mission</button>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div><label className={labelClass}>Date</label><input type="date" className={inputClass} value={data.date} onChange={e => setData({ ...data, date: e.target.value })} /></div>
-          <div><label className={labelClass}>Heure</label><input type="time" className={inputClass} value={data.time} onChange={e => setData({ ...data, time: e.target.value })} /></div>
-        </div>
-        <div><label className={labelClass}>Adresse</label><input className={inputClass} value={data.address} onChange={e => setData({ ...data, address: e.target.value })} /></div>
+        {data.type !== TEMPLATE_SOIREE && (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <div><label className={labelClass}>Date</label><input type="date" className={inputClass} value={data.date} onChange={e => setData({ ...data, date: e.target.value })} /></div>
+              <div><label className={labelClass}>Heure</label><input type="time" className={inputClass} value={data.time} onChange={e => setData({ ...data, time: e.target.value })} /></div>
+            </div>
+            <div><label className={labelClass}>Adresse</label><input className={inputClass} value={data.address} onChange={e => setData({ ...data, address: e.target.value })} /></div>
+          </>
+        )}
         <div><label className={labelClass}>Description</label><textarea rows="3" className={inputClass} value={data.description} onChange={e => setData({ ...data, description: e.target.value })} /></div>
 
-        <div className="flex items-center gap-3 py-2">
-          <input type="checkbox" id="isPaid" className="w-5 h-5 accent-cyan-600" checked={data.isPaid} onChange={e => setData({ ...data, isPaid: e.target.checked })} />
-          <label htmlFor="isPaid" className="font-bold text-brand-text">Évènement payant ?</label>
-        </div>
+        {data.type !== TEMPLATE_SOIREE && (
+          <>
+            <div className="flex items-center gap-3 py-2">
+              <input type="checkbox" id="isPaid" className="w-5 h-5 accent-cyan-600" checked={data.isPaid} onChange={e => setData({ ...data, isPaid: e.target.checked })} />
+              <label htmlFor="isPaid" className="font-bold text-brand-text">Évènement payant ?</label>
+            </div>
 
-        {data.isPaid && (
-          <div>
-            <label className={labelClass}>
-              {data.type === TEMPLATE_REPAS ? "Prix de base fixe (€) (ajouté aux choix du repas)" : "Prix par personne (€)"}
-            </label>
-            <input type="number" className={inputClass} value={data.price} onChange={e => setData({ ...data, price: e.target.value })} />
-          </div>
+            {data.isPaid && (
+              <div>
+                <label className={labelClass}>
+                  {data.type === TEMPLATE_REPAS ? "Prix de base fixe (€) (ajouté aux choix du repas)" : "Prix par personne (€)"}
+                </label>
+                <input type="number" className={inputClass} value={data.price} onChange={e => setData({ ...data, price: e.target.value })} />
+              </div>
+            )}
+          </>
         )}
 
         {/* CONFIGURATION REPAS */}
@@ -319,6 +345,30 @@ function AdminCreateForm({ eventToEdit, user, onFinish }) {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* CONFIGURATION SOIREE SPECIALE */}
+        {data.type === TEMPLATE_SOIREE && (
+          <div className="space-y-6 mt-6 border-t border-slate-200 pt-6">
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <label className={labelClass}>Missions</label>
+                <button onClick={addMission} className="text-xs bg-purple-500/20 text-purple-600 px-3 py-1.5 rounded-full hover:bg-purple-500/30 font-bold transition-colors">+ Ajouter Mission</button>
+              </div>
+              {(data.missions || []).map((mission) => (
+                <div key={mission.id} className="p-4 rounded-2xl border mb-4 bg-white/50 border-white/50 shadow-inner">
+                  <div className="flex gap-2 mb-2">
+                    <input placeholder="Nom de la mission" className={inputClass} value={mission.name} onChange={e => updateMission(mission.id, 'name', e.target.value)} />
+                    <input type="number" placeholder="Max" min="1" className={`w-24 ${inputClass}`} value={mission.maxParticipants} onChange={e => updateMission(mission.id, 'maxParticipants', e.target.value)} title="Nombre maximum de participants" />
+                    <button onClick={() => removeMission(mission.id)} className="text-red-400 hover:text-red-600 p-2"><Trash2 size={18} /></button>
+                  </div>
+                  <div>
+                    <textarea rows="2" placeholder="Description de la mission" className={inputClass} value={mission.description} onChange={e => updateMission(mission.id, 'description', e.target.value)} />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

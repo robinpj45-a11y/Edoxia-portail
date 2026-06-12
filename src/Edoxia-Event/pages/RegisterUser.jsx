@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { TEMPLATE_REPAS, TEMPLATE_ACTIVITE } from '../constants';
+import { TEMPLATE_REPAS, TEMPLATE_ACTIVITE, TEMPLATE_SOIREE } from '../constants';
 import { ThemeContext } from '../../ThemeContext';
 
 export default function RegisterUser({ event, entries = [], user, onBack }) {
@@ -30,8 +30,9 @@ export default function RegisterUser({ event, entries = [], user, onBack }) {
 
     // Helper pour les couleurs
     const isRepas = event.type === TEMPLATE_REPAS;
-    const themeColor = isRepas ? 'text-brand-coral' : 'text-brand-teal';
-    const themeBg = isRepas ? 'bg-brand-coral/10' : 'bg-brand-teal/10';
+    const isSoiree = event.type === TEMPLATE_SOIREE;
+    const themeColor = isRepas ? 'text-brand-coral' : (isSoiree ? 'text-purple-600' : 'text-brand-teal');
+    const themeBg = isRepas ? 'bg-brand-coral/10' : (isSoiree ? 'bg-purple-600/10' : 'bg-brand-teal/10');
 
     // Calcul Prix
     useEffect(() => {
@@ -85,6 +86,11 @@ export default function RegisterUser({ event, entries = [], user, onBack }) {
                     const cleanVal = val.toString().startsWith('APERO:') ? val.split(':')[1] : val.split('|')[0];
                     details.push(`- ${key}: ${cleanVal}`);
                 }
+            });
+        } else if (event.type === TEMPLATE_SOIREE) {
+            Object.entries(formEntry.selections).forEach(([key, val]) => {
+                if (key === 'Mission' && val) details.push(`Mission: ${val.toString().split('|')[0]}`);
+                else if (val) details.push(`- ${key}: ${val}`);
             });
         } else {
             Object.entries(formEntry.selections).forEach(([key, val]) => {
@@ -179,7 +185,8 @@ export default function RegisterUser({ event, entries = [], user, onBack }) {
 
     if (submitted) {
         const handleCopy = () => {
-            const text = `Inscription : ${event.title}\n\n${formatSelections()}\n\nTotal: ${formEntry.total.toFixed(2)}€`;
+            const totalText = event.type !== TEMPLATE_SOIREE ? `\n\nTotal: ${formEntry.total.toFixed(2)}€` : '';
+            const text = `Inscription : ${event.title}\n\n${formatSelections()}${totalText}`;
             navigator.clipboard.writeText(text).then(() => alert("Récapitulatif copié !"));
         };
 
@@ -239,10 +246,12 @@ export default function RegisterUser({ event, entries = [], user, onBack }) {
                         </div>
 
                         {/* Pied du ticket */}
-                        <div className="mt-1 pt-3 border-t-2 border-dashed border-brand-text/20 flex justify-between items-center">
-                            <span className="font-bold text-brand-text/50 uppercase text-xs tracking-wider">Total à payer</span>
-                            <span className="text-xl font-black text-brand-coral">{formEntry.total.toFixed(2)}€</span>
-                        </div>
+                        {event.type !== TEMPLATE_SOIREE && (
+                            <div className="mt-1 pt-3 border-t-2 border-dashed border-brand-text/20 flex justify-between items-center">
+                                <span className="font-bold text-brand-text/50 uppercase text-xs tracking-wider">Total à payer</span>
+                                <span className="text-xl font-black text-brand-coral">{formEntry.total.toFixed(2)}€</span>
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex flex-col gap-3">
@@ -282,7 +291,7 @@ export default function RegisterUser({ event, entries = [], user, onBack }) {
                                 <div className={`${themeBg} p-3 rounded-full ${themeColor} shadow-inner bg-white/60`}><MapPin size={24} /></div>
                                 <div><div className="text-[10px] font-bold text-brand-text/50 uppercase tracking-wider">Où ?</div><div className="font-bold text-sm text-brand-text">{event.address || 'Non spécifié'}</div></div>
                             </div>
-                            {event.isPaid && event.price > 0 && (
+                            {event.type !== TEMPLATE_SOIREE && event.isPaid && event.price > 0 && (
                                 <div className="p-4 rounded-[20px] border shadow-soft flex flex-col items-center text-center gap-2 bg-white/50 border-white/50">
                                     <div className={`${themeBg} p-3 rounded-full ${themeColor} shadow-inner bg-white/60`}><Euro size={24} /></div>
                                     <div>
@@ -491,6 +500,45 @@ export default function RegisterUser({ event, entries = [], user, onBack }) {
                             </section>
                         )}
 
+                        {/* CHOIX MISSION (SOIREE) */}
+                        {event.type === TEMPLATE_SOIREE && event.missions && event.missions.length > 0 && (
+                            <section className="p-6 rounded-[20px] shadow-soft border bg-white/50 border-white/50">
+                                <h3 className="text-xs font-bold uppercase mb-4 flex items-center gap-2 text-purple-600 tracking-wider"><List size={16} /> Missions</h3>
+                                <div className="space-y-4">
+                                    {event.missions.map((mission, idx) => {
+                                        const count = getChoiceCount('Mission', mission.name);
+                                        const max = parseInt(mission.maxParticipants || 1, 10);
+                                        const isFull = count >= max;
+                                        const isSelected = formEntry.selections['Mission'] === mission.name;
+
+                                        return (
+                                            <label key={idx} className={`flex flex-col p-4 rounded-xl border transition-all ${isFull && !isSelected ? 'opacity-50 cursor-not-allowed bg-black/5 grayscale' : 'cursor-pointer'} ${isSelected ? 'border-purple-500 bg-white shadow-soft scale-[1.01]' : 'border-white/50 bg-white/40 hover:bg-white/60 shadow-inner'}`}>
+                                                <div className="flex items-start justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <input
+                                                            type="radio"
+                                                            name="missionSelection"
+                                                            className="w-5 h-5 accent-purple-500 mt-0.5"
+                                                            checked={isSelected}
+                                                            disabled={isFull && !isSelected}
+                                                            onChange={() => handleSelectionChange('Mission', mission.name)}
+                                                        />
+                                                        <div>
+                                                            <div className={`font-black text-lg ${isSelected ? 'text-purple-600' : 'text-brand-text'}`}>{mission.name}</div>
+                                                            {mission.description && <div className="text-sm font-medium text-brand-text/70 mt-1">{mission.description}</div>}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-xs font-bold bg-white/60 px-3 py-1.5 rounded-full shadow-sm text-brand-text/70 whitespace-nowrap ml-4">
+                                                        {count} / {max} {isFull && <span className="text-brand-coral ml-1">(Complet)</span>}
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                            </section>
+                        )}
+
                         <section className="p-6 rounded-[20px] shadow-soft border bg-white/50 border-white/50">
                             <h3 className="text-xs font-bold uppercase mb-2 flex items-center gap-2 text-brand-teal tracking-wider"><MessageSquare size={16} /> Remarques</h3>
                             <textarea rows="2" className="w-full border rounded-xl p-3 text-sm focus:border-brand-teal outline-none resize-none bg-white/60 border-white text-brand-text placeholder-brand-text/40 shadow-inner font-medium" placeholder="Allergies, infos..." value={formEntry.comment} onChange={e => setFormEntry({ ...formEntry, comment: e.target.value })} />
@@ -500,12 +548,14 @@ export default function RegisterUser({ event, entries = [], user, onBack }) {
             </main>
 
             {!event.isLocked && (
-                <div className="fixed bottom-0 left-0 right-0 border-t p-4 px-6 flex items-center justify-between shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50 bg-white/80 backdrop-blur-md border-white/50 rounded-t-[30px]">
-                    <div>
-                        <p className="text-[10px] font-bold text-brand-text/50 uppercase tracking-widest">Total</p>
-                        <p className="text-2xl font-black text-brand-text">{formEntry.total.toFixed(2)}€</p>
-                    </div>
-                    <button onClick={handleSubmit} disabled={submitting || !formEntry.firstName} className="bg-brand-coral hover:bg-brand-coral/90 text-white px-8 py-3 rounded-full font-bold shadow-soft transition-all disabled:opacity-50 disabled:shadow-none hover:scale-105 active:scale-95 disabled:hover:scale-100 disabled:cursor-not-allowed">
+                <div className={`fixed bottom-0 left-0 right-0 border-t p-4 px-6 flex items-center shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50 bg-white/80 backdrop-blur-md border-white/50 rounded-t-[30px] ${event.type === TEMPLATE_SOIREE ? 'justify-center' : 'justify-between'}`}>
+                    {event.type !== TEMPLATE_SOIREE && (
+                        <div>
+                            <p className="text-[10px] font-bold text-brand-text/50 uppercase tracking-widest">Total</p>
+                            <p className="text-2xl font-black text-brand-text">{formEntry.total.toFixed(2)}€</p>
+                        </div>
+                    )}
+                    <button onClick={handleSubmit} disabled={submitting || !formEntry.firstName} className={`bg-brand-coral hover:bg-brand-coral/90 text-white px-8 py-3 rounded-full font-bold shadow-soft transition-all disabled:opacity-50 disabled:shadow-none hover:scale-105 active:scale-95 disabled:hover:scale-100 disabled:cursor-not-allowed ${event.type === TEMPLATE_SOIREE ? 'w-full max-w-sm' : ''}`}>
                         {submitting ? '...' : 'Valider'}
                     </button>
                 </div>
