@@ -11,7 +11,6 @@ import {
     Bug, MessageSquare, Save
 } from 'lucide-react';
 import AdminDashboard from './Edoxia-Quiz/pages/AdminDashboard';
-import AdminCalendar from './Edoxia-Calendar/pages/AdminCalendar';
 
 export const ICON_OPTIONS = {
     Gamepad2, Bell, Calendar, School, BookOpen,
@@ -334,7 +333,6 @@ export default function GlobalAdmin({ defaultModules }) {
                     <SidebarItem icon={UserCog} label="Utilisateurs" active={activeTab === 'users'} onClick={() => setActiveTab('users')} />
                     <SidebarItem icon={Gamepad2} label="Edoxia-Games" active={activeTab === 'games'} onClick={() => setActiveTab('games')} />
                     <SidebarItem icon={BookOpen} label="Edoxia-Quiz" active={activeTab === 'quiz'} onClick={() => setActiveTab('quiz')} />
-                    <SidebarItem icon={Calendar} label="Calendrier" active={activeTab === 'events'} onClick={() => setActiveTab('events')} />
                     <SidebarItem icon={Bug} label="Signalements" active={activeTab === 'bugs'} onClick={() => setActiveTab('bugs')} />
                 </nav>
             </aside>
@@ -346,7 +344,6 @@ export default function GlobalAdmin({ defaultModules }) {
                     {activeTab === 'users' && <UsersAdmin />}
                     {activeTab === 'games' && <GamesAdmin />}
                     {activeTab === 'quiz' && <div className="h-full bg-white/40 p-8 rounded-[40px] shadow-soft border border-white/60"><AdminDashboard isGlobalAdmin={true} /></div>}
-                    {activeTab === 'events' && <AdminCalendar isEmbedded={true} />}
                     {activeTab === 'bugs' && <BugsAdmin />}
                 </div>
             </main>

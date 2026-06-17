@@ -29,7 +29,7 @@ export default function EventHome({ events, entries, onSelect, onViewChange, loa
     <div className="min-h-screen font-sans flex flex-col bg-brand-bg text-brand-text">
       <header className="p-4 px-6 flex justify-between items-center shadow-md sticky top-0 z-50 backdrop-blur-md bg-white/40 border-b border-white/50">
         <div className="flex items-center gap-4">
-          <Link to="/stpbb" className="p-2 rounded-full transition-colors bg-white/50 hover:bg-white text-brand-text shadow-sm">
+          <Link to="/test-stpbb" className="p-2 rounded-full transition-colors bg-white/50 hover:bg-white text-brand-text shadow-sm">
             <ArrowLeft size={20} />
           </Link>
           <div>

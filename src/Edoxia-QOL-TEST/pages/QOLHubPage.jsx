@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Map, ArrowLeft, Calculator, Trophy, Users, Lock, LogIn, Eye, EyeOff, Search } from 'lucide-react';
+import { Calendar, Map, ArrowLeft, Calculator, Trophy, Users, Lock, LogIn, Eye, EyeOff, Search, Settings } from 'lucide-react';
 
 const QOLHubPage = () => {
   const navigate = useNavigate();
@@ -10,8 +10,8 @@ const QOLHubPage = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const repartAuth = localStorage.getItem('repart_auth');
-    const jsAuth = localStorage.getItem('js2026_auth');
+    const repartAuth = localStorage.getItem('test_repart_auth');
+    const jsAuth = localStorage.getItem('test_js2026_auth');
     if (repartAuth === 'Ecole' || jsAuth === 'Ecole') {
       setIsAuthorized(true);
     }
@@ -21,8 +21,8 @@ const QOLHubPage = () => {
     e.preventDefault();
     if (password === 'FFlaud!') {
       setIsAuthorized(true);
-      localStorage.setItem('repart_auth', 'Ecole');
-      localStorage.setItem('js2026_auth', 'Ecole');
+      localStorage.setItem('test_repart_auth', 'Ecole');
+      localStorage.setItem('test_js2026_auth', 'Ecole');
     } else {
       setError('Mot de passe incorrect.');
     }
@@ -76,7 +76,7 @@ const QOLHubPage = () => {
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
-      <div className="w-full flex mb-6">
+      <div className="w-full flex justify-between items-center mb-6">
         <button
           onClick={() => navigate('/')}
           className="flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-bold text-brand-text bg-white/40 rounded-full border border-white/50 hover:bg-white/80 transition-all shadow-soft backdrop-blur-md w-fit h-fit focus:outline-none"
@@ -84,13 +84,21 @@ const QOLHubPage = () => {
           <ArrowLeft size={18} />
           Retour
         </button>
+
+        <button
+          onClick={() => navigate('/test-global-admin')}
+          className="flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-bold text-brand-coral bg-white/40 rounded-full border border-white/50 hover:bg-brand-coral hover:text-white transition-all shadow-soft backdrop-blur-md w-fit h-fit focus:outline-none group"
+        >
+          <Settings size={18} className="group-hover:rotate-90 transition-transform" />
+          Espace admin
+        </button>
       </div>
 
       {/* Cards */}
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-4xl">
           {/* CARTE 1 - Evénements */}
-          <div onClick={() => navigate('/events')} className="bg-yellow-500 rounded-[20px] p-6 flex items-center gap-4 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:scale-105 transition-transform cursor-pointer">
+          <div onClick={() => navigate('/test-events')} className="bg-yellow-500 rounded-[20px] p-6 flex items-center gap-4 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:scale-105 transition-transform cursor-pointer">
             <div className="p-3 bg-black/10 rounded-full shrink-0">
               <Calendar className="w-8 h-8 text-white" />
             </div>
@@ -114,7 +122,7 @@ const QOLHubPage = () => {
           </div>
 
           {/* CARTE 2 - Classe de mer 2026 */}
-          <div onClick={() => navigate('/cd')} className="bg-brand-coral rounded-[20px] p-6 flex items-center gap-4 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:scale-105 transition-transform cursor-pointer">
+          <div onClick={() => navigate('/test-cd')} className="bg-brand-coral rounded-[20px] p-6 flex items-center gap-4 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:scale-105 transition-transform cursor-pointer">
             <div className="p-3 bg-black/10 rounded-full shrink-0">
               <Map className="w-8 h-8 text-white" />
             </div>
@@ -125,7 +133,7 @@ const QOLHubPage = () => {
           </div>
 
           {/* CARTE 3 - Réussite scolaire */}
-          <div onClick={() => navigate('/success')} className="bg-brand-teal rounded-[20px] p-6 flex items-center gap-4 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:scale-105 transition-transform cursor-pointer">
+          <div onClick={() => navigate('/test-success')} className="bg-brand-teal rounded-[20px] p-6 flex items-center gap-4 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:scale-105 transition-transform cursor-pointer">
             <div className="p-3 bg-black/10 rounded-full shrink-0">
               <Calculator className="w-8 h-8 text-white" />
             </div>
@@ -136,7 +144,7 @@ const QOLHubPage = () => {
           </div>
 
           {/* CARTE 4 - JS 2026 */}
-          <div onClick={() => navigate('/JS2026')} className="bg-orange-400 rounded-[20px] p-6 flex items-center gap-4 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:scale-105 transition-transform cursor-pointer">
+          <div onClick={() => navigate('/test-JS2026')} className="bg-orange-400 rounded-[20px] p-6 flex items-center gap-4 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:scale-105 transition-transform cursor-pointer">
             <div className="p-3 bg-black/10 rounded-full shrink-0">
               <Trophy className="w-8 h-8 text-white" />
             </div>
@@ -147,7 +155,7 @@ const QOLHubPage = () => {
           </div>
 
           {/* CARTE 5 - Répartition */}
-          <div onClick={() => navigate('/repart')} className="bg-indigo-500 rounded-[20px] p-6 flex items-center gap-4 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:scale-105 transition-transform cursor-pointer">
+          <div onClick={() => navigate('/test-repart')} className="bg-indigo-500 rounded-[20px] p-6 flex items-center gap-4 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:scale-105 transition-transform cursor-pointer">
             <div className="p-3 bg-black/10 rounded-full shrink-0">
               <Users className="w-8 h-8 text-white" />
             </div>
@@ -157,24 +165,13 @@ const QOLHubPage = () => {
             </div>
           </div>
           {/* CARTE 6 - Recherche d'élève */}
-          <div onClick={() => navigate('/JS2026/search', { state: { from: 'stpbb' } })} className="bg-rose-500 rounded-[20px] p-6 flex items-center gap-4 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:scale-105 transition-transform cursor-pointer">
+          <div onClick={() => navigate('/test-JS2026/search', { state: { from: 'stpbb' } })} className="bg-rose-500 rounded-[20px] p-6 flex items-center gap-4 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:scale-105 transition-transform cursor-pointer">
             <div className="p-3 bg-black/10 rounded-full shrink-0">
               <Search className="w-8 h-8 text-white" />
             </div>
             <div className="overflow-hidden text-left">
               <div className="text-[12px] font-bold uppercase tracking-wider text-white/60 truncate">Informations</div>
               <div className="text-xl font-semibold text-white truncate">Annuaire élèves</div>
-            </div>
-          </div>
-          
-          {/* CARTE 7 - Coupe du monde 2026 */}
-          <div onClick={() => navigate('/worldcup')} className="bg-emerald-500 rounded-[20px] p-6 flex items-center gap-4 shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:scale-105 transition-transform cursor-pointer">
-            <div className="p-3 bg-black/10 rounded-full shrink-0">
-              <Trophy className="w-8 h-8 text-white" />
-            </div>
-            <div className="overflow-hidden text-left">
-              <div className="text-[12px] font-bold uppercase tracking-wider text-white/60 truncate">Événement</div>
-              <div className="text-xl font-semibold text-white truncate">Coupe du monde 2026</div>
             </div>
           </div>
         </div>

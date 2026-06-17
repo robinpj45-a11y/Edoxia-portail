@@ -37,12 +37,6 @@ import {
 
 // IMPORT DU LOGO PERSO
 import logoPng from './assets/logo.png';
-import HomeGames from './Edoxia-Games/pages/HomeGames.jsx';
-import MathsGames from './Edoxia-Games/pages/MathsGames';
-import FrenchGames from './Edoxia-Games/pages/FrenchGames';
-import TypingHub from './Edoxia-Games/pages/Typing/TypingHub';
-import TypingHost from './Edoxia-Games/pages/Typing/TypingHost';
-import TypingPlayer from './Edoxia-Games/pages/Typing/TypingPlayer';
 import QuizHome from './Edoxia-Quiz/pages/Home';
 import AdminDashboard from './Edoxia-Quiz/pages/AdminDashboard';
 import HostGame from './Edoxia-Quiz/pages/HostGame';
@@ -63,10 +57,6 @@ import AdminScorePage from './Edoxia-JS/pages/AdminScorePage';
 import PublicScorePage from './Edoxia-JS/pages/PublicScorePage';
 import ReportBug from './modules/ReportBug';
 import CompteurUser from './modules/CompteurUser';
-import GVGDC from './Edoxia-QVGDC/pages/GVGDC';
-import DashboardQVGDC from './Edoxia-QVGDC/pages/DashboardQVGDC';
-import PublicCalendar from './Edoxia-Calendar/pages/PublicCalendar';
-import AdminCalendar from './Edoxia-Calendar/pages/AdminCalendar';
 import QOLHubPage from './Edoxia-QOL/pages/QOLHubPage';
 import EdoxiaCDWrapper from './Edoxia-CD/pages/EdoxiaCDWrapper';
 import CDHubPage from './Edoxia-CD/pages/CDHubPage';
@@ -85,7 +75,34 @@ import EdoxiaKaraokeWrapper from './Edoxia-Karaoke/pages/EdoxiaKaraokeWrapper';
 import KaraokeScreenPage from './Edoxia-Karaoke/pages/KaraokeScreenPage';
 import KaraokeRemotePage from './Edoxia-Karaoke/pages/KaraokeRemotePage';
 
-
+// Imports pour l'Espace TEST
+import EventAppTest from './Edoxia-Event-TEST/EventApp';
+import HubPageTest from './Edoxia-JS-TEST/pages/HubPage';
+import MobileTeamsPageTest from './Edoxia-JS-TEST/pages/MobileTeamsPage';
+import TeacherPageTest from './Edoxia-JS-TEST/pages/TeacherPage';
+import AdminPageTest from './Edoxia-JS-TEST/pages/AdminPage';
+import EdoxiaJSWrapperTest from './Edoxia-JS-TEST/pages/EdoxiaJSWrapper';
+import SongPageTest from './Edoxia-JS-TEST/pages/SongPage';
+import MapInteractivePageTest from './Edoxia-JS-TEST/pages/MapInteractivePage';
+import StudentSearchPageTest from './Edoxia-JS-TEST/pages/StudentSearchPage';
+import AdminScorePageTest from './Edoxia-JS-TEST/pages/AdminScorePage';
+import PublicScorePageTest from './Edoxia-JS-TEST/pages/PublicScorePage';
+import QOLHubPageTest from './Edoxia-QOL-TEST/pages/QOLHubPage';
+import EdoxiaCDWrapperTest from './Edoxia-CD-TEST/pages/EdoxiaCDWrapper';
+import CDHubPageTest from './Edoxia-CD-TEST/pages/CDHubPage';
+import CDRoomPlannerTest from './Edoxia-CD-TEST/pages/CDRoomPlanner';
+import CDStudentSearchPageTest from './Edoxia-CD-TEST/pages/CDStudentSearchPage';
+import CDGroupMakerPageTest from './Edoxia-CD-TEST/pages/CDGroupMakerPage';
+import SuccessHubPageTest from './Edoxia-Success-TEST/pages/SuccessHubPage';
+import SuccessSpacePageTest from './Edoxia-Success-TEST/pages/SuccessSpacePage';
+import SuccessEvaluationDetailTest from './Edoxia-Success-TEST/pages/SuccessEvaluationDetail';
+import SuccessReportsPageTest from './Edoxia-Success-TEST/pages/SuccessReportsPage';
+import SuccessEvaluationCreatorTest from './Edoxia-Success-TEST/pages/SuccessEvaluationCreator';
+import EdoxiaRepartWrapperTest from './Edoxia-Repart-TEST/pages/EdoxiaRepartWrapper';
+import RepartPageTest from './Edoxia-Repart-TEST/pages/RepartPage';
+import RepartCollegePageTest from './Edoxia-Repart-TEST/pages/RepartCollegePage';
+import GlobalAdminTest from './GlobalAdminTest';
+import WorldCupApp from './Edoxia-WorldCup/pages/WorldCupApp';
 
 // --- UTILITAIRE DE SÉCURITÉ (Obfuscation) ---
 // Permet de cacher les liens dans le code source (Inspect Element)
@@ -105,17 +122,6 @@ const ICON_MAP = {
 };
 
 const DEFAULT_MODULES = [
-  {
-    id: 'qvgdc',
-    name: 'QVGDC ?',
-    path: '/GVGDC',
-    desc: 'Qui Veut Gagner Des Cahiers ?',
-    icon: <Gamepad2 className="w-6 h-6 text-green-400" />,
-    tag: 'Jeux',
-    active: true,
-    isProtected: false,
-    requiresSchoolAuth: false
-  },
   {
     id: 'stpbb',
     name: 'QoL',
@@ -448,7 +454,6 @@ const AppLayout = () => {
             <Gamepad2 size={16} /> Jeux
           </h3>
           <div className="space-y-3">
-            <ModuleCard key="edoxia-games" app={{ id: 'static-games', name: 'Edoxia Games', path: '/games', tag: 'Jeux', iconColor: 'text-brand-coral', active: true }} locked={false} onNavigate={handleModuleClick} />
             <ModuleCard key="edoxia-quiz" app={{ id: 'static-quiz', name: 'Edoxia Quiz', path: '/quiz', tag: 'Quiz', iconColor: 'text-brand-teal', active: true }} locked={false} onNavigate={handleModuleClick} />
             {modules.filter(m => (['games', 'quiz'].includes(m.id) || ['Jeux', 'Quiz'].includes(m.tag)) && isVisible(m)).map(app => (
               <ModuleCard key={app.id} app={app} locked={false} onNavigate={handleModuleClick} />
@@ -479,54 +484,8 @@ const AppLayout = () => {
         <div className={`absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] ${isDark ? 'opacity-[0.03]' : 'opacity-[0.05]'}`} />
       </div>
 
-      {/* Nouvelle Navbar Globale */}
-      {!location.pathname.startsWith('/JS2026') && !location.pathname.startsWith('/GVGDC') && !location.pathname.startsWith('/DashboardQVGDC') && !location.pathname.startsWith('/cd') && !location.pathname.startsWith('/success') && !location.pathname.startsWith('/repart') && !location.pathname.startsWith('/stpbb') && !location.pathname.startsWith('/karaoke') && (
-        <nav className="hidden md:flex justify-between items-center px-8 py-4 shrink-0 z-50 relative bg-brand-teal text-white shadow-soft">
-          {/* Gauche : Logo */}
-          <div className="flex items-center gap-6">
-            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-3 rounded-2xl transition-all duration-300 bg-white/20 text-white shadow-soft border border-white/30 hover:bg-white/30 hover:scale-105">
-              <Menu size={24} />
-            </button>
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-              <img src={logoPng} alt="Logo Edoxia" className="w-20 h-20 object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" />
-            </div>
-          </div>
-
-          {/* Droite : Search, Auth */}
-          <div className="flex flex-1 justify-end items-center gap-6">
-            {/* Search Bar */}
-            <div className="hidden lg:flex items-center bg-white/20 rounded-full px-5 py-2.5 shadow-soft w-80 border border-white/30 text-white backdrop-blur-md">
-              <Search size={16} className="text-white/70 mr-3 shrink-0" />
-              <input type="text" placeholder="Rechercher une application ..." className="bg-transparent border-none outline-none text-sm w-full placeholder:text-white/60 text-white" />
-            </div>
-
-            {user ? (
-              <div className="flex items-center gap-4 text-white">
-                <button onClick={() => { if (user.role === 'admin') setShowSettingsModal(true); else navigate('/profile'); }} className="p-3 rounded-full bg-white/20 hover:bg-white/40 transition-all shadow-soft border border-white/30">
-                  <User size={20} />
-                </button>
-                <button onClick={() => signOut(auth)} className="p-3 rounded-full bg-white/20 hover:bg-brand-coral hover:text-white hover:border-brand-coral transition-all shadow-soft border border-white/30 text-white">
-                  <LogOut size={20} />
-                </button>
-                <div className="bg-white/20 rounded-full px-3 py-1 shadow-soft border border-white/30">
-                  <ReportBug />
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3">
-                <button onClick={() => { setIsRegistering(false); setShowAuthModal(true); }} className="px-6 py-2.5 text-sm font-bold text-brand-teal bg-white rounded-full hover:bg-white/90 transition-all shadow-soft active:scale-95">Se connecter</button>
-                <button onClick={() => { setIsRegistering(true); setShowAuthModal(true); }} className="px-6 py-2.5 text-sm font-bold text-white bg-brand-coral rounded-full hover:bg-brand-coral/90 transition-all shadow-soft active:scale-95">S'inscrire</button>
-                <div className="bg-white/20 rounded-full px-3 py-1 shadow-soft border border-white/30 hidden md:block">
-                  <ReportBug />
-                </div>
-              </div>
-            )}
-          </div>
-        </nav>
-      )}
-
       {/* Navbar Mobile (Bottom) */}
-      {!location.pathname.startsWith('/games') && !location.pathname.startsWith('/JS2026') && !location.pathname.startsWith('/GVGDC') && !location.pathname.startsWith('/DashboardQVGDC') && !location.pathname.startsWith('/events') && !location.pathname.startsWith('/calendar') && !location.pathname.startsWith('/cd') && !location.pathname.startsWith('/success') && !location.pathname.startsWith('/stpbb') && !location.pathname.startsWith('/karaoke') && (
+      {location.pathname !== '/' && !location.pathname.startsWith('/JS2026') && !location.pathname.startsWith('/test-JS2026') && !location.pathname.startsWith('/events') && !location.pathname.startsWith('/test-events') && !location.pathname.startsWith('/cd') && !location.pathname.startsWith('/test-cd') && !location.pathname.startsWith('/success') && !location.pathname.startsWith('/test-success') && !location.pathname.startsWith('/stpbb') && !location.pathname.startsWith('/test-stpbb') && !location.pathname.startsWith('/karaoke') && !location.pathname.startsWith('/worldcup') && (
         <nav className="md:hidden fixed bottom-6 left-6 right-6 z-[100] bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-brand-text/5 flex justify-around items-center px-2 py-3 backdrop-blur-xl">
           <button onClick={() => navigate('/')} className={`flex flex-col items-center gap-1 p-2 transition-colors ${location.pathname === '/' ? 'text-brand-text' : 'text-brand-text/40 hover:text-brand-coral'}`}>
             <HomeIcon className="w-6 h-6" />
@@ -540,28 +499,11 @@ const AppLayout = () => {
 
           <ReportBug isMobileNav={true} />
 
-          {!user ? (
-            <>
-              <button onClick={() => { setIsRegistering(false); setShowAuthModal(true); }} className="flex flex-col items-center gap-1 p-2 text-brand-text/40 hover:text-brand-coral transition-colors">
-                <LogIn className="w-6 h-6" />
-                <span className="text-[10px] font-bold">Connexion</span>
-              </button>
-              <button onClick={() => { setIsRegistering(true); setShowAuthModal(true); }} className="flex flex-col items-center gap-1 p-2 text-brand-text/40 hover:text-brand-coral transition-colors">
-                <UserPlus className="w-6 h-6" />
-                <span className="text-[10px] font-bold">Inscription</span>
-              </button>
-            </>
-          ) : (
-            <>
-              <button onClick={() => { if (user.role === 'admin') setShowSettingsModal(true); else navigate('/profile'); }} className={`flex flex-col items-center gap-1 p-2 transition-colors ${location.pathname === '/profile' ? 'text-brand-text' : 'text-brand-text/40 hover:text-brand-coral'}`}>
-                <User className="w-6 h-6" />
-                <span className="text-[10px] font-bold">Profil</span>
-              </button>
-              <button onClick={() => signOut(auth)} className="flex flex-col items-center gap-1 p-2 text-brand-text/40 hover:text-brand-coral transition-colors">
-                <LogOut className="w-6 h-6" />
-                <span className="text-[10px] font-bold">Quitter</span>
-              </button>
-            </>
+          {user && (
+            <button onClick={() => signOut(auth)} className="flex flex-col items-center gap-1 p-2 text-brand-text/40 hover:text-brand-coral transition-colors">
+              <LogOut className="w-6 h-6" />
+              <span className="text-[10px] font-bold">Quitter</span>
+            </button>
           )}
         </nav>
       )}
@@ -569,7 +511,7 @@ const AppLayout = () => {
       {/* Contenu des Routes */}
       <div className="flex-1 overflow-hidden relative">
         <AnimatePresence>
-          {isSidebarOpen && (
+          {isSidebarOpen && location.pathname !== '/' && (
             <>
               <motion.div
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -599,12 +541,6 @@ const AppLayout = () => {
         </AnimatePresence>
         <Routes>
           <Route path="/" element={<Home user={user} isSchoolUnlocked={isSchoolUnlocked} />} />
-          <Route path="/games" element={<HomeGames />} />
-          <Route path="/games/maths" element={<MathsGames />} />
-          <Route path="/games/french" element={<FrenchGames />} />
-          <Route path="/games/typing" element={<TypingHub />} />
-          <Route path="/games/typing/host/:lobbyId" element={<TypingHost />} />
-          <Route path="/games/typing/play/:lobbyId" element={<TypingPlayer />} />
           <Route path="/quiz" element={<QuizHome />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/admin" element={<AdminDashboard isGlobalAdmin={isGlobalAdmin} />} />
@@ -617,12 +553,6 @@ const AppLayout = () => {
           } />
           <Route path="/events" element={<EventApp user={user} />} />
           <Route path="/events/:eventId" element={<EventApp user={user} />} />
-          <Route path="/calendar" element={<PublicCalendar user={user} />} />
-          <Route path="/calendar/admin" element={
-            <ProtectedRoute isAllowed={isAuthorized}>
-              <AdminCalendar />
-            </ProtectedRoute>
-          } />
           <Route path="/repart" element={<EdoxiaRepartWrapper />}>
             <Route index element={<RepartPage />} />
             <Route path="college" element={<RepartCollegePage />} />
@@ -638,8 +568,6 @@ const AppLayout = () => {
             <Route path="scores" element={<AdminScorePage />} />
             <Route path="live-scores" element={<PublicScorePage />} />
           </Route>
-          <Route path="/GVGDC" element={<GVGDC />} />
-          <Route path="/DashboardQVGDC" element={<DashboardQVGDC />} />
           <Route path="/stpbb" element={<QOLHubPage />} />
           <Route path="/cd" element={<EdoxiaCDWrapper />}>
             <Route index element={<CDHubPage />} />
@@ -657,6 +585,42 @@ const AppLayout = () => {
           <Route path="/karaoke" element={<EdoxiaKaraokeWrapper />}>
             <Route index element={<KaraokeScreenPage />} />
             <Route path="remote" element={<KaraokeRemotePage />} />
+          </Route>
+          
+          <Route path="/worldcup/*" element={<WorldCupApp />} />
+
+          {/* Routes de l'Espace TEST */}
+          <Route path="/test-global-admin" element={<GlobalAdminTest />} />
+          <Route path="/test-events" element={<EventAppTest user={user} />} />
+          <Route path="/test-events/:eventId" element={<EventAppTest user={user} />} />
+          <Route path="/test-repart" element={<EdoxiaRepartWrapperTest />}>
+            <Route index element={<RepartPageTest />} />
+            <Route path="college" element={<RepartCollegePageTest />} />
+          </Route>
+          <Route path="/test-JS2026" element={<EdoxiaJSWrapperTest />}>
+            <Route index element={<HubPageTest />} />
+            <Route path="teams" element={<MobileTeamsPageTest />} />
+            <Route path="teacher" element={<TeacherPageTest />} />
+            <Route path="admin" element={<AdminPageTest />} />
+            <Route path="song" element={<SongPageTest />} />
+            <Route path="map" element={<MapInteractivePageTest />} />
+            <Route path="search" element={<StudentSearchPageTest />} />
+            <Route path="scores" element={<AdminScorePageTest />} />
+            <Route path="live-scores" element={<PublicScorePageTest />} />
+          </Route>
+          <Route path="/test-stpbb" element={<QOLHubPageTest />} />
+          <Route path="/test-cd" element={<EdoxiaCDWrapperTest />}>
+            <Route index element={<CDHubPageTest />} />
+            <Route path="rooms" element={<CDRoomPlannerTest />} />
+            <Route path="search" element={<CDStudentSearchPageTest />} />
+            <Route path="groups" element={<CDGroupMakerPageTest />} />
+          </Route>
+          <Route path="/test-success">
+            <Route index element={<SuccessHubPageTest />} />
+            <Route path=":spaceId" element={<SuccessSpacePageTest />} />
+            <Route path=":spaceId/create" element={<SuccessEvaluationCreatorTest />} />
+            <Route path=":spaceId/eval/:evalId" element={<SuccessEvaluationDetailTest />} />
+            <Route path=":spaceId/reports" element={<SuccessReportsPageTest />} />
           </Route>
         </Routes>
       </div>
@@ -698,21 +662,6 @@ const AppLayout = () => {
         </div>
       )}
 
-      {/* MODAL COMPLETE PROFILE (GOOGLE) */}
-      {showCompleteProfileModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 border border-slate-700 p-8 rounded-2xl w-full max-w-md relative shadow-2xl">
-            <h2 className="text-2xl font-bold text-white mb-6 text-center">Finaliser l'inscription</h2>
-            <p className="text-slate-400 text-center mb-6 text-sm">Veuillez renseigner votre nom et prénom pour continuer.</p>
-
-            <form onSubmit={handleCompleteProfile} className="space-y-4">
-              <input type="text" placeholder="Nom" className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-cyan-500 outline-none" value={completeName} onChange={e => setCompleteName(e.target.value)} required />
-              <input type="text" placeholder="Prénom" className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:border-cyan-500 outline-none" value={completeFirstname} onChange={e => setCompleteFirstname(e.target.value)} required />
-              <button type="submit" className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 rounded-lg transition-all">Enregistrer</button>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* MODAL SETTINGS (ADMIN) */}
       {showSettingsModal && (
@@ -771,205 +720,155 @@ const AppLayout = () => {
 };
 
 // --- PAGE D'ACCUEIL (Contenu) ---
-const Home = ({ isSchoolUnlocked, user }) => {
+const Home = () => {
   const navigate = useNavigate();
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [homeNews, setHomeNews] = useState("Je vous souhaite de bonnes vacances !");
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState(false);
 
-  const SLIDES = [
-    {
-      id: 'games',
-      title: 'Edoxia Games',
-      desc: 'Des jeux éducatifs et interactifs pour réviser tout en s\'amusant.',
-      icon: <Gamepad2 className="w-12 h-12 text-brand-teal mb-4" />,
-      path: '/games'
-    },
-    {
-      id: 'quiz',
-      title: 'Edoxia Quiz',
-      desc: 'Défiez vos amis ou vos élèves avec des quiz multijoueurs en temps réel.',
-      icon: <BookOpen className="w-12 h-12 text-brand-teal mb-4" />,
-      path: '/quiz'
-    },
-    {
-      id: 'qvgdc',
-      title: 'QVGDC ?',
-      desc: 'Qui Veut Gagner Des Cahiers ? Testez votre culture générale !',
-      icon: <Trophy className="w-12 h-12 text-brand-teal mb-4" />,
-      path: '/GVGDC'
+  const handleStpbbClick = () => {
+    const isUnlocked = localStorage.getItem('stpbb_unlocked') === 'true';
+    if (isUnlocked) {
+      navigate('/stpbb');
+    } else {
+      setShowPasswordModal(true);
+      setPasswordInput('');
+      setPasswordError(false);
     }
-  ];
+  };
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % 3);
-    }, 6000);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    const unsub = onSnapshot(doc(db, "settings", "home_news"), (docSnap) => {
-      if (docSnap.exists() && docSnap.data().message !== undefined) {
-        setHomeNews(docSnap.data().message);
-      }
-    });
-    return () => unsub();
-  }, []);
+  const handlePasswordSubmit = (e) => {
+    e.preventDefault();
+    if (passwordInput === 'FFlaud!') {
+      localStorage.setItem('stpbb_unlocked', 'true');
+      setShowPasswordModal(false);
+      navigate('/stpbb');
+    } else {
+      setPasswordError(true);
+    }
+  };
 
   return (
-    <div className="flex-1 flex items-center justify-center p-8 bg-brand-bg relative overflow-hidden h-full">
-      <main className="w-full max-w-7xl mx-auto flex flex-col md:flex-row gap-12 items-center">
+    <div className="flex-1 flex items-center justify-center p-4 sm:p-6 bg-brand-bg relative overflow-hidden h-full w-full">
+      {/* Decorative blurred blobs for extra premium feel */}
+      <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-brand-teal/20 rounded-full blur-[96px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-brand-coral/20 rounded-full blur-[96px] pointer-events-none" />
 
-        {/* Colonne de Gauche : Contenu & Fonctionnalités */}
-        <div className="flex-1 flex flex-col gap-8 z-10">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-brand-text mb-6">
-              Viens apprendre<br />en t&apos;amusant !
-            </h1>
-            <p className="text-lg text-brand-text/80 max-w-md">
-              Toutes les applications sont gratuites et disponibles sur mobile et tablette.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="grid grid-cols-2 gap-4 max-w-lg"
-          >
-            {/* Module Actualités */}
-            {homeNews && (
-              <div className="md:hidden col-span-2 bg-brand-peach/80 rounded-[20px] p-5 shadow-soft border border-white/40 mb-2">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-1.5 bg-brand-coral/20 rounded-full">
-                    <Bell size={16} className="text-brand-coral" />
-                  </div>
-                  <h4 className="text-base font-bold text-brand-text">Actualités</h4>
-                </div>
-                <p className="text-brand-text/80 text-sm leading-relaxed whitespace-pre-wrap">
-                  {homeNews}
-                </p>
-              </div>
-            )}
-
-            {/* CARTE 1 - Games */}
-            <div onClick={() => navigate('/games')} className="bg-brand-coral rounded-[20px] p-4 flex items-center gap-4 shadow-soft hover:scale-105 transition-transform cursor-pointer">
-              <div className="p-2 bg-black/10 rounded-full shrink-0">
-                <Gamepad2 className="w-6 h-6 text-brand-text" />
-              </div>
-              <div className="overflow-hidden">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-brand-text/60 truncate">Apprendre & Jouer</div>
-                <div className="text-sm font-semibold text-brand-text truncate">Jeux</div>
-              </div>
-            </div>
-
-            {/* CARTE 2 - Quiz */}
-            <div onClick={() => navigate('/quiz')} className="bg-brand-teal rounded-[20px] p-4 flex items-center gap-4 shadow-soft hover:scale-105 transition-transform cursor-pointer">
-              <div className="p-2 bg-black/10 rounded-full shrink-0">
-                <BookOpen className="w-6 h-6 text-white" />
-              </div>
-              <div className="overflow-hidden">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-white/60 truncate">Défier ses amis</div>
-                <div className="text-sm font-semibold text-white truncate">Quiz</div>
-              </div>
-            </div>
-
-            {/* CARTE 3 - QVGDC */}
-            <div onClick={() => navigate('/GVGDC')} className="bg-brand-teal rounded-[20px] p-4 flex items-center gap-4 shadow-soft hover:scale-105 transition-transform cursor-pointer">
-              <div className="p-2 bg-black/10 rounded-full shrink-0">
-                <Trophy className="w-6 h-6 text-white" />
-              </div>
-              <div className="overflow-hidden">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-white/60 truncate">Culture Générale</div>
-                <div className="text-sm font-semibold text-white truncate">QVGDC ?</div>
-              </div>
-            </div>
-
-            {/* CARTE 4 - Placeholder */}
-            <div className="bg-brand-coral rounded-[20px] p-4 flex items-center gap-4 shadow-soft transition-transform cursor-not-allowed opacity-70">
-              <div className="p-2 bg-black/10 rounded-full shrink-0">
-                <Lock className="w-6 h-6 text-brand-text" />
-              </div>
-              <div className="overflow-hidden">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-brand-text/60 truncate">Prochainement</div>
-                <div className="text-sm font-semibold text-brand-text truncate">Mystère...</div>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Colonne de Droite : Slider et Apps */}
+      <motion.div 
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="max-w-2xl w-full flex flex-col items-center text-center gap-6 z-10 bg-white/40 backdrop-blur-2xl p-6 md:p-8 rounded-[32px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-white/60"
+      >
         <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.7 }}
-          className="flex-1 w-full max-w-lg relative bg-white/40 p-4 rounded-[40px] shadow-soft border border-white/60 backdrop-blur-sm z-10"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.2, type: "spring" }}
+          className="relative"
         >
-          <div className="px-4 py-2 border-b border-brand-text/10 flex items-center gap-2 mb-4">
-            <span className="w-2 h-2 rounded-full bg-brand-text/50"></span>
-            <span className="text-xs font-bold tracking-widest text-brand-text/50 uppercase">Mes applications :</span>
-          </div>
-
-          {/* Grand Slider */}
-          <div className="bg-brand-peach/80 bg-gradient-to-br from-brand-peach to-white/40 rounded-[30px] relative overflow-hidden mb-4 min-h-[300px] flex w-full group shadow-md border border-white/60">
-            <button onClick={() => setCurrentSlide((prev) => (prev - 1 + SLIDES.length) % SLIDES.length)} className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/10 text-brand-text flex items-center justify-center hover:bg-black/20 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all cursor-pointer"><ArrowLeft size={18} /></button>
-            <button onClick={() => setCurrentSlide((prev) => (prev + 1) % SLIDES.length)} className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/10 text-brand-text flex items-center justify-center hover:bg-black/20 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all cursor-pointer"><ArrowRight size={18} /></button>
-
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentSlide}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.3 }}
-                className="absolute inset-0 px-12 py-8 flex flex-col justify-center items-center text-center z-10"
-              >
-                <div className="bg-white/40 p-2.5 rounded-2xl mb-2 shadow-sm backdrop-blur-md border border-white/50">
-                  {React.cloneElement(SLIDES[currentSlide].icon, { className: 'w-8 h-8 text-brand-teal' })}
-                </div>
-                <h3 className="text-xl md:text-2xl font-black text-brand-text mb-2 tracking-tight">{SLIDES[currentSlide].title}</h3>
-                <p className="hidden md:block text-xs md:text-sm text-brand-text/80 leading-snug mb-4 max-w-sm line-clamp-3 px-4">{SLIDES[currentSlide].desc}</p>
-                <button
-                  onClick={() => navigate(SLIDES[currentSlide].path)}
-                  className="group/btn flex items-center gap-2 bg-brand-coral text-white font-bold px-6 py-2.5 rounded-full text-sm hover:bg-brand-coral/90 hover:shadow-lg hover:-translate-y-0.5 transition-all mb-4"
-                >
-                  Y aller <ArrowRight size={18} className="group-hover/btn:translate-x-1 transition-transform" />
-                </button>
-              </motion.div>
-            </AnimatePresence>
-
-            {/* Slider Dots */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3 z-20">
-              {SLIDES.map((_, i) => (
-                <div
-                  key={i}
-                  onClick={() => setCurrentSlide(i)}
-                  className={`h-2 rounded-full transition-all cursor-pointer ${i === currentSlide ? 'w-8 bg-brand-teal' : 'w-2 bg-brand-text/20 hover:bg-brand-text/40'}`}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Module Actualités - Version Bureau Uniquement */}
-          {homeNews && (
-            <div className="hidden md:block bg-brand-peach/80 rounded-[24px] p-6 shadow-soft hover:bg-brand-peach transition-colors border border-white/40">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-brand-coral/20 rounded-full">
-                  <Bell size={18} className="text-brand-coral" />
-                </div>
-                <h4 className="text-lg font-bold text-brand-text">Actualités</h4>
-              </div>
-              <p className="text-brand-text/80 text-sm md:text-base leading-relaxed whitespace-pre-wrap">
-                {homeNews}
-              </p>
-            </div>
-          )}
+          <div className="absolute inset-0 bg-white/60 blur-2xl rounded-full scale-125 -z-10" />
+          <img src={logoPng} alt="Logo Edoxia" className="w-24 h-24 md:w-28 md:h-28 object-contain drop-shadow-xl relative z-10" />
         </motion.div>
-      </main>
+
+        <div>
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-brand-text mb-3">
+            Bienvenue sur <span className="bg-clip-text text-transparent bg-gradient-to-r from-brand-coral to-brand-teal">Edoxia</span>
+          </h1>
+          <p className="text-brand-text/60 font-medium text-sm md:text-base max-w-md mx-auto leading-relaxed">
+            Votre portail d'accès aux différents espaces de gestion et d'accompagnement.
+          </p>
+        </div>
+        
+        <div className="flex flex-col sm:flex-row gap-4 w-full justify-center items-center mt-2">
+          <button 
+            disabled
+            className="w-full sm:w-60 flex flex-col items-center justify-center gap-1 bg-white/50 text-brand-text/40 font-bold py-4 rounded-[20px] cursor-not-allowed border border-white/30 backdrop-blur-md transition-all relative overflow-hidden group"
+          >
+            <span className="text-[10px] uppercase tracking-[0.2em] font-black opacity-50">Accès restreint</span>
+            <span className="text-lg">Espace Parents</span>
+            <div className="absolute inset-0 bg-slate-200/50 -z-10" />
+          </button>
+          
+          <button 
+            onClick={handleStpbbClick}
+            className="w-full sm:w-60 flex flex-col items-center justify-center gap-1 bg-gradient-to-br from-brand-coral to-[#ff6b6b] hover:from-[#ff6b6b] hover:to-brand-coral text-white font-bold py-4 rounded-[20px] transition-all shadow-[0_8px_30px_-8px_rgba(255,127,80,0.5)] hover:shadow-[0_12px_40px_-8px_rgba(255,127,80,0.7)] hover:-translate-y-0.5 active:scale-95 border border-white/20"
+          >
+            <span className="text-[10px] uppercase tracking-[0.2em] font-black opacity-90 text-white/90">Accès portail</span>
+            <span className="text-lg">Espace STPBB</span>
+          </button>
+          
+          <button 
+            onClick={() => navigate('/test-stpbb')}
+            className="w-full sm:w-60 flex flex-col items-center justify-center gap-1 bg-gradient-to-br from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-500 text-white font-bold py-4 rounded-[20px] transition-all shadow-soft hover:shadow-lg hover:-translate-y-0.5 active:scale-95 border border-white/20"
+          >
+            <span className="text-[10px] uppercase tracking-[0.2em] font-black opacity-90 text-white/90">Environnement isolé</span>
+            <span className="text-lg">Espace TEST</span>
+          </button>
+        </div>
+      </motion.div>
+
+      <AnimatePresence>
+        {showPasswordModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center z-[150] p-4">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", duration: 0.5 }}
+              className="bg-white/90 backdrop-blur-2xl border border-white/60 p-6 md:p-8 rounded-[30px] w-full max-w-sm relative shadow-2xl text-center text-brand-text"
+            >
+              <button 
+                onClick={() => setShowPasswordModal(false)} 
+                className="absolute top-4 right-4 text-brand-text/50 hover:text-brand-coral transition-colors"
+              >
+                <X size={20} />
+              </button>
+
+              <div className="mb-4 flex justify-center">
+                <div className="p-3 bg-brand-coral/10 rounded-full">
+                  <Lock className="w-6 h-6 text-brand-coral" />
+                </div>
+              </div>
+
+              <h2 className="text-xl font-bold text-brand-text mb-2">Accès Sécurisé</h2>
+              <p className="text-brand-text/60 mb-6 text-sm">
+                Veuillez entrer le mot de passe pour accéder à l'Espace STPBB.
+              </p>
+
+              <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                <input
+                  type="password"
+                  placeholder="Mot de passe"
+                  className="w-full bg-white/60 border border-white/80 rounded-2xl p-3 text-brand-text focus:border-brand-teal outline-none placeholder:text-brand-text/30 shadow-inner text-center font-medium"
+                  value={passwordInput}
+                  onChange={(e) => {
+                    setPasswordInput(e.target.value);
+                    if (passwordError) setPasswordError(false);
+                  }}
+                  autoFocus
+                />
+                
+                {passwordError && (
+                  <motion.p 
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-red-500 text-xs font-semibold"
+                  >
+                    Mot de passe incorrect
+                  </motion.p>
+                )}
+
+                <button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-brand-coral to-[#ff6b6b] hover:from-[#ff6b6b] hover:to-brand-coral text-white font-bold py-3 rounded-2xl transition-all shadow-[0_4px_15px_rgba(255,127,80,0.3)] active:scale-95 border border-white/20"
+                >
+                  Valider
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
