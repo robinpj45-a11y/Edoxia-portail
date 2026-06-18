@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
 import {
     User, Utensils, CheckCircle, CalendarPlus, ArrowLeft,
-    MapPin, Clock, Info, Lock, Wine, ChevronRight, List, MessageSquare, ChevronDown, Euro
+    MapPin, Clock, Info, Lock, Wine, ChevronRight, List, MessageSquare, ChevronDown, Euro, X
 } from 'lucide-react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { TEMPLATE_REPAS, TEMPLATE_ACTIVITE, TEMPLATE_SOIREE } from '../constants';
 import { ThemeContext } from '../../ThemeContext';
@@ -14,6 +14,11 @@ export default function RegisterUser({ event, entries = [], user, onBack }) {
     const [formEntry, setFormEntry] = useState({ firstName: user?.prenom || '', lastName: user?.nom || '', selectionType: 'carte', selections: {}, comment: '', total: 0 });
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const [paymentMethod, setPaymentMethod] = useState('');
+    const [selectedMissionModal, setSelectedMissionModal] = useState(null);
+
+    const activeEntries = entries.filter(e => e.eventId === event.id && e.status !== 'cancelled');
+    const userEntry = activeEntries.find(e => e.userId === user?.uid);
 
     useEffect(() => {
         if (user) {
@@ -67,7 +72,7 @@ export default function RegisterUser({ event, entries = [], user, onBack }) {
     // Helper pour compter les choix déjà effectués par d'autres participants
     const getChoiceCount = (category, itemName) => {
         return entries.filter(ent => {
-            if (ent.eventId !== event.id) return false;
+            if (ent.eventId !== event.id || ent.status === 'cancelled') return false;
             const sel = ent.selections && ent.selections[category];
             if (!sel) return false;
             const name = sel.toString().split('|')[0];
@@ -106,12 +111,23 @@ export default function RegisterUser({ event, entries = [], user, onBack }) {
         setSubmitting(true);
         try {
             // 1. Sauvegarde inscription
-            await addDoc(collection(db, 'entries'), { ...formEntry, eventId: event.id, timestamp: serverTimestamp(), userId: user.uid, isPaid: false });
-
-
-
+            await addDoc(collection(db, 'entries'), { ...formEntry, eventId: event.id, timestamp: serverTimestamp(), userId: user.uid, isPaid: false, status: 'active', paymentMethod });
             setSubmitted(true);
         } catch (err) { alert(err.message); } finally { setSubmitting(false); }
+    };
+
+    const handleCancelSpecificEntry = async (entryId) => {
+        if (confirm("Êtes-vous sûr de vouloir désinscrire cette personne ?")) {
+            setSubmitting(true);
+            try {
+                await updateDoc(doc(db, 'entries', entryId), { status: 'cancelled', cancelledAt: serverTimestamp() });
+                alert("L'inscription a été annulée.");
+                if (userEntry && userEntry.id === entryId) {
+                    setFormEntry({ ...formEntry, selections: {} });
+                    setPaymentMethod('');
+                }
+            } catch (err) { alert(err.message); } finally { setSubmitting(false); }
+        }
     };
 
     const handleOptionCheck = (name, price, checked) => {
@@ -185,7 +201,7 @@ export default function RegisterUser({ event, entries = [], user, onBack }) {
 
     if (submitted) {
         const handleCopy = () => {
-            const totalText = event.type !== TEMPLATE_SOIREE ? `\n\nTotal: ${formEntry.total.toFixed(2)}€` : '';
+            const totalText = event.isPaid ? `\n\nTotal: ${formEntry.total.toFixed(2)}€` : '';
             const text = `Inscription : ${event.title}\n\n${formatSelections()}${totalText}`;
             navigator.clipboard.writeText(text).then(() => alert("Récapitulatif copié !"));
         };
@@ -243,10 +259,20 @@ export default function RegisterUser({ event, entries = [], user, onBack }) {
                                     <span className="italic font-medium">"{formEntry.comment}"</span>
                                 </div>
                             )}
+
+                            {/* Moyen de paiement */}
+                            {paymentMethod && (
+                                <div className="p-3 rounded-xl text-xs flex flex-col gap-1 bg-cyan-50 text-cyan-800 mt-2 shadow-inner">
+                                    <div className="font-bold flex items-center gap-2"><Euro size={14} /> Moyen de paiement : {paymentMethod}</div>
+                                    {event.paymentMethods?.find(pm => pm.name === paymentMethod)?.instructions && (
+                                        <div className="italic text-cyan-700 mt-1 whitespace-pre-wrap">{event.paymentMethods?.find(pm => pm.name === paymentMethod)?.instructions}</div>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         {/* Pied du ticket */}
-                        {event.type !== TEMPLATE_SOIREE && (
+                        {event.isPaid && (
                             <div className="mt-1 pt-3 border-t-2 border-dashed border-brand-text/20 flex justify-between items-center">
                                 <span className="font-bold text-brand-text/50 uppercase text-xs tracking-wider">Total à payer</span>
                                 <span className="text-xl font-black text-brand-coral">{formEntry.total.toFixed(2)}€</span>
@@ -504,7 +530,7 @@ export default function RegisterUser({ event, entries = [], user, onBack }) {
                         {event.type === TEMPLATE_SOIREE && event.missions && event.missions.length > 0 && (
                             <section className="p-6 rounded-[20px] shadow-soft border bg-white/50 border-white/50">
                                 <h3 className="text-xs font-bold uppercase mb-4 flex items-center gap-2 text-purple-600 tracking-wider"><List size={16} /> Missions</h3>
-                                <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
                                     {event.missions.map((mission, idx) => {
                                         const count = getChoiceCount('Mission', mission.name);
                                         const max = parseInt(mission.maxParticipants || 1, 10);
@@ -512,29 +538,36 @@ export default function RegisterUser({ event, entries = [], user, onBack }) {
                                         const isSelected = formEntry.selections['Mission'] === mission.name;
 
                                         return (
-                                            <label key={idx} className={`flex flex-col p-4 rounded-xl border transition-all ${isFull && !isSelected ? 'opacity-50 cursor-not-allowed bg-black/5 grayscale' : 'cursor-pointer'} ${isSelected ? 'border-purple-500 bg-white shadow-soft scale-[1.01]' : 'border-white/50 bg-white/40 hover:bg-white/60 shadow-inner'}`}>
-                                                <div className="flex items-start justify-between">
-                                                    <div className="flex items-center gap-3">
-                                                        <input
-                                                            type="radio"
-                                                            name="missionSelection"
-                                                            className="w-5 h-5 accent-purple-500 mt-0.5"
-                                                            checked={isSelected}
-                                                            disabled={isFull && !isSelected}
-                                                            onChange={() => handleSelectionChange('Mission', mission.name)}
-                                                        />
-                                                        <div>
-                                                            <div className={`font-black text-lg ${isSelected ? 'text-purple-600' : 'text-brand-text'}`}>{mission.name}</div>
-                                                            {mission.description && <div className="text-sm font-medium text-brand-text/70 mt-1">{mission.description}</div>}
-                                                        </div>
-                                                    </div>
-                                                    <div className="text-xs font-bold bg-white/60 px-3 py-1.5 rounded-full shadow-sm text-brand-text/70 whitespace-nowrap ml-4">
-                                                        {count} / {max} {isFull && <span className="text-brand-coral ml-1">(Complet)</span>}
-                                                    </div>
+                                            <div key={idx} onClick={() => setSelectedMissionModal(mission)} className={`flex flex-col p-4 rounded-xl border transition-all cursor-pointer ${isSelected ? 'border-purple-500 bg-purple-50 shadow-soft scale-[1.02]' : 'border-white/50 bg-white/40 hover:bg-white/60 shadow-inner'}`}>
+                                                <div className={`font-black text-center ${isSelected ? 'text-purple-600' : 'text-brand-text'}`}>{mission.name}</div>
+                                                <div className="text-xs font-bold text-center text-brand-text/50 mt-2">
+                                                    {count} / {max} {isFull && <span className="text-brand-coral">(Complet)</span>}
                                                 </div>
-                                            </label>
+                                            </div>
                                         );
                                     })}
+                                </div>
+                            </section>
+                        )}
+
+                        {event.isPaid && (
+                            <section className="p-6 rounded-[20px] shadow-soft border bg-white/50 border-white/50">
+                                <h3 className="text-xs font-bold uppercase mb-4 flex items-center gap-2 text-cyan-600 tracking-wider"><Euro size={16} /> Paiement</h3>
+                                <div className="text-sm font-medium text-brand-text/70 mb-4">Veuillez choisir un moyen de paiement pour valider votre inscription.</div>
+                                <div className="space-y-3">
+                                    {(event.paymentMethods || []).map((pm, idx) => (
+                                        <label key={idx} className={`flex flex-col p-4 rounded-xl border cursor-pointer transition-all ${paymentMethod === pm.name ? 'border-cyan-500 bg-cyan-50 shadow-soft' : 'border-white/50 bg-white/40 hover:bg-white/60 shadow-inner'}`}>
+                                            <div className="flex items-center gap-3">
+                                                <input type="radio" name="paymentMethod" className="w-5 h-5 accent-cyan-600" checked={paymentMethod === pm.name} onChange={() => setPaymentMethod(pm.name)} />
+                                                <span className={`font-bold ${paymentMethod === pm.name ? 'text-cyan-700' : 'text-brand-text'}`}>{pm.name}</span>
+                                            </div>
+                                            {paymentMethod === pm.name && pm.instructions && (
+                                                <div className="mt-3 text-xs p-3 rounded-lg bg-white/60 text-brand-text/80 font-medium whitespace-pre-wrap">
+                                                    {pm.instructions}
+                                                </div>
+                                            )}
+                                        </label>
+                                    ))}
                                 </div>
                             </section>
                         )}
@@ -555,9 +588,60 @@ export default function RegisterUser({ event, entries = [], user, onBack }) {
                             <p className="text-2xl font-black text-brand-text">{formEntry.total.toFixed(2)}€</p>
                         </div>
                     )}
-                    <button onClick={handleSubmit} disabled={submitting || !formEntry.firstName} className={`bg-brand-coral hover:bg-brand-coral/90 text-white px-8 py-3 rounded-full font-bold shadow-soft transition-all disabled:opacity-50 disabled:shadow-none hover:scale-105 active:scale-95 disabled:hover:scale-100 disabled:cursor-not-allowed ${event.type === TEMPLATE_SOIREE ? 'w-full max-w-sm' : ''}`}>
+                    <button onClick={handleSubmit} disabled={submitting || !formEntry.firstName || (event.isPaid && !paymentMethod) || (event.type === TEMPLATE_SOIREE && !formEntry.selections['Mission'])} className={`bg-brand-coral hover:bg-brand-coral/90 text-white px-8 py-3 rounded-full font-bold shadow-soft transition-all disabled:opacity-50 disabled:shadow-none hover:scale-105 active:scale-95 disabled:hover:scale-100 disabled:cursor-not-allowed ${event.type === TEMPLATE_SOIREE ? 'w-full max-w-sm' : ''}`}>
                         {submitting ? '...' : 'Valider'}
                     </button>
+                </div>
+            )}
+
+            {/* Modal de détails de mission */}
+            {selectedMissionModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setSelectedMissionModal(null)}>
+                    <div className="bg-white rounded-[30px] p-6 max-w-sm w-full shadow-2xl flex flex-col max-h-[80vh]" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-start mb-4">
+                            <h3 className="font-black text-xl text-purple-600">{selectedMissionModal.name}</h3>
+                            <button onClick={() => setSelectedMissionModal(null)} className="p-1 text-brand-text/40 hover:text-brand-text"><X size={20} /></button>
+                        </div>
+                        <div className="overflow-y-auto flex-1 pr-2">
+                            {selectedMissionModal.description && (
+                                <div className="text-sm font-medium text-brand-text/80 mb-6 bg-purple-50 p-4 rounded-2xl">
+                                    {selectedMissionModal.description}
+                                </div>
+                            )}
+                            <div>
+                                <h4 className="text-xs font-bold uppercase tracking-wider text-brand-text/50 mb-3">Personnes inscrites</h4>
+                                <div className="space-y-2">
+                                    {entries.filter(e => e.eventId === event.id && e.status !== 'cancelled' && e.selections && e.selections['Mission'] && e.selections['Mission'].split('|')[0] === selectedMissionModal.name).map(e => (
+                                        <div key={e.id} className="flex justify-between items-center text-sm font-bold bg-black/5 px-3 py-2 rounded-xl text-brand-text">
+                                            <span>{e.firstName} {e.lastName}</span>
+                                            <button 
+                                                onClick={() => handleCancelSpecificEntry(e.id)} 
+                                                className="p-1.5 rounded-lg bg-white/50 hover:bg-red-100 text-brand-text/40 hover:text-red-600 transition-colors shadow-sm"
+                                                title="Désinscrire cette personne"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {entries.filter(e => e.eventId === event.id && e.status !== 'cancelled' && e.selections && e.selections['Mission'] && e.selections['Mission'].split('|')[0] === selectedMissionModal.name).length === 0 && (
+                                        <div className="text-sm italic text-brand-text/40">Aucun inscrit pour l'instant.</div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="mt-6 pt-4 border-t">
+                            <button 
+                                onClick={() => { 
+                                    handleSelectionChange('Mission', selectedMissionModal.name); 
+                                    setSelectedMissionModal(null); 
+                                }}
+                                disabled={getChoiceCount('Mission', selectedMissionModal.name) >= parseInt(selectedMissionModal.maxParticipants || 1, 10)}
+                                className="w-full py-3 rounded-full font-bold bg-purple-600 text-white shadow-soft transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100"
+                            >
+                                {getChoiceCount('Mission', selectedMissionModal.name) >= parseInt(selectedMissionModal.maxParticipants || 1, 10) ? 'Mission Complète' : 'Choisir cette mission'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

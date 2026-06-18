@@ -79,9 +79,17 @@ function AdminTabButton({ active, onClick, icon, label }) {
 
 // --- ADMIN OVERVIEW ---
 function AdminOverview({ events, entries, onEdit }) {
-  const [expandedId, setExpandedId] = useState(null);
-
   const deleteEvent = async (id) => { if (confirm("Supprimer ?")) await deleteDoc(doc(db, 'events', id)); };
+
+  const purgeCancelled = async (eventId) => {
+    if (confirm("Voulez-vous vraiment supprimer définitivement toutes les inscriptions annulées pour cet événement ?")) {
+      const cancelledEntries = entries.filter(e => e.eventId === eventId && e.status === 'cancelled');
+      for (const entry of cancelledEntries) {
+        await deleteDoc(doc(db, 'entries', entry.id));
+      }
+      alert(`${cancelledEntries.length} inscriptions annulées ont été supprimées.`);
+    }
+  };
 
   const togglePaid = async (entryId, currentStatus) => {
     try { await updateDoc(doc(db, 'entries', entryId), { isPaid: !currentStatus }); }
@@ -94,13 +102,31 @@ function AdminOverview({ events, entries, onEdit }) {
   };
 
   const exportCsv = (event) => {
-    const eventEntries = entries.filter(e => e.eventId === event.id);
-    const csv = "\ufeffNom;Prénom;Détail;Total;Payé\n" + eventEntries.map(e => `${e.lastName};${e.firstName};${JSON.stringify(e.selections).replace(/"/g, "'")};${e.total};${e.isPaid ? 'OUI' : 'NON'}`).join("\n");
-    const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })); link.download = "export.csv"; link.click();
+    const eventEntries = entries.filter(e => e.eventId === event.id && e.status !== 'cancelled');
+    let csv = "";
+    if (event.type === TEMPLATE_SOIREE) {
+      csv = "\ufeffNom;Prénom;Mission;Montant;Moyen de paiement;A payé;Commentaire\n" + eventEntries.map(e => {
+        const missionName = e.selections && e.selections['Mission'] ? e.selections['Mission'].split('|')[0] : '';
+        const pm = e.paymentMethod || '';
+        const total = e.total || 0;
+        const paidStr = e.isPaid ? 'OUI' : 'NON';
+        const comment = (e.comment || '').replace(/;/g, ',');
+        const status = e.status === 'cancelled' ? ' (ANNULÉ)' : '';
+        return `${e.lastName}${status};${e.firstName};${missionName};${total};${pm};${paidStr};${comment}`;
+      }).join("\n");
+    } else {
+      csv = "\ufeffNom;Prénom;Détail;Total;Payé\n" + eventEntries.map(e => {
+        const status = e.status === 'cancelled' ? ' (ANNULÉ)' : '';
+        return `${e.lastName}${status};${e.firstName};${JSON.stringify(e.selections).replace(/"/g, "'")};${e.total || 0};${e.isPaid ? 'OUI' : 'NON'}`;
+      }).join("\n");
+    }
+    const dateStr = new Date().toLocaleDateString('fr-FR').replace(/\//g, '-');
+    const fileName = `Récap ${event.title} ${dateStr}.csv`;
+    const link = document.createElement("a"); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })); link.download = fileName; link.click();
   };
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 gap-6">
       {events.map(e => {
         const isRepas = e.type === TEMPLATE_REPAS;
         const isSoiree = e.type === TEMPLATE_SOIREE;
@@ -130,36 +156,35 @@ function AdminOverview({ events, entries, onEdit }) {
               <div className="flex gap-4">
                 <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/events/${e.id}`); alert('Lien copié !'); }} className="flex items-center gap-1.5 hover:text-brand-teal transition-colors" title="Copier le lien public"><Link size={14} /> Lien</button>
                 <button onClick={() => exportCsv(e)} className="flex items-center gap-1.5 hover:text-brand-teal transition-colors"><Download size={14} /> CSV</button>
-                <button onClick={() => setExpandedId(expandedId === e.id ? null : e.id)} className={`flex items-center gap-1.5 transition-colors ${expandedId === e.id ? 'text-brand-teal' : 'hover:text-brand-teal'}`}><Eye size={14} /> {expandedId === e.id ? 'Masquer' : 'Voir'}</button>
+                <button onClick={() => purgeCancelled(e.id)} className="flex items-center gap-1.5 hover:text-red-500 transition-colors" title="Supprimer les inscriptions annulées"><Trash2 size={14} /> Purger annulés</button>
               </div>
             </div>
 
             {/* Table Preview */}
-            {expandedId === e.id && (
-              <div className="max-h-80 overflow-y-auto p-2 bg-white/30 backdrop-blur-sm">
-                <table className="w-full text-left text-sm border-separate border-spacing-y-1">
+            <div className="max-h-80 overflow-y-auto p-2 bg-white/30 backdrop-blur-sm">
+              <table className="w-full text-left text-sm border-separate border-spacing-y-1">
                   <thead className="text-[10px] uppercase font-bold sticky top-0 bg-white/80 backdrop-blur-md text-brand-text/50 z-10 rounded-xl">
                     <tr>
                       <th className="p-3">Nom</th>
                       <th className="p-3">Détails</th>
-                      {e.type !== TEMPLATE_SOIREE && (
-                        <>
-                          <th className="p-3 text-right">Total</th>
-                          <th className="p-3 text-center">Paiement</th>
-                        </>
-                      )}
+                      <th className="p-3 text-right">Total</th>
+                      <th className="p-3 text-center">Moyen</th>
+                      <th className="p-3 text-center">Paiement</th>
                     </tr>
                   </thead>
                   <tbody>
                     {eventEntries.map(ent => (
-                      <tr key={ent.id} className="hover:bg-white/60 transition-colors bg-white/40 rounded-[10px] shadow-sm">
-                        <td className="p-3 font-bold text-brand-text rounded-l-[10px]">{ent.lastName} {ent.firstName}</td>
+                      <tr key={ent.id} className={`hover:bg-white/60 transition-colors rounded-[10px] shadow-sm ${ent.status === 'cancelled' ? 'bg-red-500/5 opacity-60 grayscale-[50%]' : 'bg-white/40'}`}>
+                        <td className="p-3 font-bold text-brand-text rounded-l-[10px]">
+                          {ent.lastName} {ent.firstName}
+                          {ent.status === 'cancelled' && <span className="ml-2 text-[10px] px-2 py-0.5 bg-red-100 text-red-600 rounded-full font-bold">Annulé</span>}
+                        </td>
 
                         {/* Affichage Menu ou Carte ou Mission */}
                         <td className="p-3 text-xs text-brand-text/70">
-                          {e.type === TEMPLATE_SOIREE && ent.selections['Mission'] && (
+                          {e.type === TEMPLATE_SOIREE && ent.selections && ent.selections['Mission'] && (
                             <span className="inline-block px-2 py-1 rounded-md font-bold mr-2 uppercase tracking-wide bg-purple-500/10 text-purple-600">
-                              Mission : {ent.selections['Mission'].split('|')[0]}
+                              {ent.selections['Mission'].split('|')[0]}
                             </span>
                           )}
                           {e.type === TEMPLATE_REPAS && (
@@ -167,38 +192,34 @@ function AdminOverview({ events, entries, onEdit }) {
                               {ent.selectionType === 'carte' ? 'À la carte' : (e.menus?.find(m => m.id === ent.selectionType)?.name || 'Menu')}
                             </span>
                           )}
-                          {Object.entries(ent.selections).map(([k, v]) => {
+                          {ent.selections && Object.entries(ent.selections).map(([k, v]) => {
                             if (!v || v.toString().startsWith('APERO:') || k === 'Mission') return null;
                             return <span key={v} className="inline-block border px-1.5 py-0.5 rounded mr-1 bg-white/50 border-white text-brand-text/60 font-medium">{v.split('|')[0]}</span>;
                           })}
-                          {Object.values(ent.selections).filter(v => v && v.toString().startsWith('APERO:')).map(v => (
+                          {ent.selections && Object.values(ent.selections).filter(v => v && v.toString().startsWith('APERO:')).map(v => (
                             <span key={v} className="inline-block border px-1.5 py-0.5 rounded font-bold mr-1 bg-brand-peach/10 text-brand-peach border-brand-peach/20">{v.split(':')[1]}</span>
                           ))}
                         </td>
 
-                        {e.type !== TEMPLATE_SOIREE && (
-                          <>
-                            <td className="p-3 text-right font-mono font-bold text-brand-coral">{ent.total}€</td>
-                            <td className="p-3 text-center rounded-r-[10px]">
-                              {ent.total > 0 ? (
-                                <button
-                                  onClick={() => togglePaid(ent.id, ent.isPaid)}
-                                  className={`p-1.5 rounded-full transition-all flex items-center justify-center mx-auto hover:scale-110 ${ent.isPaid ? 'bg-green-500/20 text-green-600 shadow-inner' : 'bg-black/5 text-brand-text/30 hover:bg-brand-text/10'}`}
-                                  title={ent.isPaid ? "Payé" : "Marquer comme payé"}
-                                >
-                                  {ent.isPaid ? <CheckCircle size={16} /> : <Circle size={16} />}
-                                </button>
-                              ) : <span className="text-xs text-brand-text/30 font-bold p-1.5">-</span>}
-                            </td>
-                          </>
-                        )}
+                        <td className="p-3 text-right font-mono font-bold text-brand-coral">{ent.total || 0}€</td>
+                        <td className="p-3 text-center text-xs font-bold text-brand-text/70">{ent.paymentMethod || '-'}</td>
+                        <td className="p-3 text-center rounded-r-[10px]">
+                          {ent.total > 0 || e.isPaid ? (
+                            <button
+                              onClick={() => togglePaid(ent.id, ent.isPaid)}
+                              className={`p-1.5 rounded-full transition-all flex items-center justify-center mx-auto hover:scale-110 ${ent.isPaid ? 'bg-green-500/20 text-green-600 shadow-inner' : 'bg-black/5 text-brand-text/30 hover:bg-brand-text/10'}`}
+                              title={ent.isPaid ? "Payé" : "Marquer comme payé"}
+                            >
+                              {ent.isPaid ? <CheckCircle size={16} /> : <Circle size={16} />}
+                            </button>
+                          ) : <span className="text-xs text-brand-text/30 font-bold p-1.5">-</span>}
+                        </td>
                       </tr>
                     ))}
-                    {eventEntries.length === 0 && <tr><td colSpan={e.type === TEMPLATE_SOIREE ? 2 : 4} className="p-4 text-center text-brand-text/40 italic font-medium">Aucune inscription</td></tr>}
+                    {eventEntries.length === 0 && <tr><td colSpan={5} className="p-4 text-center text-brand-text/40 italic font-medium">Aucune inscription</td></tr>}
                   </tbody>
                 </table>
               </div>
-            )}
           </div>
         )
       })}
@@ -213,6 +234,7 @@ function AdminCreateForm({ eventToEdit, user, onFinish }) {
     menus: [], carte: { entrees: [], plats: [], desserts: [] },
     date: '', time: '', address: '', price: 0, activityOptions: [],
     missions: [],
+    paymentMethods: [],
     hasApero: false, aperoChoices: ['', ''],
     isLocked: false
   });
@@ -246,6 +268,10 @@ function AdminCreateForm({ eventToEdit, user, onFinish }) {
   const updateMission = (id, k, v) => setData(p => ({ ...p, missions: p.missions.map(m => m.id === id ? { ...m, [k]: v } : m) }));
   const removeMission = (id) => setData(p => ({ ...p, missions: p.missions.filter(m => m.id !== id) }));
 
+  const addPaymentMethod = () => setData(p => ({ ...p, paymentMethods: [...(p.paymentMethods || []), { name: '', instructions: '' }] }));
+  const updatePaymentMethod = (idx, k, v) => setData(p => ({ ...p, paymentMethods: (p.paymentMethods || []).map((pm, i) => i === idx ? { ...pm, [k]: v } : pm) }));
+  const removePaymentMethod = (idx) => setData(p => ({ ...p, paymentMethods: (p.paymentMethods || []).filter((_, i) => i !== idx) }));
+
   const inputClass = "w-full border rounded-xl p-3 font-bold outline-none transition-colors bg-white/60 border-white text-brand-text placeholder-brand-text/40 focus:border-brand-teal shadow-inner";
   const labelClass = "text-[10px] font-bold uppercase mb-1 text-brand-text/50 tracking-wider";
 
@@ -275,22 +301,37 @@ function AdminCreateForm({ eventToEdit, user, onFinish }) {
         )}
         <div><label className={labelClass}>Description</label><textarea rows="3" className={inputClass} value={data.description} onChange={e => setData({ ...data, description: e.target.value })} /></div>
 
-        {data.type !== TEMPLATE_SOIREE && (
-          <>
-            <div className="flex items-center gap-3 py-2">
-              <input type="checkbox" id="isPaid" className="w-5 h-5 accent-cyan-600" checked={data.isPaid} onChange={e => setData({ ...data, isPaid: e.target.checked })} />
-              <label htmlFor="isPaid" className="font-bold text-brand-text">Évènement payant ?</label>
+        {/* GESTION DU PAIEMENT (POUR TOUS LES TYPES) */}
+        <div className="flex items-center gap-3 py-2 border-t border-slate-200 mt-4 pt-4">
+          <input type="checkbox" id="isPaid" className="w-5 h-5 accent-cyan-600" checked={data.isPaid} onChange={e => setData({ ...data, isPaid: e.target.checked })} />
+          <label htmlFor="isPaid" className="font-bold text-brand-text">Évènement payant ?</label>
+        </div>
+
+        {data.isPaid && (
+          <div className="space-y-4">
+            <div>
+              <label className={labelClass}>
+                {data.type === TEMPLATE_REPAS ? "Prix de base fixe (€) (ajouté aux choix du repas)" : "Prix par personne (€)"}
+              </label>
+              <input type="number" className={inputClass} value={data.price} onChange={e => setData({ ...data, price: e.target.value })} />
             </div>
 
-            {data.isPaid && (
-              <div>
-                <label className={labelClass}>
-                  {data.type === TEMPLATE_REPAS ? "Prix de base fixe (€) (ajouté aux choix du repas)" : "Prix par personne (€)"}
-                </label>
-                <input type="number" className={inputClass} value={data.price} onChange={e => setData({ ...data, price: e.target.value })} />
+            <div className="p-4 rounded-2xl border bg-white/50 border-white/50 shadow-inner">
+              <div className="flex justify-between items-center mb-4">
+                <label className={labelClass}>Moyens de paiement</label>
+                <button onClick={addPaymentMethod} className="text-xs bg-cyan-600/20 text-cyan-700 px-3 py-1.5 rounded-full hover:bg-cyan-600/30 font-bold transition-colors">+ Ajouter</button>
               </div>
-            )}
-          </>
+              {(data.paymentMethods || []).map((pm, idx) => (
+                <div key={idx} className="flex gap-2 mb-3 items-start">
+                  <div className="flex-1 space-y-2">
+                    <input placeholder="Nom (ex: Virement, Espèces)" className={inputClass} value={pm.name} onChange={e => updatePaymentMethod(idx, 'name', e.target.value)} />
+                    <textarea rows="2" placeholder="Instructions (ex: IBAN...)" className={`text-sm ${inputClass}`} value={pm.instructions} onChange={e => updatePaymentMethod(idx, 'instructions', e.target.value)} />
+                  </div>
+                  <button onClick={() => removePaymentMethod(idx)} className="text-red-400 hover:text-red-600 p-2 mt-1"><Trash2 size={18} /></button>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* CONFIGURATION REPAS */}
