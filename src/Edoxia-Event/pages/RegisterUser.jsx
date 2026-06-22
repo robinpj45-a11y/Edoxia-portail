@@ -317,7 +317,7 @@ export default function RegisterUser({ event, entries = [], user, onBack }) {
                                 <div className={`${themeBg} p-3 rounded-full ${themeColor} shadow-inner bg-white/60`}><MapPin size={24} /></div>
                                 <div><div className="text-[10px] font-bold text-brand-text/50 uppercase tracking-wider">Où ?</div><div className="font-bold text-sm text-brand-text">{event.address || 'Non spécifié'}</div></div>
                             </div>
-                            {event.type !== TEMPLATE_SOIREE && event.isPaid && event.price > 0 && (
+                            {event.isPaid && event.price > 0 && (
                                 <div className="p-4 rounded-[20px] border shadow-soft flex flex-col items-center text-center gap-2 bg-white/50 border-white/50">
                                     <div className={`${themeBg} p-3 rounded-full ${themeColor} shadow-inner bg-white/60`}><Euro size={24} /></div>
                                     <div>
@@ -581,14 +581,14 @@ export default function RegisterUser({ event, entries = [], user, onBack }) {
             </main>
 
             {!event.isLocked && (
-                <div className={`fixed bottom-0 left-0 right-0 border-t p-4 px-6 flex items-center shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50 bg-white/80 backdrop-blur-md border-white/50 rounded-t-[30px] ${event.type === TEMPLATE_SOIREE ? 'justify-center' : 'justify-between'}`}>
-                    {event.type !== TEMPLATE_SOIREE && (
+                <div className={`fixed bottom-0 left-0 right-0 border-t p-4 px-6 flex items-center shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-50 bg-white/80 backdrop-blur-md border-white/50 rounded-t-[30px] ${(event.type === TEMPLATE_SOIREE && !event.isPaid) ? 'justify-center' : 'justify-between'}`}>
+                    {(event.type !== TEMPLATE_SOIREE || event.isPaid) && (
                         <div>
                             <p className="text-[10px] font-bold text-brand-text/50 uppercase tracking-widest">Total</p>
                             <p className="text-2xl font-black text-brand-text">{formEntry.total.toFixed(2)}€</p>
                         </div>
                     )}
-                    <button onClick={handleSubmit} disabled={submitting || !formEntry.firstName || (event.isPaid && !paymentMethod) || (event.type === TEMPLATE_SOIREE && !formEntry.selections['Mission'])} className={`bg-brand-coral hover:bg-brand-coral/90 text-white px-8 py-3 rounded-full font-bold shadow-soft transition-all disabled:opacity-50 disabled:shadow-none hover:scale-105 active:scale-95 disabled:hover:scale-100 disabled:cursor-not-allowed ${event.type === TEMPLATE_SOIREE ? 'w-full max-w-sm' : ''}`}>
+                    <button onClick={handleSubmit} disabled={submitting || !formEntry.firstName || (event.isPaid && !paymentMethod) || (event.type === TEMPLATE_SOIREE && !formEntry.selections['Mission'])} className={`bg-brand-coral hover:bg-brand-coral/90 text-white px-8 py-3 rounded-full font-bold shadow-soft transition-all disabled:opacity-50 disabled:shadow-none hover:scale-105 active:scale-95 disabled:hover:scale-100 disabled:cursor-not-allowed ${(event.type === TEMPLATE_SOIREE && !event.isPaid) ? 'w-full max-w-sm' : ''}`}>
                         {submitting ? '...' : 'Valider'}
                     </button>
                 </div>
