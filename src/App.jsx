@@ -348,6 +348,29 @@ const AppLayout = () => {
     return () => clearInterval(interval);
   }, [user]); // Se relance si le statut de connexion change
 
+  // --- AUTO-RELOAD APRÈS INACTIVITÉ (Pour s'assurer d'avoir la dernière version) ---
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        localStorage.setItem('lastHiddenAt', Date.now().toString());
+      } else if (document.visibilityState === 'visible') {
+        const lastHiddenAt = localStorage.getItem('lastHiddenAt');
+        if (lastHiddenAt) {
+          const timeHidden = Date.now() - parseInt(lastHiddenAt, 10);
+          // Si l'application est restée en arrière-plan pendant plus de 2 heures (7200000 ms), on force le rafraîchissement
+          if (timeHidden > 7200000) {
+            window.location.reload();
+          }
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
   const handleAuth = async (e) => {
     e.preventDefault();
     try {

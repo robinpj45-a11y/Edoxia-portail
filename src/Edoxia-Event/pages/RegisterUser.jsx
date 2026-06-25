@@ -3,7 +3,7 @@ import {
     User, Utensils, CheckCircle, CalendarPlus, ArrowLeft,
     MapPin, Clock, Info, Lock, Wine, ChevronRight, List, MessageSquare, ChevronDown, Euro, X
 } from 'lucide-react';
-import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { TEMPLATE_REPAS, TEMPLATE_ACTIVITE, TEMPLATE_SOIREE } from '../constants';
 import { ThemeContext } from '../../ThemeContext';
@@ -110,6 +110,37 @@ export default function RegisterUser({ event, entries = [], user, onBack }) {
         e.preventDefault();
         setSubmitting(true);
         try {
+            // VERIFICATION MISSION COMPLETE (pour éviter les conflits si 2 personnes s'inscrivent en même temps)
+            if (event.type === TEMPLATE_SOIREE && formEntry.selections['Mission']) {
+                const selectedMissionName = formEntry.selections['Mission'].split('|')[0];
+                const missionDef = event.missions?.find(m => m.name === selectedMissionName);
+                
+                if (missionDef) {
+                    const max = parseInt(missionDef.maxParticipants || 1, 10);
+                    
+                    // On récupère les inscriptions à jour depuis Firestore
+                    const q = query(
+                        collection(db, 'entries'),
+                        where('eventId', '==', event.id)
+                    );
+                    const querySnapshot = await getDocs(q);
+                    
+                    const currentCount = querySnapshot.docs.filter(docSnapshot => {
+                        const data = docSnapshot.data();
+                        if (data.status === 'cancelled') return false;
+                        const sel = data.selections && data.selections['Mission'];
+                        if (!sel) return false;
+                        return sel.toString().split('|')[0] === selectedMissionName;
+                    }).length;
+
+                    if (currentCount >= max) {
+                        alert(`Désolé, la mission "${selectedMissionName}" est déjà complète. Quelqu'un d'autre vient de s'inscrire.`);
+                        setSubmitting(false);
+                        return; // On empêche l'inscription
+                    }
+                }
+            }
+
             // 1. Sauvegarde inscription
             await addDoc(collection(db, 'entries'), { ...formEntry, eventId: event.id, timestamp: serverTimestamp(), userId: user.uid, isPaid: false, status: 'active', paymentMethod });
             setSubmitted(true);
